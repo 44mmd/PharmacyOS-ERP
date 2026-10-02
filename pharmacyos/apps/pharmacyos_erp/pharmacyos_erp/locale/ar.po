@@ -622,3 +622,659 @@ msgstr "تنبيه"
 
 msgid "Block"
 msgstr "منع"
+
+# --- sign-in ------------------------------------------------------------------------------
+msgid "Sign In"
+msgstr "تسجيل الدخول"
+
+msgid "Sign in"
+msgstr "تسجيل الدخول"
+
+msgid "Welcome! Please sign in to continue."
+msgstr "أهلاً بك! سجّل الدخول للمتابعة."
+
+msgid "Forgot password?"
+msgstr "نسيت كلمة السر؟"
+
+msgid "Language"
+msgstr "اللغة"
+
+msgid "Open-source notices"
+msgstr "إشعارات البرمجيات مفتوحة المصدر"
+
+msgid "The operating system for your pharmacy."
+msgstr "نظام التشغيل لصيدليتك."
+
+msgid "Medicines, batches and expiry, branches, purchasing and sales — in one calm, reliable workspace."
+msgstr "الأدوية والوجبات والصلاحية والفروع والمشتريات والمبيعات — في مساحة عمل واحدة هادئة وموثوقة."
+
+msgid "First-expiry-first-out guidance on every sale"
+msgstr "توجيه «الأقرب انتهاءً يُصرف أولاً» في كل عملية بيع"
+
+msgid "Branch-aware stock with batch and expiry tracking"
+msgstr "مخزون لكل فرع مع تتبّع الوجبات وتواريخ الصلاحية"
+
+msgid "Arabic and English, priced in Iraqi Dinar"
+msgstr "بالعربية والإنجليزية، وبالدينار العراقي"
+
+# --- pages, dialogs, validations -------------------------------------------------------
+
+msgid "Nearest expiry: batch {0} on {1} ({2})"
+msgstr "أقرب انتهاء: الوجبة {0} في {1} ({2})"
+
+msgid "No unexpired batch in stock."
+msgstr "لا توجد وجبة صالحة في المخزون."
+
+msgid "Add Medicine"
+msgstr "إضافة دواء"
+
+msgid "Batch & Expiry"
+msgstr "الوجبة والصلاحية"
+
+msgid "{0} of {1} medicine rows still need a batch number and expiry date."
+msgstr "{0} من {1} أسطر أدوية ما زالت تحتاج رقم وجبة وتاريخ انتهاء."
+
+msgid "Record now"
+msgstr "سجّلها الآن"
+
+msgid "All medicine rows have a batch and expiry date."
+msgstr "جميع أسطر الأدوية لها رقم وجبة وتاريخ انتهاء."
+
+msgid "Enter the batch number and expiry date exactly as printed on each pack. Rows that already have a batch are skipped."
+msgstr "أدخل رقم الوجبة وتاريخ الانتهاء كما هما مطبوعان على العبوة. يتم تخطي الأسطر التي لها وجبة مسبقاً."
+
+msgid "Apply to receipt"
+msgstr "تطبيق على الاستلام"
+
+msgid "Enter at least one batch number and expiry date."
+msgstr "أدخل رقم وجبة وتاريخ انتهاء واحداً على الأقل."
+
+msgid "Batch details applied to {0} rows"
+msgstr "تم تطبيق بيانات الوجبة على {0} سطر"
+
+msgid "All medicine rows already have a batch."
+msgstr "جميع أسطر الأدوية لها وجبة مسبقاً."
+
+msgid "Identity"
+msgstr "الهوية"
+
+msgid "Commercial Name"
+msgstr "الاسم التجاري"
+
+msgid "As printed on the pack, e.g. Panadol 500 mg"
+msgstr "كما هو مطبوع على العبوة، مثل: بانادول 500 ملغ"
+
+msgid "Scan the pack barcode"
+msgstr "امسح باركود العبوة"
+
+msgid "SKU / Item Code"
+msgstr "رمز المادة"
+
+msgid "Leave empty to generate one"
+msgstr "اتركه فارغاً لإنشائه تلقائياً"
+
+msgid "Formulation"
+msgstr "التركيبة"
+
+msgid "e.g. 500 mg"
+msgstr "مثال: 500 ملغ"
+
+msgid "Stock Unit"
+msgstr "وحدة المخزون"
+
+msgid "Supplier & Brand"
+msgstr "المورّد والعلامة التجارية"
+
+msgid "Preferred Supplier"
+msgstr "المورّد المفضّل"
+
+msgid "Price & Stock"
+msgstr "السعر والمخزون"
+
+msgid "Selling Price"
+msgstr "سعر البيع"
+
+msgid "Purchase Price"
+msgstr "سعر الشراء"
+
+msgid "Typical Shelf Life (Days)"
+msgstr "مدة الصلاحية المعتادة (أيام)"
+
+msgid "Reorder Warehouse"
+msgstr "مخزن إعادة الطلب"
+
+msgid "Reorder Level"
+msgstr "حد إعادة الطلب"
+
+msgid "Reorder Quantity"
+msgstr "كمية إعادة الطلب"
+
+msgid "Medicines are created with batch and expiry tracking. The supplier's batch number and expiry date are entered when the stock is received."
+msgstr "تُنشأ الأدوية مع تتبّع الوجبة والصلاحية. يُدخل رقم وجبة المورّد وتاريخ الانتهاء عند استلام المخزون."
+
+msgid "Create Medicine"
+msgstr "إنشاء الدواء"
+
+msgid "Medicine {0} created"
+msgstr "تم إنشاء الدواء {0}"
+
+msgid "Receive Stock"
+msgstr "استلام مخزون"
+
+msgid "Open POS"
+msgstr "فتح نقطة البيع"
+
+msgid "Good morning"
+msgstr "صباح الخير"
+
+msgid "Good afternoon"
+msgstr "مساء الخير"
+
+msgid "Good evening"
+msgstr "مساء الخير"
+
+msgid "No access"
+msgstr "لا توجد صلاحية"
+
+msgid "Sales today"
+msgstr "مبيعات اليوم"
+
+msgid "{0} transactions · {1} returns"
+msgstr "{0} عملية · {1} مرتجع"
+
+msgid "Net revenue today"
+msgstr "صافي الإيراد اليوم"
+
+msgid "7 days: {0}"
+msgstr "آخر 7 أيام: {0}"
+
+msgid "Gross profit today"
+msgstr "إجمالي الربح اليوم"
+
+msgid "Not available"
+msgstr "غير متاح"
+
+msgid "Needs stock-updating invoices"
+msgstr "يتطلب فواتير تُحدّث المخزون"
+
+msgid "{0}% margin"
+msgstr "هامش {0}%"
+
+msgid "partial"
+msgstr "جزئي"
+
+msgid "Inventory value"
+msgstr "قيمة المخزون"
+
+msgid "at current valuation"
+msgstr "حسب التقييم الحالي"
+
+msgid "My sales today"
+msgstr "مبيعاتي اليوم"
+
+msgid "Expired batches — {0}"
+msgstr "وجبات منتهية — {0}"
+
+msgid "Expiring within 30 days"
+msgstr "تنتهي خلال 30 يوماً"
+
+msgid "Out of stock"
+msgstr "نفد من المخزون"
+
+msgid "Low stock"
+msgstr "مخزون منخفض"
+
+msgid "Negative stock balances"
+msgstr "أرصدة مخزون سالبة"
+
+msgid "Orders awaiting delivery"
+msgstr "طلبات بانتظار التوريد"
+
+msgid "Receipts in progress (draft)"
+msgstr "استلامات قيد الإدخال (مسودة)"
+
+msgid "Unpaid supplier invoices — {0}"
+msgstr "فواتير مورّدين غير مسددة — {0}"
+
+msgid "Your role does not include this information."
+msgstr "دورك لا يتضمن هذه المعلومات."
+
+msgid "Top-selling medicines"
+msgstr "الأدوية الأكثر مبيعاً"
+
+msgid "Last 30 days"
+msgstr "آخر 30 يوماً"
+
+msgid "{0} sold"
+msgstr "بيع {0}"
+
+msgid "No sales in the last 30 days"
+msgstr "لا مبيعات خلال آخر 30 يوماً"
+
+msgid "Slow-moving stock"
+msgstr "مخزون بطيء الحركة"
+
+msgid "No sales in 60 days"
+msgstr "بلا مبيعات منذ 60 يوماً"
+
+msgid "{0} in stock"
+msgstr "{0} في المخزون"
+
+msgid "Everything in stock has sold recently"
+msgstr "كل ما في المخزون بيع مؤخراً"
+
+msgid "Recent sales"
+msgstr "أحدث المبيعات"
+
+msgid "No sales this week"
+msgstr "لا مبيعات هذا الأسبوع"
+
+msgid "All invoices"
+msgstr "كل الفواتير"
+
+msgid "Recent stock movement"
+msgstr "أحدث حركات المخزون"
+
+msgid "No stock movement yet"
+msgstr "لا توجد حركة مخزون بعد"
+
+msgid "Stock ledger"
+msgstr "سجل المخزون"
+
+msgid "Batch list"
+msgstr "قائمة الوجبات"
+
+msgid "Search medicine or batch number"
+msgstr "ابحث عن دواء أو رقم وجبة"
+
+msgid "Medicines only"
+msgstr "الأدوية فقط"
+
+msgid "Value at risk is estimated as batch quantity × the medicine's current valuation rate in that warehouse."
+msgstr "القيمة المعرّضة للخطر تقديرية: كمية الوجبة × سعر التقييم الحالي للدواء في ذلك المخزن."
+
+msgid "All batches"
+msgstr "كل الوجبات"
+
+msgid "30 days"
+msgstr "30 يوماً"
+
+msgid "60 days"
+msgstr "60 يوماً"
+
+msgid "90 days"
+msgstr "90 يوماً"
+
+msgid "Expiry window"
+msgstr "نافذة الصلاحية"
+
+msgid "All batches in stock"
+msgstr "كل الوجبات في المخزون"
+
+msgid "Expired batches"
+msgstr "الوجبات المنتهية"
+
+msgid "Expiring within 60 days"
+msgstr "تنتهي خلال 60 يوماً"
+
+msgid "Expiring within 90 days"
+msgstr "تنتهي خلال 90 يوماً"
+
+msgid "{0} batches"
+msgstr "{0} وجبة"
+
+msgid "Expired — value at risk"
+msgstr "منتهية — القيمة المعرّضة للخطر"
+
+msgid "Expiring in 30 days"
+msgstr "تنتهي خلال 30 يوماً"
+
+msgid "Expiring in 90 days"
+msgstr "تنتهي خلال 90 يوماً"
+
+msgid "No matching batches"
+msgstr "لا توجد وجبات مطابقة"
+
+msgid "Try a different medicine name or batch number."
+msgstr "جرّب اسم دواء أو رقم وجبة آخر."
+
+msgid "No expired stock"
+msgstr "لا يوجد مخزون منتهي الصلاحية"
+
+msgid "No expired batch is held in the selected warehouses."
+msgstr "لا توجد وجبة منتهية في المخازن المحددة."
+
+msgid "No batch stock yet"
+msgstr "لا توجد وجبات في المخزون بعد"
+
+msgid "Batches appear here once batch-tracked medicines are received into stock."
+msgstr "تظهر الوجبات هنا بعد استلام الأدوية المتتبَّعة بالوجبات إلى المخزون."
+
+msgid "Nothing expires in this window"
+msgstr "لا شيء ينتهي ضمن هذه الفترة"
+
+msgid "Expiry"
+msgstr "الصلاحية"
+
+msgid "Value at Risk"
+msgstr "القيمة المعرّضة للخطر"
+
+msgid "Source"
+msgstr "المصدر"
+
+msgid "{0}–{1} of {2}"
+msgstr "{0}–{1} من {2}"
+
+msgid "Stock Balance report"
+msgstr "تقرير رصيد المخزون"
+
+msgid "Search medicine, generic or Arabic name"
+msgstr "ابحث بالاسم التجاري أو العلمي أو العربي"
+
+msgid "Stock by medicine"
+msgstr "المخزون حسب الدواء"
+
+msgid "Low stock compares on-hand quantity with the reorder levels of the warehouses in view. Available = on hand − reserved."
+msgstr "المخزون المنخفض يقارن الكمية الحالية بحدود إعادة الطلب للمخازن المعروضة. المتاح = الموجود − المحجوز."
+
+msgid "Stock state"
+msgstr "حالة المخزون"
+
+msgid "{0} medicines"
+msgstr "{0} دواء"
+
+msgid "No matching medicines"
+msgstr "لا توجد أدوية مطابقة"
+
+msgid "Nothing in this state"
+msgstr "لا شيء في هذه الحالة"
+
+msgid "No stock yet"
+msgstr "لا يوجد مخزون بعد"
+
+msgid "Receive medicines into a warehouse to see their health here."
+msgstr "استلم الأدوية إلى مخزن لترى حالتها هنا."
+
+msgid "State"
+msgstr "الحالة"
+
+msgid "On Hand"
+msgstr "الموجود"
+
+msgid "Nearest Expiry"
+msgstr "أقرب انتهاء"
+
+msgid "Expired Qty"
+msgstr "الكمية المنتهية"
+
+msgid "Reorder at"
+msgstr "إعادة الطلب عند"
+
+msgid "Stock value by expiry window"
+msgstr "قيمة المخزون حسب فترة الصلاحية"
+
+msgid "Medicines with the most value at risk"
+msgstr "الأدوية الأعلى قيمة معرّضة للخطر"
+
+msgid "At risk by warehouse"
+msgstr "المعرّض للخطر حسب المخزن"
+
+msgid "At risk by supplier"
+msgstr "المعرّض للخطر حسب المورّد"
+
+msgid "Values are estimates: batch quantity × current valuation rate. “At risk” means expired or expiring within the selected window."
+msgstr "القيم تقديرية: كمية الوجبة × سعر التقييم الحالي. «معرّض للخطر» يعني منتهي الصلاحية أو ينتهي خلال الفترة المحددة."
+
+msgid "Today (expired)"
+msgstr "اليوم (المنتهي)"
+
+msgid "Risk window"
+msgstr "فترة الخطر"
+
+msgid "within {0} days"
+msgstr "خلال {0} يوماً"
+
+msgid "expired only"
+msgstr "المنتهي فقط"
+
+msgid "Value at risk"
+msgstr "القيمة المعرّضة للخطر"
+
+msgid "Already expired"
+msgstr "منتهي بالفعل"
+
+msgid "Batches at risk"
+msgstr "وجبات معرّضة للخطر"
+
+msgid "Batch-tracked stock value"
+msgstr "قيمة المخزون المتتبَّع بالوجبات"
+
+msgid "{0}% at risk"
+msgstr "{0}% معرّض للخطر"
+
+msgid "expired"
+msgstr "منتهي"
+
+msgid "No medicine at risk in this window"
+msgstr "لا يوجد دواء معرّض للخطر في هذه الفترة"
+
+msgid "No warehouse at risk"
+msgstr "لا يوجد مخزن معرّض للخطر"
+
+msgid "Supplier not recorded"
+msgstr "المورّد غير مسجّل"
+
+msgid "No supplier at risk"
+msgstr "لا يوجد مورّد معرّض للخطر"
+
+msgid "Search medicine"
+msgstr "ابحث عن دواء"
+
+msgid "Create Purchase Order"
+msgstr "إنشاء أمر شراء"
+
+msgid "Below reorder level"
+msgstr "دون حد إعادة الطلب"
+
+msgid "Suggested when projected stock (on hand + ordered − reserved) is below the reorder level. Suggested quantity = the larger of the reorder quantity and the shortfall. Reorder levels are set per warehouse on each medicine."
+msgstr "يُقترح عندما يكون المخزون المتوقع (الموجود + المطلوب − المحجوز) أقل من حد إعادة الطلب. الكمية المقترحة = الأكبر بين كمية إعادة الطلب والنقص. تُضبط حدود إعادة الطلب لكل مخزن في بطاقة الدواء."
+
+msgid "{0} suggestions"
+msgstr "{0} اقتراح"
+
+msgid "Nothing to reorder"
+msgstr "لا شيء لإعادة طلبه"
+
+msgid "No medicine in view is below its reorder level. Medicines without reorder levels are not checked."
+msgstr "لا يوجد دواء دون حد إعادة الطلب. الأدوية بلا حدود لإعادة الطلب لا يتم فحصها."
+
+msgid "Transfer from another warehouse"
+msgstr "تحويل من مخزن آخر"
+
+msgid "Order from {0}"
+msgstr "الطلب من {0}"
+
+msgid "Order (choose supplier)"
+msgstr "طلب (اختر المورّد)"
+
+msgid "Projected"
+msgstr "المتوقع"
+
+msgid "Suggested Qty"
+msgstr "الكمية المقترحة"
+
+msgid "Suggested Action"
+msgstr "الإجراء المقترح"
+
+msgid "Not set"
+msgstr "غير محدد"
+
+msgid "Choose supplier"
+msgstr "اختر المورّد"
+
+msgid "The selected medicines have different preferred suppliers. One draft order is created for the supplier you choose."
+msgstr "للأدوية المحددة مورّدون مفضّلون مختلفون. سيُنشأ أمر مسودة واحد للمورّد الذي تختاره."
+
+msgid "Create Draft Order"
+msgstr "إنشاء أمر مسودة"
+
+msgid "The Critical window ({0} days) cannot be longer than the Expiring Soon window ({1} days)."
+msgstr "لا يمكن أن تكون فترة الحالة الحرجة ({0} يوماً) أطول من فترة قرب الانتهاء ({1} يوماً)."
+
+msgid "Expiry Windows"
+msgstr "فترات الصلاحية"
+
+msgid "The PharmacyOS endpoint must use HTTPS."
+msgstr "يجب أن يستخدم عنوان PharmacyOS بروتوكول HTTPS."
+
+msgid "Insecure Endpoint"
+msgstr "عنوان غير آمن"
+
+msgid "Select at least one medicine to order."
+msgstr "اختر دواءً واحداً على الأقل للطلب."
+
+msgid "You are not allowed to create purchase orders."
+msgstr "غير مسموح لك بإنشاء أوامر شراء."
+
+msgid "Nothing to order."
+msgstr "لا شيء للطلب."
+
+msgid "Medicines are normally tracked by batch and expiry date. Enable <b>Has Batch No</b> and <b>Has Expiry Date</b> so PharmacyOS can apply expiry checks and FEFO."
+msgstr "تُتتبّع الأدوية عادةً بالوجبة وتاريخ الانتهاء. فعّل <b>يتتبع رقم الوجبة</b> و<b>له تاريخ انتهاء صلاحية</b> ليطبّق PharmacyOS فحوصات الصلاحية ومبدأ الأقرب انتهاءً أولاً."
+
+msgid "Batch & Expiry Tracking"
+msgstr "تتبّع الوجبة والصلاحية"
+
+msgid "You are not allowed to create medicines."
+msgstr "غير مسموح لك بإنشاء أدوية."
+
+msgid "Row {0}: {1}, batch {2}"
+msgstr "السطر {0}: {1}، الوجبة {2}"
+
+msgid "{0} has no expiry date. Enter the expiry date printed on the pack."
+msgstr "{0} بلا تاريخ انتهاء. أدخل تاريخ الانتهاء المطبوع على العبوة."
+
+msgid "{0} expired on {1}. Expired medicines cannot be received."
+msgstr "{0} انتهت صلاحيتها في {1}. لا يمكن استلام أدوية منتهية الصلاحية."
+
+msgid "{0} has only {1} days of shelf life left (minimum {2})."
+msgstr "{0} متبقٍ لها {1} يوماً فقط من الصلاحية (الحد الأدنى {2})."
+
+msgid "Check batch & expiry"
+msgstr "تحقّق من الوجبة والصلاحية"
+
+msgid "Short shelf life"
+msgstr "صلاحية قصيرة"
+
+msgid "Enter the batch number printed on the pack."
+msgstr "أدخل رقم الوجبة المطبوع على العبوة."
+
+msgid "Enter the expiry date printed on the pack."
+msgstr "أدخل تاريخ الانتهاء المطبوع على العبوة."
+
+msgid "Manufacturing date cannot be after the expiry date."
+msgstr "لا يمكن أن يكون تاريخ التصنيع بعد تاريخ الانتهاء."
+
+msgid "Batch {0} already exists for this medicine with expiry {1}. Check the pack."
+msgstr "الوجبة {0} مسجّلة مسبقاً لهذا الدواء بتاريخ انتهاء {1}. تحقّق من العبوة."
+
+msgid "Batch already recorded"
+msgstr "الوجبة مسجّلة مسبقاً"
+
+msgid "0–30 days"
+msgstr "0–30 يوماً"
+
+msgid "31–60 days"
+msgstr "31–60 يوماً"
+
+msgid "61–90 days"
+msgstr "61–90 يوماً"
+
+msgid "Over 90 days"
+msgstr "أكثر من 90 يوماً"
+
+msgid "No expiry date"
+msgstr "بلا تاريخ انتهاء"
+
+msgid "You do not have access to branch {0}."
+msgstr "ليست لديك صلاحية على الفرع {0}."
+
+msgid "You do not have access to warehouse {0}."
+msgstr "ليست لديك صلاحية على المخزن {0}."
+
+msgid "Only a Pharmacy Owner can assign branches."
+msgstr "مالك الصيدلية فقط يمكنه تعيين الفروع."
+
+msgid "Set a Branch Warehouse on {0} first."
+msgstr "حدّد مخزن الفرع لـ {0} أولاً."
+
+msgid "Row {0}: {1} uses batch {2}, but batch {3} expires earlier ({4})."
+msgstr "السطر {0}: {1} يستخدم الوجبة {2}، لكن الوجبة {3} تنتهي أبكر ({4})."
+
+msgid "First Expiry, First Out"
+msgstr "الأقرب انتهاءً يُصرف أولاً"
+
+msgid "Show \"Powered by PharmacyOS\" on printed documents"
+msgstr "إظهار «مدعوم بواسطة PharmacyOS» على المستندات المطبوعة"
+
+msgid "Send Events to PharmacyOS Backend"
+msgstr "إرسال الأحداث إلى خادم PharmacyOS"
+
+msgid "Endpoint URL"
+msgstr "عنوان الخادم"
+
+msgid "Signing Secret"
+msgstr "مفتاح التوقيع"
+
+msgid "Request Timeout (Seconds)"
+msgstr "مهلة الطلب (ثوانٍ)"
+
+msgid "Class Name"
+msgstr "اسم التصنيف"
+
+msgid "Class Name (Arabic)"
+msgstr "اسم التصنيف (عربي)"
+
+msgid "Event Type"
+msgstr "نوع الحدث"
+
+msgid "Pharmacy Dashboard"
+msgstr "لوحة الصيدلية"
+
+msgid "Available"
+msgstr "المتاح"
+
+msgid "Return"
+msgstr "مرتجع"
+
+# --- print formats ----------------------------------------------------------------------
+
+msgid "Credit Note"
+msgstr "إشعار دائن"
+
+msgid "Bill To"
+msgstr "فاتورة إلى"
+
+msgid "Medicine / Item"
+msgstr "الدواء / المادة"
+
+msgid "Batch · Expiry"
+msgstr "الوجبة · الصلاحية"
+
+msgid "Exp."
+msgstr "تنتهي"
+
+msgid "Outstanding"
+msgstr "المتبقي"
+
+msgid "Change"
+msgstr "الباقي"
+
+msgid "Invoice"
+msgstr "فاتورة"
+
+msgid "No."
+msgstr "رقم"
+
+msgid "Due"
+msgstr "الاستحقاق"

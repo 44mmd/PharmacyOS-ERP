@@ -1,0 +1,46 @@
+{#- PharmacyOS thermal receipt (80 mm). Pharmacy identity first; PharmacyOS only as an optional small line. -#}
+{%- set id = get_print_identity(doc) -%}
+{%- set ar = (frappe.local.lang == "ar") -%}
+<div class="pos-receipt" dir="{{ 'rtl' if ar else 'ltr' }}">
+	<header class="r-head">
+		{%- if id.pharmacy_logo %}<img class="r-logo" src="{{ id.pharmacy_logo }}" alt="">{% endif %}
+		<div class="r-name">{{ id.pharmacy_name_ar if ar and id.pharmacy_name_ar else id.pharmacy_name }}</div>
+		{%- if id.pharmacy_name_ar and not ar %}<div class="r-name-ar" dir="rtl">{{ id.pharmacy_name_ar }}</div>{% endif %}
+		{%- if id.branch %}<div class="r-meta">{{ id.branch_ar if ar and id.branch_ar else id.branch }}</div>{% endif %}
+		{%- if id.address %}<div class="r-meta">{{ id.address }}</div>{% endif %}
+		{%- if id.phone %}<div class="r-meta" dir="ltr">{{ id.phone }}</div>{% endif %}
+		{%- if id.license_number %}<div class="r-meta">{{ _("Pharmacy License No.") }} {{ id.license_number }}</div>{% endif %}
+	</header>
+	<div class="r-rule"></div>
+	<table class="r-info">
+		<tr><td>{{ _("Invoice") }}</td><td class="r-end" dir="ltr">{{ doc.name }}</td></tr>
+		<tr><td>{{ _("Date") }}</td><td class="r-end" dir="ltr">{{ frappe.utils.format_date(doc.posting_date) }} {{ (doc.posting_time or "")|string|truncate(5, True, "") }}</td></tr>
+		{%- if doc.customer_name %}<tr><td>{{ _("Customer") }}</td><td class="r-end">{{ doc.customer_name }}</td></tr>{% endif %}
+		{%- if doc.is_return %}<tr><td colspan="2" class="r-flag">{{ _("Return") }}</td></tr>{% endif %}
+	</table>
+	<div class="r-rule"></div>
+	<table class="r-items">
+		{%- for row in doc.items %}
+		<tr class="r-item">
+			<td colspan="2"><strong>{{ row.item_name }}</strong></td>
+		</tr>
+		<tr>
+			<td class="r-sub" dir="ltr">{{ "%g"|format(row.qty|float) }} × {{ format_money(row.rate, doc.currency) }}</td>
+			<td class="r-end">{{ format_money(row.amount, doc.currency) }}</td>
+		</tr>
+		{%- for b in get_item_batches(row) %}
+		<tr><td colspan="2" class="r-batch">{{ _("Batch") }} <span dir="ltr">{{ b.batch_id }}</span>{% if b.expiry_date %} · {{ _("Exp.") }} <span dir="ltr">{{ frappe.utils.format_date(b.expiry_date, "MM/yyyy") }}</span>{% endif %}</td></tr>
+		{%- endfor %}
+		{%- endfor %}
+	</table>
+	<div class="r-rule"></div>
+	<table class="r-totals">
+		{%- if doc.discount_amount %}<tr><td>{{ _("Discount") }}</td><td class="r-end">− {{ format_money(doc.discount_amount, doc.currency) }}</td></tr>{% endif %}
+		{%- for t in doc.taxes %}<tr><td>{{ t.description }}</td><td class="r-end">{{ format_money(t.tax_amount, doc.currency) }}</td></tr>{% endfor %}
+		<tr class="r-grand"><td>{{ _("Total") }}</td><td class="r-end">{{ format_money(doc.rounded_total or doc.grand_total, doc.currency) }}</td></tr>
+		{%- for p in (doc.payments or []) %}{% if p.amount %}<tr><td>{{ _(p.mode_of_payment) }}</td><td class="r-end">{{ format_money(p.amount, doc.currency) }}</td></tr>{% endif %}{% endfor %}
+		{%- if doc.change_amount %}<tr><td>{{ _("Change") }}</td><td class="r-end">{{ format_money(doc.change_amount, doc.currency) }}</td></tr>{% endif %}
+	</table>
+	{%- if id.receipt_footer %}<div class="r-rule"></div><div class="r-foot">{{ id.receipt_footer }}</div>{% endif %}
+	{%- if id.show_powered_by %}<div class="r-powered">{{ _(id.powered_by) }}</div>{% endif %}
+</div>

@@ -210,7 +210,16 @@ def apply_recommended_configuration():
 	configure_stock()
 	configure_pos_search()
 	configure_branch_dimension()
+	configure_print_formats()
 	compile_translations()
+
+
+def configure_print_formats():
+	"""PharmacyOS invoice as Sales Invoice default (Property Setter; users can still pick others)."""
+	if frappe.db.exists("Print Format", "PharmacyOS Invoice"):
+		make_property_setter(
+			"Sales Invoice", None, "default_print_format", "PharmacyOS Invoice", "Data", for_doctype=True
+		)
 
 
 def configure_branch_dimension():

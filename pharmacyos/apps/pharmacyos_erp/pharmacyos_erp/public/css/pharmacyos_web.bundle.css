@@ -23,3 +23,305 @@
 html[lang="ar"] {
 	--font-stack: "Tajawal", "InterVariable", "Inter", -apple-system, "Segoe UI", sans-serif;
 }
+
+/* ================================================================ sign-in
+   Layout around Frappe's own login forms (see www/login.html). */
+body[data-path="login"] {
+	background: #f8fbfa;
+}
+body[data-path="login"] .web-footer,
+body[data-path="login"] .navbar {
+	display: none;
+}
+.pos-login {
+	--pl-deep: #063f36;
+	--pl-green: #087b61;
+	--pl-mint: #63e6be;
+	--pl-ink: #10231f;
+	--pl-ink-2: #63736f;
+	--pl-border: rgba(6, 63, 54, 0.12);
+	position: fixed;
+	inset: 0;
+	z-index: 10;
+	display: grid;
+	grid-template-columns: minmax(380px, 44%) 1fr;
+	min-height: 100dvh;
+	overflow: auto;
+	background: #f8fbfa;
+	font-family: var(--font-stack);
+	color: var(--pl-ink);
+}
+.pos-login-brand {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	gap: 40px;
+	padding: 44px 48px;
+	color: #eafbf5;
+	background:
+		radial-gradient(120% 80% at 100% 0%, rgba(99, 230, 190, 0.16) 0%, rgba(99, 230, 190, 0) 55%),
+		linear-gradient(160deg, #075245 0%, #063f36 55%, #04302a 100%);
+	overflow: hidden;
+}
+/* a single quiet clinical cross motif, not a busy pattern */
+.pos-login-brand::after {
+	content: "";
+	position: absolute;
+	inset-inline-end: -120px;
+	bottom: -120px;
+	width: 420px;
+	height: 420px;
+	background:
+		linear-gradient(rgba(234, 251, 245, 0.06), rgba(234, 251, 245, 0.06)) center / 34% 100% no-repeat,
+		linear-gradient(rgba(234, 251, 245, 0.06), rgba(234, 251, 245, 0.06)) center / 100% 34% no-repeat;
+	border-radius: 48px;
+	pointer-events: none;
+}
+.pos-login-brand-top {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+.pos-login-mark {
+	width: 40px;
+	height: 40px;
+	border-radius: 10px;
+	box-shadow: 0 0 0 1px rgba(234, 251, 245, 0.18);
+}
+.pos-login-product {
+	font-weight: 650;
+	font-size: 16px;
+	letter-spacing: -0.01em;
+	color: #fff;
+}
+.pos-login-descriptor {
+	font-size: 12.5px;
+	color: rgba(234, 251, 245, 0.7);
+}
+.pos-login-pitch {
+	max-width: 440px;
+	position: relative;
+	z-index: 1;
+}
+.pos-login-pitch h1 {
+	font-size: 30px;
+	line-height: 1.18;
+	font-weight: 650;
+	letter-spacing: -0.025em;
+	color: #fff;
+	margin: 0 0 14px;
+}
+.pos-login-pitch p {
+	font-size: 15px;
+	line-height: 1.55;
+	color: rgba(234, 251, 245, 0.78);
+	margin: 0 0 24px;
+}
+.pos-login-points {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	display: grid;
+	gap: 12px;
+}
+.pos-login-points li {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	font-size: 14px;
+	color: rgba(234, 251, 245, 0.9);
+}
+.pos-login-dot {
+	flex: none;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: var(--pl-mint);
+	box-shadow: 0 0 0 4px rgba(99, 230, 190, 0.16);
+}
+.pos-login-brand-foot {
+	position: relative;
+	z-index: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	font-size: 12.5px;
+	color: rgba(234, 251, 245, 0.62);
+}
+.pos-login-tenant {
+	font-size: 13px;
+	font-weight: 600;
+	color: rgba(234, 251, 245, 0.88);
+}
+.pos-login-half strong {
+	letter-spacing: 0.12em;
+	color: rgba(234, 251, 245, 0.9);
+}
+.pos-login-main {
+	display: flex;
+	flex-direction: column;
+	min-height: 100%;
+	padding: 24px 32px;
+	padding-bottom: max(24px, env(safe-area-inset-bottom));
+}
+.pos-login-topbar {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 12px;
+}
+.pos-login-mobile-brand {
+	display: none;
+	align-items: center;
+	gap: 8px;
+	font-weight: 650;
+	font-size: 15px;
+	margin-inline-end: auto;
+}
+.pos-login-mobile-brand img {
+	border-radius: 8px;
+}
+.pos-login-lang {
+	display: inline-flex;
+	padding: 3px;
+	border: 1px solid var(--pl-border);
+	border-radius: 999px;
+	background: #fff;
+}
+.pos-login-lang a {
+	padding: 5px 12px;
+	border-radius: 999px;
+	font-size: 12.5px;
+	color: var(--pl-ink-2);
+	text-decoration: none;
+}
+.pos-login-lang a[aria-current="true"] {
+	background: #eafbf5;
+	color: var(--pl-deep);
+	font-weight: 600;
+}
+.pos-login-card {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 32px 0;
+}
+/* Frappe's forms, restyled — markup untouched */
+.pos-login .for-login,
+.pos-login .for-forgot,
+.pos-login .for-signup,
+.pos-login .for-email-login,
+.pos-login .for-login-with-email-link {
+	width: 100%;
+	max-width: 400px;
+	margin: 0 auto;
+}
+.pos-login .login-content.page-card {
+	min-height: 0;
+	height: auto;
+	max-width: 400px;
+	width: 100%;
+	margin: 0;
+	padding: 32px;
+	border: 1px solid var(--pl-border);
+	border-radius: 16px;
+	background: #fff;
+	box-shadow: 0 1px 2px rgba(6, 63, 54, 0.05), 0 18px 40px -24px rgba(6, 63, 54, 0.28);
+}
+.pos-login .page-card-head .app-logo {
+	width: 36px;
+	height: 36px;
+	border-radius: 9px;
+}
+.pos-login .page-card-head h4 {
+	font-size: 22px;
+	letter-spacing: -0.02em;
+	color: var(--pl-ink);
+}
+.pos-login .form-control {
+	height: 42px;
+	border-radius: 10px;
+	border: 1px solid rgba(6, 63, 54, 0.16);
+	background: #fff;
+	font-size: 15px;
+	transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+.pos-login .form-control:focus {
+	outline: none;
+	border-color: #0aa77e;
+	box-shadow: 0 0 0 3px rgba(10, 167, 126, 0.25);
+}
+.pos-login .es-button[data-variant="solid"],
+.pos-login .btn-primary {
+	height: 42px;
+	border-radius: 10px;
+	background: var(--pl-deep);
+	color: #fff;
+	font-weight: 600;
+	font-size: 14.5px;
+	transition: background-color 120ms ease;
+}
+.pos-login .es-button[data-variant="solid"]:hover {
+	background: #075245;
+}
+.pos-login .es-button[data-variant="solid"]:focus-visible,
+.pos-login .btn-login-option:focus-visible,
+.pos-login-lang a:focus-visible,
+.pos-login-foot a:focus-visible {
+	outline: none;
+	box-shadow: 0 0 0 3px rgba(10, 167, 126, 0.35);
+}
+.pos-login .btn-login-option {
+	height: 40px;
+	border-radius: 10px;
+}
+.pos-login a {
+	color: var(--pl-green);
+}
+.pos-login-foot {
+	display: flex;
+	justify-content: space-between;
+	gap: 12px;
+	flex-wrap: wrap;
+	font-size: 12px;
+	color: var(--pl-ink-2);
+}
+.pos-login-foot a {
+	color: var(--pl-ink-2);
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+
+@media (max-width: 900px) {
+	.pos-login {
+		grid-template-columns: 1fr;
+	}
+	.pos-login-brand {
+		display: none;
+	}
+	.pos-login-mobile-brand {
+		display: inline-flex;
+	}
+	.pos-login-main {
+		padding: 16px;
+		padding-top: max(16px, env(safe-area-inset-top));
+	}
+	.pos-login-card {
+		align-items: flex-start;
+		padding-top: 28px;
+	}
+	.pos-login .login-content.page-card {
+		padding: 24px 20px;
+		border-radius: 14px;
+	}
+	.pos-login .form-control {
+		font-size: 16px; /* prevents iOS zoom on focus */
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.pos-login * {
+		transition: none !important;
+	}
+}

@@ -411,6 +411,8 @@ body.dock-pinned .dock {
 	font-weight: 600;
 }
 .pos-segment button .pos-count {
+	unicode-bidi: isolate;
+	display: inline-block;
 	margin-inline-start: 6px;
 	font-variant-numeric: tabular-nums;
 	color: var(--pos-ink-3);
@@ -484,7 +486,7 @@ body.dock-pinned .dock {
 /* KPI tiles */
 .pos-kpis {
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+	grid-template-columns: repeat(auto-fill, minmax(205px, 1fr));
 	gap: 12px;
 	margin-block-end: 20px;
 }
@@ -530,7 +532,7 @@ a.pos-kpi:focus-visible {
 	gap: 6px;
 }
 .pos-kpi-value {
-	font-size: 24px;
+	font-size: clamp(19px, 0.9vw + 11px, 24px);
 	line-height: 1.15;
 	font-weight: 650;
 	letter-spacing: -0.02em;
@@ -1135,6 +1137,8 @@ a.pos-kpi:focus-visible {
 @media (max-width: 767px) {
 	.pos-page {
 		--pos-gap: 12px;
+		padding-inline: 12px;
+		padding-bottom: max(32px, env(safe-area-inset-bottom));
 	}
 	.pos-kpis {
 		grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -39,6 +39,8 @@ jinja = {
 	"methods": [
 		"pharmacyos_erp.branding.get_brand",
 		"pharmacyos_erp.utils.money.format_money",
+		"pharmacyos_erp.utils.printing.get_item_batches",
+		"pharmacyos_erp.utils.printing.get_print_identity",
 	],
 }
 

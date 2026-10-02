@@ -1,0 +1,29 @@
+.pos-invoice { font-family: "Inter", "Tajawal", "Noto Sans Arabic", Arial, sans-serif; color: #10231f; font-size: 12px; line-height: 1.45; }
+.pos-invoice table { width: 100%; border-collapse: collapse; }
+.pos-invoice .i-head { display: flex; justify-content: space-between; gap: 24px; padding-bottom: 14px; border-bottom: 2px solid #063f36; }
+.pos-invoice .i-pharmacy { display: flex; gap: 12px; align-items: flex-start; }
+.pos-invoice .i-logo { max-height: 56px; max-width: 120px; }
+.pos-invoice .i-name { font-size: 18px; font-weight: 700; color: #063f36; }
+.pos-invoice .i-name-ar { font-size: 15px; font-weight: 700; color: #063f36; }
+.pos-invoice .i-meta { color: #45554f; font-size: 11px; }
+.pos-invoice .i-title { text-align: end; min-width: 200px; }
+.pos-invoice .i-doc { font-size: 20px; font-weight: 700; letter-spacing: 0.02em; }
+.pos-invoice .i-doc-ar { font-size: 16px; font-weight: 700; color: #45554f; }
+.pos-invoice .i-kv td { padding: 2px 0; font-size: 11.5px; }
+.pos-invoice .i-kv td:first-child { color: #63736f; padding-inline-end: 12px; }
+.pos-invoice .i-party { margin: 16px 0; }
+.pos-invoice .i-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: #63736f; }
+.pos-invoice .i-party-name { font-size: 14px; font-weight: 600; }
+.pos-invoice .i-items th { background: #eafbf5; color: #063f36; font-weight: 600; font-size: 11px; text-align: start; padding: 7px 8px; border-bottom: 1px solid rgba(6, 63, 54, 0.18); }
+.pos-invoice .i-items td { padding: 7px 8px; border-bottom: 1px solid rgba(6, 63, 54, 0.1); vertical-align: top; }
+.pos-invoice .i-num { text-align: end !important; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.pos-invoice .i-n { width: 24px; color: #63736f; }
+.pos-invoice .i-item { font-weight: 600; }
+.pos-invoice .i-sub { font-size: 10.5px; color: #8a9a95; }
+.pos-invoice .i-batch { font-size: 11px; }
+.pos-invoice .i-sum { display: flex; justify-content: flex-end; margin-top: 12px; }
+.pos-invoice .i-sum table { width: 280px; }
+.pos-invoice .i-sum td { padding: 4px 8px; }
+.pos-invoice .i-grand td { font-size: 15px; font-weight: 700; border-top: 2px solid #063f36; color: #063f36; }
+.pos-invoice .i-foot { margin-top: 24px; padding-top: 10px; border-top: 1px solid rgba(6, 63, 54, 0.12); font-size: 11px; color: #45554f; white-space: pre-line; }
+.pos-invoice .i-powered { margin-top: 10px; font-size: 9.5px; color: #8a9a95; text-align: center; }
