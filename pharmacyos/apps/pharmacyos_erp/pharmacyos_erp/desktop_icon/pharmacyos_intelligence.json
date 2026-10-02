@@ -1,0 +1,21 @@
+{
+ "app": "pharmacyos_erp",
+ "creation": "2026-10-02 00:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Desktop Icon",
+ "hidden": 0,
+ "icon": "radar",
+ "icon_type": "Link",
+ "idx": 9,
+ "label": "PharmacyOS Intelligence",
+ "link_to": "PharmacyOS Intelligence",
+ "link_type": "Workspace Sidebar",
+ "modified": "2026-10-03 01:00:00.000000",
+ "modified_by": "Administrator",
+ "name": "PharmacyOS Intelligence",
+ "owner": "Administrator",
+ "parent_icon": "PharmacyOS ERP",
+ "restrict_removal": 0,
+ "roles": [],
+ "standard": 1
+}

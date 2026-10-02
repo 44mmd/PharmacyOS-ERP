@@ -23,6 +23,34 @@ Pharmacy server (Linux or the PharmacyOS WSL2 environment on Windows)    ← one
   events wait in the outbox and are delivered once the connection returns; delivery is idempotent by
   event ID (Flow F is tested).
 
+## Stable base: version-16
+
+Production runs on **stable Frappe/ERPNext `version-16`** (upstream), plus the PharmacyOS ERP app.
+
+* The app has no ERPNext core changes, so it installs on upstream stable as is.
+* Tested: the full PharmacyOS suite passes on version-16 (98/98) and on develop (98/98).
+* The app ships both desk shells:
+  * develop: Dock/Sidebar;
+  * version-16: Workspace Sidebar + Desktop Icon.
+* Routes adapt automatically (`/desk` on develop, `/app` on version-16).
+
+## First-run pharmacy setup — tested
+
+```
+bench --site <site> execute pharmacyos_erp.setup.first_run.setup_pharmacy --kwargs '{"pharmacy_name": "Al Noor Pharmacy", "pharmacy_name_ar": "صيدلية النور", "owner_email": "owner@example.com", "owner_password": "…"}'
+```
+
+This replaces ERPNext's setup wizard and configures:
+
+* the company: IQD, Iraq, Asia/Baghdad, Arabic;
+* the chart of accounts and fiscal year;
+* the first branch with its warehouse and storefront code;
+* PharmacyOS settings (FEFO, batches, backups);
+* the owner account (Pharmacy Owner roles, Arabic).
+
+`install-server.sh` runs it from `PHARMACY_NAME`, `OWNER_EMAIL` and related variables. It was verified on
+a brand-new site: the owner logs in and the setup wizard never appears.
+
 ## Server installation
 
 ### Linux server — Untested end-to-end
@@ -83,7 +111,11 @@ address). You can also pick a receipt printer and choose to print receipts witho
 * an unreachable server shows the offline screen;
 * config unit tests: `npm test`.
 
-**Windows installer:**
+**Windows installer — built.** `PharmacyOS-ERP-Setup-0.1.0.exe` is built by the **PharmacyOS Desktop
+(Windows)** workflow on `windows-latest`. Run 37067473124 produced the artifact `PharmacyOS-ERP-Setup`
+(81.7 MB). The installer is **unsigned**; a code-signing certificate is needed before distribution.
+
+**Earlier notes:**
 * The installer is defined: NSIS, per-machine, desktop and Start-menu shortcuts.
 * Data folders go in `%ProgramData%\PharmacyOS`. Uninstall never deletes them.
 * Build it with the **PharmacyOS Desktop (Windows)** GitHub workflow (manual or on a tag) or `npm run dist:win`

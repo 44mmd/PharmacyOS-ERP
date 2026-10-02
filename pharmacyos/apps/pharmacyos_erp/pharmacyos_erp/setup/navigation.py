@@ -24,7 +24,7 @@ MODULE = "PharmacyOS"
 APP = "pharmacyos_erp"
 CREATED = "2026-10-02 00:00:00.000000"
 # Bump MODIFIED whenever NAVIGATION changes: `bench migrate` only re-imports newer files.
-MODIFIED = "2026-10-02 21:30:00.000000"
+MODIFIED = "2026-10-03 01:00:00.000000"
 
 
 def link(label, link_type, link_to, icon=None, filters=None):
@@ -302,6 +302,111 @@ def write_files():
 		write_json(os.path.join(folder, frappe.scrub(name) + ".json"), doc)
 
 	write_json(os.path.join(app_path, "dock", APP, APP + ".json"), dock_doc())
+	write_v16_files(app_path)
+
+
+# ------------------------------------------------------------------ version-16 shell
+# Frappe version-16 draws the desk from app-level `workspace_sidebar/*.json` and
+# `desktop_icon/*.json` instead of Dock/Sidebar. Both formats are generated from NAVIGATION and
+# shipped together; each Frappe version imports only its own.
+
+
+def v16_sidebar_name(title):
+	return f"PharmacyOS {title}" if title != "PharmacyOS" else "PharmacyOS Overview"
+
+
+def v16_sidebar_doc(title, icon, items):
+	rows, in_section = [], False
+	for item in items:
+		base = {"child": 0, "collapsible": 1, "indent": 0, "keep_closed": 0, "show_arrow": 0}
+		if item["type"] == "Section Break":
+			in_section = True
+			rows.append(
+				{**base, "type": "Section Break", "label": item["label"], "indent": 1, "link_type": "DocType"}
+			)
+			continue
+		row = {
+			**base,
+			"type": "Link",
+			"label": item["label"],
+			"link_type": item["link_type"],
+			"link_to": item["link_to"],
+			"icon": item.get("icon"),
+			"child": 1 if in_section else 0,
+		}
+		if item.get("filters"):
+			row["filters"] = item["filters"]
+		rows.append(row)
+	name = v16_sidebar_name(title)
+	return {
+		"app": APP,
+		"creation": CREATED,
+		"docstatus": 0,
+		"doctype": "Workspace Sidebar",
+		"header_icon": icon,
+		"idx": 0,
+		"items": rows,
+		"modified": MODIFIED,
+		"modified_by": "Administrator",
+		"module": MODULE,
+		"name": name,
+		"owner": "Administrator",
+		"standard": 1,
+		"title": title,
+	}
+
+
+def v16_icon(name, idx, **values):
+	return {
+		"app": APP,
+		"creation": CREATED,
+		"docstatus": 0,
+		"doctype": "Desktop Icon",
+		"hidden": 0,
+		"idx": idx,
+		"label": name,
+		"modified": MODIFIED,
+		"modified_by": "Administrator",
+		"name": name,
+		"owner": "Administrator",
+		"roles": [],
+		"standard": 1,
+		**values,
+	}
+
+
+def write_v16_files(app_path):
+	sidebar_dir = os.path.join(app_path, "workspace_sidebar")
+	icon_dir = os.path.join(app_path, "desktop_icon")
+	os.makedirs(sidebar_dir, exist_ok=True)
+	os.makedirs(icon_dir, exist_ok=True)
+	write_json(
+		os.path.join(icon_dir, "pharmacyos_erp.json"),
+		v16_icon(
+			"PharmacyOS ERP",
+			1,
+			icon_type="App",
+			link_type="External",
+			link="/app/pharmacy-dashboard",
+			logo_url="/assets/pharmacyos_erp/images/pharmacyos-mark.svg",
+		),
+	)
+	for idx, (_name, title, icon, items) in enumerate(NAVIGATION, start=1):
+		doc = v16_sidebar_doc(title, icon, items)
+		write_json(os.path.join(sidebar_dir, frappe.scrub(doc["name"]) + ".json"), doc)
+		write_json(
+			os.path.join(icon_dir, frappe.scrub(doc["name"]) + ".json"),
+			v16_icon(
+				doc["name"],
+				idx,
+				icon=icon,
+				icon_type="Link",
+				link_to=doc["name"],
+				link_type="Workspace Sidebar",
+				parent_icon="PharmacyOS ERP",
+				restrict_removal=0,
+			),
+		)
 
 
 def write_json(path, doc):

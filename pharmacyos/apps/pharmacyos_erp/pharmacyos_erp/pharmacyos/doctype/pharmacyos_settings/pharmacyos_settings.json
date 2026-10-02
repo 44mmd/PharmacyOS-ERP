@@ -297,8 +297,7 @@
    "fieldtype": "Link",
    "options": "Mode of Payment",
    "label": "Website Payment Method",
-   "default": "Cash",
-   "description": "Recorded when a delivered website order is invoiced (cash on delivery)."
+   "description": "Recorded when a delivered website order is invoiced (cash on delivery). Empty = Cash."
   },
   {
    "fieldname": "cloud_cb",
@@ -319,7 +318,7 @@
  ],
  "issingle": 1,
  "links": [],
- "modified": "2026-10-02 21:19:49.527685",
+ "modified": "2026-10-02 21:35:14.258217",
  "modified_by": "Administrator",
  "module": "PharmacyOS",
  "name": "PharmacyOS Settings",

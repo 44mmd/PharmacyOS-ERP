@@ -324,7 +324,6 @@ def purchasing_summary(warehouses):
 	return out
 
 
-@frappe.whitelist()
 def system_attention() -> list[dict]:
 	from pharmacyos_erp.pharmacy.system import attention_items
 
@@ -335,6 +334,7 @@ def system_attention() -> list[dict]:
 		return []
 
 
+@frappe.whitelist()
 def get_dashboard(branch: str | None = None) -> dict:
 	require_pharmacy_role()
 	from pharmacyos_erp.pharmacy.expiry import get_batches

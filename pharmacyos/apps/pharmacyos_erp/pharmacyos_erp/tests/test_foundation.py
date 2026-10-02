@@ -108,11 +108,16 @@ class TestNavigation(IntegrationTestCase):
 	def test_navigation_targets_exist_and_are_owned_once(self):
 		from collections import Counter
 
-		from pharmacyos_erp.setup.navigation import NAVIGATION
+		from pharmacyos_erp.setup.navigation import NAVIGATION, v16_sidebar_name
 
+		v16 = not frappe.db.exists("DocType", "Sidebar")  # version-16: Workspace Sidebar
 		owned = Counter()
-		for name, _title, _icon, _items in NAVIGATION:
-			sidebar = frappe.get_doc("Sidebar", name)
+		for name, title, _icon, _items in NAVIGATION:
+			sidebar = (
+				frappe.get_doc("Workspace Sidebar", v16_sidebar_name(title))
+				if v16
+				else frappe.get_doc("Sidebar", name)
+			)
 			self.assertEqual(sidebar.app, "pharmacyos_erp")
 			for row in sidebar.items:
 				if row.type != "Link":
@@ -120,13 +125,21 @@ class TestNavigation(IntegrationTestCase):
 				self.assertTrue(
 					frappe.db.exists(row.link_type, row.link_to), f"{row.link_type} {row.link_to}"
 				)
-				if row.is_default_module:
+				if row.get("is_default_module"):
 					owned[(row.link_type, row.link_to)] += 1
+		if v16:
+			return  # version-16 has no shell ownership (is_default_module); links verified above
 		self.assertTrue(owned)
 		self.assertEqual(max(owned.values()), 1)
 
 	def test_dock_lists_every_section(self):
 		from pharmacyos_erp.setup.navigation import NAVIGATION
 
+		if not frappe.db.exists("DocType", "Dock"):  # version-16: one desktop icon per section
+			from pharmacyos_erp.setup.navigation import v16_sidebar_name
+
+			icons = frappe.get_all("Desktop Icon", filters={"parent_icon": "PharmacyOS ERP"}, pluck="link_to")
+			self.assertEqual(sorted(icons), sorted(v16_sidebar_name(n[1]) for n in NAVIGATION))
+			return
 		dock = frappe.get_doc("Dock", "pharmacyos_erp")
 		self.assertEqual([r.link_to for r in dock.items], [n[0] for n in NAVIGATION])

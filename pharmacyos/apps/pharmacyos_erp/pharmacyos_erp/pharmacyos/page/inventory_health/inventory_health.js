@@ -165,7 +165,7 @@ class PharmacyOSInventoryHealth {
 								<td class="num">${pharmacyos.format_qty(r.available)}</td>
 								<td class="num">${r.reorder_level ? pharmacyos.format_qty(r.reorder_level) : "<span class='pos-muted'>—</span>"}</td>
 								<td class="num">${r.warehouses}</td>
-								<td class="num"><a href="/desk/batches-expiry?search=${encodeURIComponent(r.item_code)}">${r.batches}</a></td>
+								<td class="num"><a href="${pharmacyos.ui.base}/batches-expiry?search=${encodeURIComponent(r.item_code)}">${r.batches}</a></td>
 								<td>${expiry(r)}</td>
 								<td class="num">${r.expired_qty ? pharmacyos.format_qty(r.expired_qty) : "<span class='pos-muted'>—</span>"}</td>
 								<td class="num">${pharmacyos.format_money(r.value)}</td>

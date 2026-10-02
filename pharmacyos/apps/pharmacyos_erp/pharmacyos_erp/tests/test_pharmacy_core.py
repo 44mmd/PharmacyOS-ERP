@@ -60,7 +60,8 @@ class TestPharmacyCore(IntegrationTestCase):
 		ids = {r["batch_id"] for r in data["rows"]}
 		self.assertEqual(ids, {"T-EXP-01", "T-NEAR-01", "T-FAR-01"})
 		for r in data["rows"]:
-			self.assertNotEqual(r["batch_id"], r["batch"])  # hash name is never the displayed number
+			# the business batch number is shown, never the internal (possibly hash) document name
+			self.assertEqual(r["batch_id"], frappe.db.get_value("Batch", r["batch"], "batch_id"))
 		self.assertEqual(data["counts"]["expired"], 1)
 		self.assertEqual(data["counts"]["30"], 1)
 		statuses = {r["batch_id"]: r["status"] for r in data["rows"]}

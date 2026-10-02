@@ -16,6 +16,9 @@ About dialog. It must never be removed.
 
 import frappe
 
+# Desk base route: Frappe 17 serves the desk at /desk, version-16 at /app.
+DESK_BASE = "/desk" if int(str(frappe.__version__).split(".")[0]) >= 17 else "/app"
+
 ASSETS = "/assets/pharmacyos_erp"
 
 PRODUCT = {
@@ -29,7 +32,7 @@ PRODUCT = {
 	"mark_url": f"{ASSETS}/images/pharmacyos-mark.svg",
 	"mark_light_url": f"{ASSETS}/images/pharmacyos-mark-light.svg",
 	"favicon_url": f"{ASSETS}/images/pharmacyos-mark.svg",
-	"home_route": "/desk/pharmacy-dashboard",
+	"home_route": f"{DESK_BASE}/pharmacy-dashboard",
 }
 
 UPSTREAM = [

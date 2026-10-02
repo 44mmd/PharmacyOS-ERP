@@ -1,0 +1,19 @@
+{
+ "app": "pharmacyos_erp",
+ "creation": "2026-10-02 00:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Desktop Icon",
+ "hidden": 0,
+ "icon_type": "App",
+ "idx": 1,
+ "label": "PharmacyOS ERP",
+ "link": "/app/pharmacy-dashboard",
+ "link_type": "External",
+ "logo_url": "/assets/pharmacyos_erp/images/pharmacyos-mark.svg",
+ "modified": "2026-10-03 01:00:00.000000",
+ "modified_by": "Administrator",
+ "name": "PharmacyOS ERP",
+ "owner": "Administrator",
+ "roles": [],
+ "standard": 1
+}

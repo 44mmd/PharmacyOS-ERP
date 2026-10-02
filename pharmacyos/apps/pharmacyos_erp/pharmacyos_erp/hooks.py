@@ -5,7 +5,9 @@ app_description = "PharmacyOS ERP — Pharmacy Operating System, built on ERPNex
 app_email = "noreply@pharmacyos.invalid"
 app_license = "gpl-3.0"
 app_logo_url = "/assets/pharmacyos_erp/images/pharmacyos-mark.svg"
-app_home = "/desk/pharmacy-dashboard"
+from pharmacyos_erp.branding import DESK_BASE
+
+app_home = f"{DESK_BASE}/pharmacy-dashboard"
 
 required_apps = ["frappe/erpnext"]
 
@@ -18,7 +20,7 @@ add_to_apps_screen = [
 		"name": "pharmacyos_erp",
 		"logo": "/assets/pharmacyos_erp/images/pharmacyos-mark.svg",
 		"title": "PharmacyOS",
-		"route": "/desk/pharmacy-dashboard",
+		"route": f"{DESK_BASE}/pharmacy-dashboard",
 		"has_permission": "pharmacyos_erp.permissions.has_app_permission",
 	}
 ]

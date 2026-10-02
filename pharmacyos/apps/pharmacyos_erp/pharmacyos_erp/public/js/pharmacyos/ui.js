@@ -6,6 +6,9 @@ pharmacyos.ui.esc = esc;
 
 pharmacyos.ui.icon = (name, size = "sm") => frappe.utils.icon(name, size);
 
+// Desk base route: "/desk" on Frappe 17, "/app" on version-16.
+pharmacyos.ui.base = window.location.pathname.startsWith("/app") ? "/app" : "/desk";
+
 // Technical or numeric value that must read left-to-right inside Arabic text (SKU, batch, 39.9%).
 pharmacyos.ui.ltr = (v) => `<bdi dir="ltr">${esc(v)}</bdi>`;
 
@@ -83,11 +86,11 @@ pharmacyos.ui.list_url = (doctype, filters = {}) => {
 		params.set(k, typeof v === "string" ? v : JSON.stringify(v));
 	}
 	const q = params.toString();
-	return `/desk/${frappe.router.slug(doctype)}${q ? "?" + q : ""}`;
+	return `${pharmacyos.ui.base}/${frappe.router.slug(doctype)}${q ? "?" + q : ""}`;
 };
 
 pharmacyos.ui.form_url = (doctype, name) =>
-	`/desk/${frappe.router.slug(doctype)}/${encodeURIComponent(name)}`;
+	`${pharmacyos.ui.base}/${frappe.router.slug(doctype)}/${encodeURIComponent(name)}`;
 
 // Unambiguous display dates: "27 Oct 2026" / "27 تشرين الأول 2026" (Iraqi month names, Latin
 // digits). Storage and API values stay ISO (YYYY-MM-DD); only presentation changes.

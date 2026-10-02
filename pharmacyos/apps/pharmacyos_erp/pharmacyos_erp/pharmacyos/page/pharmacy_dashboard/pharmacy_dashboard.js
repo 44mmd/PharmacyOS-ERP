@@ -121,7 +121,7 @@ class PharmacyOSDashboard {
 				icon: "package",
 				value: d.stock ? money(d.stock.inventory_value) : na,
 				sub: d.stock ? __("at current valuation") : "",
-				href: d.stock ? "/desk/inventory-health" : null,
+				href: d.stock ? pharmacyos.ui.base + "/inventory-health" : null,
 			})
 		);
 		if (s && (frappe.user.has_role("Cashier") || frappe.user.has_role("Pharmacist"))) {
@@ -142,10 +142,10 @@ class PharmacyOSDashboard {
 					value ? `<span class="pos-attention-value">${value}</span>` : ""
 				}</span></a>`);
 		if (st) {
-			att("danger", "circle-x", st.expired_batches, __("Expired batches"), "/desk/batches-expiry?bucket=expired", st.expired_batches ? money(st.expired_value) : "");
-			att("warning", "calendar-clock", st.expiring_30, __("Expiring within 30 days"), "/desk/batches-expiry?bucket=30");
-			att("danger", "package-x", st.counts.out, __("Out of stock"), "/desk/inventory-health?state=out");
-			att("warning", "trending-down", st.counts.low, __("Low stock"), "/desk/inventory-health?state=low");
+			att("danger", "circle-x", st.expired_batches, __("Expired batches"), pharmacyos.ui.base + "/batches-expiry?bucket=expired", st.expired_batches ? money(st.expired_value) : "");
+			att("warning", "calendar-clock", st.expiring_30, __("Expiring within 30 days"), pharmacyos.ui.base + "/batches-expiry?bucket=30");
+			att("danger", "package-x", st.counts.out, __("Out of stock"), pharmacyos.ui.base + "/inventory-health?state=out");
+			att("warning", "trending-down", st.counts.low, __("Low stock"), pharmacyos.ui.base + "/inventory-health?state=low");
 			if (st.negative_bins) att("danger", "scale", st.negative_bins, __("Negative stock balances"), ui.list_url("Bin", { actual_qty: ["<", 0] }));
 		}
 		if (p.pending_orders) {
@@ -155,14 +155,14 @@ class PharmacyOSDashboard {
 			att("info", "package-check", p.draft_receipts, __("Receipts in progress (draft)"), ui.list_url("Purchase Receipt", { docstatus: 0 }));
 		}
 		if (p.supplier_obligations) {
-			att("info", "hand-coins", p.supplier_obligations.count, __("Unpaid supplier invoices"), "/desk/query-report/Accounts Payable", p.supplier_obligations.count ? money(p.supplier_obligations.value) : "");
+			att("info", "hand-coins", p.supplier_obligations.count, __("Unpaid supplier invoices"), pharmacyos.ui.base + "/query-report/Accounts Payable", p.supplier_obligations.count ? money(p.supplier_obligations.value) : "");
 		}
 		for (const sys of d.system || []) {
-			if (sys.kind === "backup") att("danger", "shield-alert", sys.count, __("Backup needs attention"), "/desk/system-status");
+			if (sys.kind === "backup") att("danger", "shield-alert", sys.count, __("Backup needs attention"), pharmacyos.ui.base + "/system-status");
 			if (sys.kind === "web_orders")
 				att("info", "globe", sys.count, __("Website orders to prepare"), ui.list_url("Sales Order", { pharmacyos_order_id: ["is", "set"], docstatus: 1, status: ["not in", ["Completed", "Closed"]] }));
 			if (sys.kind === "sync")
-				att("warning", "cloud-off", sys.count, sys.state === "offline" ? __("Changes waiting to sync (offline)") : __("Changes that could not be synced"), "/desk/system-status");
+				att("warning", "cloud-off", sys.count, sys.state === "offline" ? __("Changes waiting to sync (offline)") : __("Changes that could not be synced"), pharmacyos.ui.base + "/system-status");
 		}
 		this.$root.find("[data-slot=attention]").html(items.join("") || ui.state({ kind: "denied", title: __("No access") }));
 
@@ -247,7 +247,7 @@ class PharmacyOSDashboard {
 							)
 							.join("")}</ul>`
 					: ui.state({ title: __("No stock movement yet") }),
-				moves && moves.length ? { href: "/desk/query-report/Stock Ledger", label: __("Stock ledger") } : null
+				moves && moves.length ? { href: pharmacyos.ui.base + "/query-report/Stock Ledger", label: __("Stock ledger") } : null
 			)
 		);
 	}

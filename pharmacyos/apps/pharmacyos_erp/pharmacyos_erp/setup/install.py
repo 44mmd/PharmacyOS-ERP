@@ -280,7 +280,10 @@ def compile_translations():
 	try:
 		from frappe.gettext.translate import compile_translations as _compile
 
-		_compile("pharmacyos_erp", force=True, verbose=False)
+		try:
+			_compile("pharmacyos_erp", force=True, verbose=False)
+		except TypeError:  # version-16 has no `verbose` argument
+			_compile("pharmacyos_erp", force=True)
 	except Exception:
 		frappe.log_error(_("PharmacyOS: could not compile translations"))
 

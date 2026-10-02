@@ -101,12 +101,12 @@ class PharmacyOSExpiryIntelligence {
 		const expired = d.buckets.find((b) => b.key === "expired") || { value: 0, batches: 0 };
 		const window_label = d.horizon ? __("within {0} days", [d.horizon]) : __("expired only");
 		this.$root.find('[data-slot="kpis"]').html(`
-			<a class="pos-kpi is-primary" href="/desk/batches-expiry?bucket=${d.horizon ? d.horizon : "expired"}">
+			<a class="pos-kpi is-primary" href="${pharmacyos.ui.base}/batches-expiry?bucket=${d.horizon ? d.horizon : "expired"}">
 				<div class="pos-kpi-label">${ui.icon("calendar-x", "xs")} ${__("Value at risk")}</div>
 				<div class="pos-kpi-value">${money(d.risk_value)}</div>
 				<div class="pos-kpi-sub">${ui.esc(window_label)}</div>
 			</a>
-			<a class="pos-kpi" href="/desk/batches-expiry?bucket=expired">
+			<a class="pos-kpi" href="${pharmacyos.ui.base}/batches-expiry?bucket=expired">
 				<div class="pos-kpi-label">${ui.icon("circle-x", "xs")} ${__("Already expired")}</div>
 				<div class="pos-kpi-value">${money(expired.value)}</div>
 				<div class="pos-kpi-sub">${__("{0} batches", [expired.batches])}</div>
@@ -163,7 +163,7 @@ class PharmacyOSExpiryIntelligence {
 					const m = ui.medicine_title({ item_code: r.key, item_name: r.item_name, name_ar: r.name_ar });
 					return `<span class="pos-cell-title">${ui.esc(m.title)}</span><span class="pos-cell-sub">${ui.esc(m.sub || r.key)}</span>`;
 				},
-				(r) => `/desk/batches-expiry?search=${encodeURIComponent(r.key)}`,
+				(r) => `${pharmacyos.ui.base}/batches-expiry?search=${encodeURIComponent(r.key)}`,
 				__("No medicine at risk in this window")
 			)
 		);
