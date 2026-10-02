@@ -1,15 +1,15 @@
 {
  "content": null,
- "creation": "2026-10-02 00:00:00.000000",
+ "creation": "2026-10-02 21:00:00.000000",
  "docstatus": 0,
  "doctype": "Page",
  "idx": 0,
- "modified": "2026-10-02 20:43:55.631151",
+ "modified": "2026-10-02 20:43:55.631983",
  "modified_by": "Administrator",
  "module": "PharmacyOS",
- "name": "reorder-suggestions",
+ "name": "system-status",
  "owner": "Administrator",
- "page_name": "reorder-suggestions",
+ "page_name": "system-status",
  "roles": [
   {
    "role": "Pharmacy Owner"
@@ -18,21 +18,12 @@
    "role": "Pharmacy Manager"
   },
   {
-   "role": "Inventory Manager"
-  },
-  {
-   "role": "Purchasing Officer"
-  },
-  {
    "role": "System Manager"
-  },
-  {
-   "role": "Branch Manager"
   }
  ],
  "script": null,
  "standard": "Yes",
  "style": null,
  "system_page": 0,
- "title": "Reorder Suggestions"
+ "title": "System Status"
 }

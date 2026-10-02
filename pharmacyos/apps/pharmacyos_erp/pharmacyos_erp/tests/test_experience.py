@@ -25,7 +25,7 @@ class TestExperience(IntegrationTestCase):
 		# Frappe's own form markup and script are still rendered (upgrade-safe wrapper)
 		for marker in ('id="login_email"', 'id="login_password"', "form-login", "login.js"):
 			self.assertIn(marker, html)
-		self.assertIn("/attribution", html)  # open-source notices remain reachable
+		self.assertNotIn("Open-source notices", html)  # licence notices live in About, not on sign-in
 		self.assertNotIn("frappe.io/erpnext?source=website_footer", html)
 
 	def test_print_formats_render_batch_and_identity(self):

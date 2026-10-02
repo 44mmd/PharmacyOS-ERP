@@ -24,7 +24,7 @@ MODULE = "PharmacyOS"
 APP = "pharmacyos_erp"
 CREATED = "2026-10-02 00:00:00.000000"
 # Bump MODIFIED whenever NAVIGATION changes: `bench migrate` only re-imports newer files.
-MODIFIED = "2026-10-02 19:00:00.000000"
+MODIFIED = "2026-10-02 21:30:00.000000"
 
 
 def link(label, link_type, link_to, icon=None, filters=None):
@@ -150,6 +150,7 @@ NAVIGATION = [
 		"Finance",
 		"landmark",
 		[
+			dt("Expenses", "Journal Entry", "receipt", filters=[["pharma_expense", "=", 1]]),
 			dt("Payments", "Payment Entry", "banknote"),
 			dt("Journal Entries", "Journal Entry", "notebook-tabs"),
 			dt("Payment Methods", "Mode of Payment", "credit-card"),
@@ -209,11 +210,13 @@ NAVIGATION = [
 		"System",
 		"settings",
 		[
+			page("System Status", "system-status", "shield-check"),
 			dt("PharmacyOS Settings", "PharmacyOS Settings", "settings"),
 			dt("Stock Settings", "Stock Settings", "package"),
 			dt("Company", "Company", "building-2"),
 			section("Integrations"),
 			dt("Sync Events", "PharmacyOS Sync Event", "plug"),
+			dt("Backups", "PharmacyOS Backup Log", "database-backup"),
 			dt("Webhooks", "Webhook", "plug"),
 			section("Audit"),
 			dt("Document History", "Version", "history"),

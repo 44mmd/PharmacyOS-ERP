@@ -221,6 +221,18 @@ CUSTOM_FIELDS = {
 			"insert_after": "pharmacyos_phone",
 		},
 	],
+	"Journal Entry": [
+		{
+			# set by the PharmacyOS "Record Expense" flow; lets the Expenses list filter real ledger entries
+			"fieldname": "pharma_expense",
+			"fieldtype": "Check",
+			"label": "Pharmacy Expense",
+			"insert_after": "voucher_type",
+			"read_only": 1,
+			"no_copy": 1,
+			"in_standard_filter": 1,
+		},
+	],
 	"Sales Order": [
 		{
 			"fieldname": "pharmacyos_order_id",

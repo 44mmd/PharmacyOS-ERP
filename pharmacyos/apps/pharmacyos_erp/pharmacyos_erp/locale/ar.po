@@ -2186,3 +2186,207 @@ msgstr "م"
 
 msgid "This is the pharmacy's own business identity, used on invoices and receipts. The platform itself remains PharmacyOS."
 msgstr "هذه هي الهوية التجارية للصيدلية نفسها، وتظهر على الفواتير والوصولات. أما المنصة فتبقى PharmacyOS."
+
+msgid "System Status"
+msgstr "حالة النظام"
+
+msgid "Backups"
+msgstr "النسخ الاحتياطية"
+
+msgid "Backup needs attention"
+msgstr "النسخ الاحتياطي يحتاج انتباهك"
+
+msgid "Backup protected"
+msgstr "البيانات محمية بنسخ احتياطية"
+
+msgid "Automatic backup is off"
+msgstr "النسخ الاحتياطي التلقائي متوقف"
+
+msgid "Connected to PharmacyOS Cloud"
+msgstr "متصل بسحابة PharmacyOS"
+
+msgid "Offline — changes are queued"
+msgstr "غير متصل — التغييرات في قائمة الانتظار"
+
+msgid "Some changes could not be sent"
+msgstr "تعذّر إرسال بعض التغييرات"
+
+msgid "Cloud connection not set up"
+msgstr "لم يُضبط الاتصال بالسحابة"
+
+msgid "Last successful backup"
+msgstr "آخر نسخة احتياطية ناجحة"
+
+msgid "Next backup"
+msgstr "النسخة التالية"
+
+msgid "Size"
+msgstr "الحجم"
+
+msgid "Backup folder"
+msgstr "مجلد النسخ الاحتياطية"
+
+msgid "Free disk space"
+msgstr "المساحة الفارغة"
+
+msgid "Last error"
+msgstr "آخر خطأ"
+
+msgid "Last successful sync"
+msgstr "آخر مزامنة ناجحة"
+
+msgid "Waiting to send"
+msgstr "بانتظار الإرسال"
+
+msgid "Failed"
+msgstr "فشل"
+
+msgid "Back up now"
+msgstr "نسخ احتياطي الآن"
+
+msgid "Retry"
+msgstr "إعادة المحاولة"
+
+msgid "Recent backups"
+msgstr "آخر النسخ الاحتياطية"
+
+msgid "Kind"
+msgstr "النوع"
+
+msgid "Success"
+msgstr "نجاح"
+
+msgid "Running"
+msgstr "قيد التنفيذ"
+
+msgid "No backups yet"
+msgstr "لا توجد نسخ احتياطية بعد"
+
+msgid "The first automatic backup runs within the hour."
+msgstr "تُنفَّذ أول نسخة احتياطية تلقائية خلال ساعة."
+
+msgid "Sales keep working when the internet is down: every sale is saved on this pharmacy's server first and sent to PharmacyOS Cloud when the connection returns. Restoring a backup is done by a system administrator."
+msgstr "تستمر المبيعات عند انقطاع الإنترنت: تُحفظ كل عملية بيع على خادم الصيدلية أولاً وتُرسل إلى سحابة PharmacyOS عند عودة الاتصال. استعادة النسخة الاحتياطية يقوم بها مدير النظام."
+
+msgid "Backup started. It appears here when finished."
+msgstr "بدأ النسخ الاحتياطي، وسيظهر هنا عند الانتهاء."
+
+msgid "{0} changes will be sent again."
+msgstr "سيُعاد إرسال التغييرات: {0}."
+
+msgid "Changes waiting to sync (offline)"
+msgstr "تغييرات بانتظار المزامنة (غير متصل)"
+
+msgid "Changes that could not be synced"
+msgstr "تغييرات تعذّرت مزامنتها"
+
+msgid "Backup & Recovery"
+msgstr "النسخ الاحتياطي والاستعادة"
+
+msgid "Hourly Database Backup"
+msgstr "نسخ احتياطي لقاعدة البيانات كل ساعة"
+
+msgid "Hourly Sales Spreadsheet"
+msgstr "جدول مبيعات كل ساعة"
+
+msgid "Data Folder"
+msgstr "مجلد البيانات"
+
+msgid "Where backups and spreadsheets are saved. Leave empty to use the server's PharmacyOS data folder."
+msgstr "مكان حفظ النسخ الاحتياطية والجداول. اتركه فارغاً لاستخدام مجلد بيانات PharmacyOS على الخادم."
+
+msgid "Keep Hourly Backups (Days)"
+msgstr "الاحتفاظ بالنسخ الساعية (أيام)"
+
+msgid "Keep Daily Backups (Days)"
+msgstr "الاحتفاظ بالنسخ اليومية (أيام)"
+
+msgid "Minimum Free Disk (MB)"
+msgstr "أقل مساحة فارغة (ميغابايت)"
+
+msgid "A backup is skipped with a warning when less space is free."
+msgstr "يُتخطّى النسخ الاحتياطي مع تنبيه عندما تقل المساحة الفارغة عن ذلك."
+
+msgid "PharmacyOS backs up the pharmacy database every hour and saves a spreadsheet of today's sales next to it. Restoring a backup is done by a system administrator on the server."
+msgstr "يأخذ PharmacyOS نسخة احتياطية من قاعدة بيانات الصيدلية كل ساعة ويحفظ بجانبها جدولاً بمبيعات اليوم. استعادة النسخة يقوم بها مدير النظام على الخادم."
+
+msgid "PharmacyOS Backup Log"
+msgstr "سجل النسخ الاحتياطي"
+
+msgid "Backup Folder"
+msgstr "مجلد النسخة"
+
+msgid "Verified"
+msgstr "تم التحقق"
+
+msgid "Encrypted"
+msgstr "مشفّرة"
+
+msgid "Hourly"
+msgstr "كل ساعة"
+
+msgid "Daily"
+msgstr "يومي"
+
+msgid "Manual"
+msgstr "يدوي"
+
+msgid "Safety"
+msgstr "احترازي"
+
+msgid "Restore"
+msgstr "استعادة"
+
+msgid "Record Expense"
+msgstr "تسجيل مصروف"
+
+msgid "Expense Type"
+msgstr "نوع المصروف"
+
+msgid "e.g. Rent, Electricity, Internet, Transport, Maintenance"
+msgstr "مثل الإيجار، الكهرباء، الإنترنت، النقل، الصيانة"
+
+msgid "Paid From"
+msgstr "دُفع من"
+
+msgid "Note"
+msgstr "ملاحظة"
+
+msgid "Save Expense"
+msgstr "حفظ المصروف"
+
+msgid "Expense saved ({0})."
+msgstr "تم حفظ المصروف ({0})."
+
+msgid "Pharmacy Expense"
+msgstr "مصروف صيدلية"
+
+msgid "Enter an amount greater than zero."
+msgstr "أدخل مبلغاً أكبر من صفر."
+
+msgid "Choose an expense account."
+msgstr "اختر حساب مصروف."
+
+msgid "Payment method {0} has no cash or bank account for {1}. Set it in Payment Methods."
+msgstr "طريقة الدفع {0} ليس لها حساب نقدية أو بنك للشركة {1}. اضبطها في طرق الدفع."
+
+msgid "Pharmacy expense"
+msgstr "مصروف صيدلية"
+
+msgid "Branch Manager"
+msgstr "مدير الفرع"
+
+msgid "Third-party licences"
+msgstr "تراخيص الأطراف الثالثة"
+
+msgid "Licence texts"
+msgstr "نصوص التراخيص"
+
+msgid "Not enough free disk space for a backup ({0} MB free)."
+msgstr "لا توجد مساحة كافية للنسخ الاحتياطي (المتاح {0} ميغابايت)."
+
+msgid "Interrupted before completion (server restart, power loss or restore)."
+msgstr "توقّف قبل الاكتمال (إعادة تشغيل الخادم أو انقطاع الكهرباء أو استعادة)."
+
+msgid "Sale"
+msgstr "بيع"

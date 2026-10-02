@@ -32,7 +32,16 @@
   "enable_outbound_events",
   "outbound_endpoint",
   "outbound_secret",
-  "outbound_timeout"
+  "outbound_timeout",
+  "backup_tab",
+  "backup_help",
+  "enable_hourly_backup",
+  "enable_sales_snapshots",
+  "data_directory",
+  "backup_cb",
+  "keep_hourly_days",
+  "keep_daily_days",
+  "min_free_disk_mb"
  ],
  "fields": [
   {
@@ -200,11 +209,66 @@
    "fieldname": "outbound_timeout",
    "fieldtype": "Int",
    "label": "Request Timeout (Seconds)"
+  },
+  {
+   "fieldname": "backup_tab",
+   "fieldtype": "Tab Break",
+   "label": "Backup & Recovery"
+  },
+  {
+   "fieldname": "backup_help",
+   "fieldtype": "Section Break",
+   "description": "PharmacyOS backs up the pharmacy database every hour and saves a spreadsheet of today's sales next to it. Restoring a backup is done by a system administrator on the server."
+  },
+  {
+   "fieldname": "enable_hourly_backup",
+   "fieldtype": "Check",
+   "label": "Hourly Database Backup",
+   "default": "1"
+  },
+  {
+   "fieldname": "enable_sales_snapshots",
+   "fieldtype": "Check",
+   "label": "Hourly Sales Spreadsheet",
+   "default": "1"
+  },
+  {
+   "fieldname": "data_directory",
+   "fieldtype": "Data",
+   "label": "Data Folder",
+   "length": 500,
+   "description": "Where backups and spreadsheets are saved. Leave empty to use the server's PharmacyOS data folder."
+  },
+  {
+   "fieldname": "backup_cb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "keep_hourly_days",
+   "fieldtype": "Int",
+   "label": "Keep Hourly Backups (Days)",
+   "default": "2",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "keep_daily_days",
+   "fieldtype": "Int",
+   "label": "Keep Daily Backups (Days)",
+   "default": "30",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "min_free_disk_mb",
+   "fieldtype": "Int",
+   "label": "Minimum Free Disk (MB)",
+   "default": "1024",
+   "non_negative": 1,
+   "description": "A backup is skipped with a warning when less space is free."
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2026-10-02 17:02:55.729683",
+ "modified": "2026-10-02 20:33:04.238477",
  "modified_by": "Administrator",
  "module": "PharmacyOS",
  "name": "PharmacyOS Settings",

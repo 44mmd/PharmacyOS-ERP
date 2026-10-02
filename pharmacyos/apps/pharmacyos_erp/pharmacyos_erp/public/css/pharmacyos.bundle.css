@@ -1121,6 +1121,15 @@ a.pos-kpi:focus-visible {
 	letter-spacing: 0.08em;
 	color: var(--pos-ink);
 }
+.pos-about-copy {
+	font-size: 12px;
+	color: var(--pos-ink-2);
+	margin-top: 4px;
+}
+.pos-about-legal summary {
+	cursor: pointer;
+	color: var(--pos-ink-2);
+}
 .pos-about-legal {
 	font-size: 12px;
 	color: var(--pos-ink-2);
@@ -1359,4 +1368,55 @@ html[dir="rtl"] .pos-page svg.icon:has(> use:is(
 		[href="#icon-move-left"]
 	)) {
 	transform: scaleX(-1);
+}
+
+/* ---------------------------------------------------------------- system status */
+.pos-status-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+	gap: 16px;
+	margin-bottom: 16px;
+}
+.pos-status-card {
+	padding: 16px 18px;
+	margin: 0;
+}
+.pos-status-head {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-bottom: 12px;
+}
+.pos-status-card[data-tone="ok"] .pos-status-head {
+	color: var(--pos-green);
+}
+.pos-status-card[data-tone="warning"] .pos-status-head {
+	color: #b45309;
+}
+.pos-status-card[data-tone="warning"] {
+	border-color: rgba(180, 83, 9, 0.35);
+}
+.pos-status-list {
+	display: grid;
+	gap: 6px;
+	margin: 0 0 12px;
+}
+.pos-status-list > div {
+	display: flex;
+	justify-content: space-between;
+	gap: 12px;
+	font-size: 13px;
+}
+.pos-status-list dt {
+	font-weight: 500;
+	color: var(--pos-ink-2);
+}
+.pos-status-list dd {
+	margin: 0;
+	text-align: end;
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+.pos-error-text {
+	color: #b42318;
 }

@@ -2,5 +2,6 @@
 
 [post_model_sync]
 pharmacyos_erp.patches.v1.arabic_first_locale
+pharmacyos_erp.patches.v1.backup_defaults
 
 [post_fixture_sync]

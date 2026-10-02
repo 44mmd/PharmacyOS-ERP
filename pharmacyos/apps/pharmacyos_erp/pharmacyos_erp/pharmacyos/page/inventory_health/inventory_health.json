@@ -4,7 +4,7 @@
  "docstatus": 0,
  "doctype": "Page",
  "idx": 0,
- "modified": "2026-10-02 00:00:00.000000",
+ "modified": "2026-10-02 20:43:55.630007",
  "modified_by": "Administrator",
  "module": "PharmacyOS",
  "name": "inventory-health",
@@ -31,6 +31,9 @@
   },
   {
    "role": "System Manager"
+  },
+  {
+   "role": "Branch Manager"
   }
  ],
  "script": null,

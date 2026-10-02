@@ -9,15 +9,20 @@
   stale snapshot.
 * Delivery: scheduler job every 5 minutes (`process_outbox`), JSON POST signed with HMAC-SHA256 over
   the raw body (`X-PharmacyOS-Signature: sha256=<hex>`), with `X-PharmacyOS-Event` / `-Event-Id`
-  headers. Up to MAX_ATTEMPTS tries, then `Failed`.
+  headers. Up to MAX_ATTEMPTS tries with exponential back-off (2, 4, 8 … minutes, capped at an
+  hour), then the event stays `Failed` until an authorized user presses Retry.
+* Offline behaviour: local sales, stock and accounting commit locally first; events simply wait in
+  the queue while the internet is down and are delivered, in order, once it returns. The receiver
+  de-duplicates by `X-PharmacyOS-Event-Id`, so a retried delivery never creates a second record.
 """
 
 import hashlib
 import hmac
 import json
+from datetime import timedelta
 
 import frappe
-from frappe.utils import cint, now_datetime
+from frappe.utils import cint, get_datetime, now_datetime
 
 MAX_ATTEMPTS = 5
 BATCH_SIZE = 100
@@ -31,8 +36,11 @@ def outbound_enabled() -> bool:
 def queue_event(event_type: str, reference_doctype: str, reference_name: str, dedupe_key: str) -> None:
 	if not outbound_enabled():
 		return
-	if frappe.db.exists("PharmacyOS Sync Event", {"dedupe_key": dedupe_key, "status": "Pending"}):
-		return
+	if frappe.db.exists(
+		"PharmacyOS Sync Event",
+		{"dedupe_key": dedupe_key, "status": ["in", ["Pending", "Failed"]], "attempts": ["<", MAX_ATTEMPTS]},
+	):
+		return  # the queued event is sent with current state, so one per key is enough
 	frappe.get_doc(
 		{
 			"doctype": "PharmacyOS Sync Event",
@@ -125,6 +133,14 @@ def sign(body: bytes, secret: str) -> str:
 	return "sha256=" + hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
 
 
+def retry_delay(attempts: int) -> timedelta:
+	return timedelta(minutes=min(2 ** cint(attempts), 60)) if attempts else timedelta(0)
+
+
+def is_due(row, now=None) -> bool:
+	return get_datetime(row.modified) + retry_delay(row.attempts) <= get_datetime(now or now_datetime())
+
+
 def process_outbox() -> None:
 	"""Scheduler entry point. Sends pending events; no-op unless outbound is enabled."""
 	if not outbound_enabled():
@@ -134,15 +150,18 @@ def process_outbox() -> None:
 	settings = frappe.get_cached_doc("PharmacyOS Settings")
 	secret = settings.get_password("outbound_secret", raise_exception=False) or ""
 	timeout = cint(settings.outbound_timeout) or 10
+	now = now_datetime()
 	events = frappe.get_all(
 		"PharmacyOS Sync Event",
 		filters={"status": ["in", ["Pending", "Failed"]], "attempts": ["<", MAX_ATTEMPTS]},
+		fields=["name", "attempts", "modified"],
 		order_by="creation asc",
 		limit_page_length=BATCH_SIZE,
-		pluck="name",
 	)
-	for name in events:
-		event = frappe.get_doc("PharmacyOS Sync Event", name)
+	for row in events:
+		if not is_due(row, now):
+			continue
+		event = frappe.get_doc("PharmacyOS Sync Event", row.name)
 		payload = build_payload(event)
 		body = json.dumps(payload, separators=(",", ":"), default=str).encode()
 		headers = {
@@ -162,3 +181,84 @@ def process_outbox() -> None:
 			event.last_error = str(e)[:500]
 		event.save(ignore_permissions=True)
 		frappe.db.commit()  # each delivery is independent
+
+
+# ------------------------------------------------------------------ status & actions
+
+STATUS_ROLES = ("System Manager", "Pharmacy Owner", "Pharmacy Manager")
+
+
+def sync_status() -> dict:
+	settings = frappe.get_cached_doc("PharmacyOS Settings")
+	enabled = outbound_enabled()
+	counts = dict(
+		frappe.get_all(
+			"PharmacyOS Sync Event",
+			filters={"status": ["in", ["Pending", "Failed"]]},
+			fields=["status", {"COUNT": "*", "as": "n"}],
+			group_by="status",
+			as_list=1,
+		)
+	)
+	stuck = frappe.db.count("PharmacyOS Sync Event", {"status": "Failed", "attempts": [">=", MAX_ATTEMPTS]})
+	last_sent = frappe.db.get_value(
+		"PharmacyOS Sync Event", {"status": "Sent"}, "sent_on", order_by="sent_on desc"
+	)
+	last_failure = frappe.db.get_value(
+		"PharmacyOS Sync Event",
+		{"status": "Failed"},
+		["modified", "last_error"],
+		order_by="modified desc",
+		as_dict=True,
+	)
+	connected = None
+	if enabled:
+		# the most recent delivery attempt decides whether the cloud is currently reachable
+		connected = not (
+			last_failure and (not last_sent or get_datetime(last_failure.modified) > get_datetime(last_sent))
+		)
+	if not enabled:
+		state = "not_configured"
+	elif stuck:
+		state = "attention"
+	elif connected is False:
+		state = "offline"
+	else:
+		state = "online"
+	return {
+		"state": state,
+		"enabled": enabled,
+		"endpoint_configured": bool(settings.outbound_endpoint),
+		"pending": cint(counts.get("Pending")) + cint(counts.get("Failed")) - stuck,
+		"failed": stuck,
+		"last_success": last_sent,
+		"last_error": last_failure.last_error if (last_failure and connected is False) or stuck else None,
+	}
+
+
+@frappe.whitelist()
+def get_sync_status() -> dict:
+	frappe.only_for(STATUS_ROLES)
+	return sync_status()
+
+
+@frappe.whitelist(methods=["POST"])
+def retry_failed() -> int:
+	"""Give events that used up their attempts a fresh start and send now (audited by track_changes)."""
+	frappe.only_for(("System Manager", "Pharmacy Owner"))
+	names = frappe.get_all(
+		"PharmacyOS Sync Event", filters={"status": "Failed", "attempts": [">=", MAX_ATTEMPTS]}, pluck="name"
+	)
+	for name in names:
+		event = frappe.get_doc("PharmacyOS Sync Event", name)
+		event.attempts = 0
+		event.status = "Pending"
+		event.save(ignore_permissions=True)
+	if outbound_enabled():
+		frappe.enqueue(
+			"pharmacyos_erp.integration.outbox.process_outbox",
+			queue="short",
+			deduplicate=True,
+			job_id="pharmacyos-outbox-retry",
+		)
+	return len(names)

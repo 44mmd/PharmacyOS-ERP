@@ -1,5 +1,5 @@
-// "About" — PharmacyOS identity, HALF attribution and the upstream open-source notices.
-// Upstream credits (ERPNext GPL-3.0, Frappe MIT) are part of this dialog and must stay.
+// "About" — PharmacyOS ERP by HALF. Third-party licence notices required by the licences of the
+// bundled components stay available here, collapsed under "Third-party licences" (do not remove).
 frappe.provide("frappe.ui.misc");
 
 frappe.ui.misc.about = function () {
@@ -29,15 +29,17 @@ frappe.ui.misc.about = function () {
 				</div>
 			</div>
 			<div class="pos-about-half">${esc(__("Designed & Developed by"))} <strong>HALF</strong></div>
-			<div class="pos-about-legal">
-				${esc(__("PharmacyOS ERP is built on open-source software:"))}
+			<div class="pos-about-copy">© ${new Date().getFullYear()} HALF — PharmacyOS ERP</div>
+			<details class="pos-about-legal">
+				<summary>${esc(__("Third-party licences"))}</summary>
 				<ul>${upstream}</ul>
 				<div style="margin-top:8px">${esc(
 					__(
 						"ERPNext and Frappe are trademarks of Frappe Technologies Pvt. Ltd. PharmacyOS ERP is not affiliated with or endorsed by Frappe Technologies."
 					)
 				)}</div>
-			</div>
+				<div style="margin-top:6px"><a href="/attribution" target="_blank" rel="noopener">${esc(__("Licence texts"))}</a></div>
+			</details>
 		</div>`);
 	d.show();
 };

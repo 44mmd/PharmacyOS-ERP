@@ -325,6 +325,16 @@ def purchasing_summary(warehouses):
 
 
 @frappe.whitelist()
+def system_attention() -> list[dict]:
+	from pharmacyos_erp.pharmacy.system import attention_items
+
+	try:
+		return attention_items()
+	except Exception:  # a status problem must never break the dashboard
+		frappe.log_error(title="PharmacyOS dashboard: system status")
+		return []
+
+
 def get_dashboard(branch: str | None = None) -> dict:
 	require_pharmacy_role()
 	from pharmacyos_erp.pharmacy.expiry import get_batches
@@ -376,5 +386,6 @@ def get_dashboard(branch: str | None = None) -> dict:
 		"recent_movements": recent_movements(warehouses),
 		"stock": stock,
 		"purchasing": purchasing_summary(warehouses),
+		"system": system_attention(),
 		"user": {"full_name": frappe.utils.get_fullname()},
 	}

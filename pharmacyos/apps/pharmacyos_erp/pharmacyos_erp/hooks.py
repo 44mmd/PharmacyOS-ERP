@@ -63,6 +63,7 @@ doctype_js = {
 }
 doctype_list_js = {
 	"Item": "public/js/doctype/item_list.js",
+	"Journal Entry": "public/js/doctype/journal_entry_list.js",
 }
 
 _branch = "pharmacyos_erp.pharmacy.branches.set_branch_from_warehouse"
@@ -103,4 +104,7 @@ scheduler_events = {
 	"cron": {
 		"*/5 * * * *": ["pharmacyos_erp.integration.outbox.process_outbox"],
 	},
+	# database backup + sales spreadsheet every hour; full backup and day reports once a day
+	"hourly_long": ["pharmacyos_erp.backup.service.hourly"],
+	"daily_long": ["pharmacyos_erp.backup.service.daily"],
 }

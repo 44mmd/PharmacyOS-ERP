@@ -31,6 +31,7 @@ ROLES = [
 	"Inventory Manager",
 	"Purchasing Officer",
 	"Pharmacy Accountant",
+	"Branch Manager",
 	"PharmacyOS Integration",
 ]
 
@@ -78,6 +79,15 @@ ROLE_PROFILES = {
 	],
 	"Purchasing Officer": ["Purchasing Officer", "Purchase User", "Purchase Manager", "Stock User"],
 	"Pharmacy Accountant": ["Pharmacy Accountant", "Accounts User", "Accounts Manager"],
+	# runs one branch: restrict with a Branch User Permission; opens/closes POS shifts (Sales Manager)
+	"Branch Manager": [
+		"Branch Manager",
+		"Sales Manager",
+		"Sales User",
+		"Accounts User",
+		"Stock User",
+		"Purchase User",
+	],
 	"PharmacyOS Integration": ["PharmacyOS Integration", "Sales User", "Stock User"],
 }
 
@@ -161,7 +171,7 @@ def ensure_roles():
 # Permission for Item Price". The only exception to the "no Custom DocPerm on core DocTypes" rule:
 # read-only access for the roles that sell. Frappe copies the standard rules first, so existing
 # access is unchanged; the rows are removed on uninstall.
-PRICE_READ_ROLES = ("Pharmacy Owner", "Pharmacy Manager", "Pharmacist", "Cashier")
+PRICE_READ_ROLES = ("Pharmacy Owner", "Pharmacy Manager", "Branch Manager", "Pharmacist", "Cashier")
 
 
 def ensure_price_read_access():
