@@ -22,7 +22,9 @@ import frappe
 
 MODULE = "PharmacyOS"
 APP = "pharmacyos_erp"
-TIMESTAMP = "2026-10-02 00:00:00.000000"
+CREATED = "2026-10-02 00:00:00.000000"
+# Bump MODIFIED whenever NAVIGATION changes: `bench migrate` only re-imports newer files.
+MODIFIED = "2026-10-02 19:00:00.000000"
 
 
 def link(label, link_type, link_to, icon=None, filters=None):
@@ -221,7 +223,13 @@ NAVIGATION = [
 ]
 
 
-def sidebar_doc(name, items):
+def sidebar_doc(name, items, claimed):
+	"""`claimed` collects (link_type, link_to) already owned by an earlier PharmacyOS sidebar.
+
+	The first PharmacyOS link to an entity is flagged `is_default_module`, which makes the PharmacyOS
+	shell the canonical place that entity opens in (Frappe's "owned" rule), so a direct URL to e.g.
+	a Purchase Receipt stays inside PharmacyOS navigation.
+	"""
 	rows = []
 	for item in items:
 		row = {
@@ -236,16 +244,20 @@ def sidebar_doc(name, items):
 			"show_arrow": 0,
 		}
 		row.update({k: v for k, v in item.items() if v is not None})
+		key = (item.get("link_type"), item.get("link_to"))
+		if item.get("type") == "Link" and key not in claimed:
+			row["is_default_module"] = 1
+			claimed.add(key)
 		rows.append(row)
 	return {
 		"app": APP,
-		"creation": TIMESTAMP,
+		"creation": CREATED,
 		"docstatus": 0,
 		"doctype": "Sidebar",
 		"header_icon": None,
 		"idx": 0,
 		"items": rows,
-		"modified": TIMESTAMP,
+		"modified": MODIFIED,
 		"modified_by": "Administrator",
 		"module": MODULE,
 		"name": name,
@@ -258,7 +270,7 @@ def sidebar_doc(name, items):
 def dock_doc():
 	return {
 		"app": APP,
-		"creation": TIMESTAMP,
+		"creation": CREATED,
 		"docstatus": 0,
 		"doctype": "Dock",
 		"idx": 0,
@@ -266,7 +278,7 @@ def dock_doc():
 			{"added": 0, "hidden": 0, "icon": icon, "link_to": name, "link_type": "Sidebar", "title": title}
 			for name, title, icon, _items in NAVIGATION
 		],
-		"modified": TIMESTAMP,
+		"modified": MODIFIED,
 		"modified_by": "Administrator",
 		"name": APP,
 		"owner": "Administrator",
@@ -278,8 +290,9 @@ def dock_doc():
 def write_files():
 	"""Regenerate the shipped Dock and Sidebar JSON files from `NAVIGATION`."""
 	app_path = frappe.get_app_path(APP)
+	claimed = set()
 	for name, _title, icon, items in NAVIGATION:
-		doc = sidebar_doc(name, items)
+		doc = sidebar_doc(name, items, claimed)
 		doc["header_icon"] = icon
 		folder = os.path.join(app_path, "pharmacyos", "sidebar", frappe.scrub(name))
 		os.makedirs(folder, exist_ok=True)

@@ -55,19 +55,29 @@ pharmacyos_sale_validators = []
 # Documents --------------------------------------------------------------------------------------
 doctype_js = {
 	"Item": "public/js/doctype/item.js",
+	"Purchase Receipt": "public/js/doctype/purchase_receipt.js",
+	"Purchase Invoice": "public/js/doctype/purchase_receipt.js",
 }
 doctype_list_js = {
 	"Item": "public/js/doctype/item_list.js",
 }
 
+_branch = "pharmacyos_erp.pharmacy.branches.set_branch_from_warehouse"
 _sales_validate = [
+	_branch,
 	"pharmacyos_erp.pharmacy.fefo.check_fefo",
 	"pharmacyos_erp.pharmacy.fefo.run_sale_validators",
 ]
+_receipt_validate = [_branch, "pharmacyos_erp.pharmacy.receiving.validate_receipt"]
 
 doc_events = {
 	"Item": {"validate": "pharmacyos_erp.pharmacy.medicine.validate_item"},
 	"Sales Invoice": {"validate": _sales_validate},
 	"POS Invoice": {"validate": _sales_validate},
 	"Delivery Note": {"validate": _sales_validate},
+	"Purchase Receipt": {"validate": _receipt_validate},
+	"Purchase Invoice": {"validate": _receipt_validate},
+	"Sales Order": {"validate": _branch},
+	"Purchase Order": {"validate": _branch},
+	"Stock Entry": {"validate": _branch},
 }

@@ -26,7 +26,7 @@ class TestFoundation(IntegrationTestCase):
 
 	def test_cashier_profile_is_minimal(self):
 		roles = {r.role for r in frappe.get_doc("Role Profile", "Cashier").roles}
-		self.assertEqual(roles, {"Cashier", "Sales User"})
+		self.assertEqual(roles, {"Cashier", "Sales User", "Accounts User"})
 
 	def test_custom_fields_exist_and_are_prefixed(self):
 		for doctype, fields in CUSTOM_FIELDS.items():
@@ -102,3 +102,31 @@ def make_user(email, roles):
 	if roles:
 		user.add_roles(*roles)
 	return email
+
+
+class TestNavigation(IntegrationTestCase):
+	def test_navigation_targets_exist_and_are_owned_once(self):
+		from collections import Counter
+
+		from pharmacyos_erp.setup.navigation import NAVIGATION
+
+		owned = Counter()
+		for name, _title, _icon, _items in NAVIGATION:
+			sidebar = frappe.get_doc("Sidebar", name)
+			self.assertEqual(sidebar.app, "pharmacyos_erp")
+			for row in sidebar.items:
+				if row.type != "Link":
+					continue
+				self.assertTrue(
+					frappe.db.exists(row.link_type, row.link_to), f"{row.link_type} {row.link_to}"
+				)
+				if row.is_default_module:
+					owned[(row.link_type, row.link_to)] += 1
+		self.assertTrue(owned)
+		self.assertEqual(max(owned.values()), 1)
+
+	def test_dock_lists_every_section(self):
+		from pharmacyos_erp.setup.navigation import NAVIGATION
+
+		dock = frappe.get_doc("Dock", "pharmacyos_erp")
+		self.assertEqual([r.link_to for r in dock.items], [n[0] for n in NAVIGATION])

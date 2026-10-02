@@ -66,8 +66,9 @@ ROLE_PROFILES = {
 		"Purchase User",
 		"Accounts User",
 	],
-	"Pharmacist": ["Pharmacist", "Sales User", "Stock User"],
-	"Cashier": ["Cashier", "Sales User"],
+	# ERPNext v17 requires Accounts User to create Sales/POS Invoices.
+	"Pharmacist": ["Pharmacist", "Sales User", "Accounts User", "Stock User"],
+	"Cashier": ["Cashier", "Sales User", "Accounts User"],
 	"Inventory Manager": [
 		"Inventory Manager",
 		"Stock Manager",
@@ -208,7 +209,14 @@ def apply_recommended_configuration():
 	configure_currency()
 	configure_stock()
 	configure_pos_search()
+	configure_branch_dimension()
 	compile_translations()
+
+
+def configure_branch_dimension():
+	from pharmacyos_erp.pharmacy.branches import ensure_branch_dimension
+
+	ensure_branch_dimension()
 
 
 def configure_branding():
@@ -232,6 +240,8 @@ def configure_branding():
 			"default_app": "pharmacyos_erp",
 			# drops the hook-provided "Sent via ERPNext" footer from outgoing email
 			"disable_standard_email_footer": 1,
+			# ERPNext's module "Getting Started" panels are replaced by PharmacyOS workflows
+			"enable_onboarding": 0,
 		},
 	)
 
