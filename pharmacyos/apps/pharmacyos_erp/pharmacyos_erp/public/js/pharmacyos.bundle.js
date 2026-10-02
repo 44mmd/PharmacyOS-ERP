@@ -4,3 +4,4 @@ import "./pharmacyos/money";
 import "./pharmacyos/ui";
 import "./pharmacyos/shell";
 import "./pharmacyos/about";
+import "./pharmacyos/medicine";

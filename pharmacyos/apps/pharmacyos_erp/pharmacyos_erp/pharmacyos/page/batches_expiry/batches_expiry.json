@@ -1,0 +1,44 @@
+{
+ "content": null,
+ "creation": "2026-10-02 00:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Page",
+ "idx": 0,
+ "modified": "2026-10-02 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "PharmacyOS",
+ "name": "batches-expiry",
+ "owner": "Administrator",
+ "page_name": "batches-expiry",
+ "roles": [
+  {
+   "role": "Pharmacy Owner"
+  },
+  {
+   "role": "Pharmacy Manager"
+  },
+  {
+   "role": "Pharmacist"
+  },
+  {
+   "role": "Cashier"
+  },
+  {
+   "role": "Inventory Manager"
+  },
+  {
+   "role": "Purchasing Officer"
+  },
+  {
+   "role": "Pharmacy Accountant"
+  },
+  {
+   "role": "System Manager"
+  }
+ ],
+ "script": null,
+ "standard": "Yes",
+ "style": null,
+ "system_page": 0,
+ "title": "Batches & Expiry"
+}

@@ -51,3 +51,23 @@ before_uninstall = "pharmacyos_erp.setup.install.before_uninstall"
 # Extension point: callables `fn(doc, item_row, item)` run for medicine rows of sales documents.
 # PharmacyOS ships none — regulated-medicine rules must come from confirmed regulatory requirements.
 pharmacyos_sale_validators = []
+
+# Documents --------------------------------------------------------------------------------------
+doctype_js = {
+	"Item": "public/js/doctype/item.js",
+}
+doctype_list_js = {
+	"Item": "public/js/doctype/item_list.js",
+}
+
+_sales_validate = [
+	"pharmacyos_erp.pharmacy.fefo.check_fefo",
+	"pharmacyos_erp.pharmacy.fefo.run_sale_validators",
+]
+
+doc_events = {
+	"Item": {"validate": "pharmacyos_erp.pharmacy.medicine.validate_item"},
+	"Sales Invoice": {"validate": _sales_validate},
+	"POS Invoice": {"validate": _sales_validate},
+	"Delivery Note": {"validate": _sales_validate},
+}
