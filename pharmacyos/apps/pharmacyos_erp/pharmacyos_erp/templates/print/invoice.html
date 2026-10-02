@@ -6,19 +6,19 @@
 		<div class="i-pharmacy">
 			{%- if id.pharmacy_logo %}<img class="i-logo" src="{{ id.pharmacy_logo }}" alt="">{% endif %}
 			<div>
-				<div class="i-name">{{ id.pharmacy_name }}</div>
-				{%- if id.pharmacy_name_ar %}<div class="i-name-ar" dir="rtl">{{ id.pharmacy_name_ar }}</div>{% endif %}
-				{%- if id.branch %}<div class="i-meta">{{ id.branch }}{% if id.branch_ar %} · <span dir="rtl">{{ id.branch_ar }}</span>{% endif %}</div>{% endif %}
-				{%- if id.address %}<div class="i-meta">{{ id.address }}</div>{% endif %}
-				{%- if id.phone %}<div class="i-meta" dir="ltr">{{ id.phone }}</div>{% endif %}
-				{%- if id.license_number %}<div class="i-meta">{{ _("Pharmacy License No.") }} {{ id.license_number }}</div>{% endif %}
+				<div class="i-name">{{ id.pharmacy_name|e }}</div>
+				{%- if id.pharmacy_name_ar %}<div class="i-name-ar" dir="rtl">{{ id.pharmacy_name_ar|e }}</div>{% endif %}
+				{%- if id.branch %}<div class="i-meta">{{ id.branch|e }}{% if id.branch_ar %} · <span dir="rtl">{{ id.branch_ar|e }}</span>{% endif %}</div>{% endif %}
+				{%- if id.address %}<div class="i-meta">{{ id.address|e }}</div>{% endif %}
+				{%- if id.phone %}<div class="i-meta" dir="ltr">{{ id.phone|e }}</div>{% endif %}
+				{%- if id.license_number %}<div class="i-meta">{{ _("Pharmacy License No.") }} {{ id.license_number|e }}</div>{% endif %}
 			</div>
 		</div>
 		<div class="i-title">
 			<div class="i-doc">{% if doc.is_return %}{{ _("Credit Note") }}{% else %}{{ _("Invoice") }}{% endif %}</div>
 			<div class="i-doc-ar" dir="rtl">{% if doc.is_return %}إشعار دائن{% else %}فاتورة{% endif %}</div>
 			<table class="i-kv">
-				<tr><td>{{ _("No.") }}</td><td dir="ltr">{{ doc.name }}</td></tr>
+				<tr><td>{{ _("No.") }}</td><td dir="ltr">{{ doc.name|e }}</td></tr>
 				<tr><td>{{ _("Date") }}</td><td dir="ltr">{{ frappe.utils.format_date(doc.posting_date) }}</td></tr>
 				{%- if doc.due_date and doc.due_date != doc.posting_date %}<tr><td>{{ _("Due") }}</td><td dir="ltr">{{ frappe.utils.format_date(doc.due_date) }}</td></tr>{% endif %}
 			</table>
@@ -27,8 +27,8 @@
 
 	<section class="i-party">
 		<div class="i-label">{{ _("Bill To") }}</div>
-		<div class="i-party-name">{{ doc.customer_name }}</div>
-		{%- if doc.address_display %}<div class="i-meta">{{ doc.address_display }}</div>{% endif %}
+		<div class="i-party-name">{{ doc.customer_name|e }}</div>
+		{%- if doc.address_display %}<div class="i-meta">{{ doc.address_display|e }}</div>{% endif %}
 	</section>
 
 	<table class="i-items">
@@ -45,10 +45,10 @@
 		<tbody>
 		{%- for row in doc.items %}
 			<tr>
-				<td class="i-n">{{ row.idx }}</td>
-				<td><div class="i-item">{{ row.item_name }}</div><div class="i-sub" dir="ltr">{{ row.item_code }}</div></td>
-				<td>{%- for b in get_item_batches(row) %}<div class="i-batch"><span dir="ltr">{{ b.batch_id }}</span>{% if b.expiry_date %} · <span dir="ltr">{{ frappe.utils.format_date(b.expiry_date, "MM/yyyy") }}</span>{% endif %}</div>{%- else %}<span class="i-sub">—</span>{%- endfor %}</td>
-				<td class="i-num" dir="ltr">{{ "%g"|format(row.qty|float) }} {{ _(row.uom) }}</td>
+				<td class="i-n">{{ row.idx|e }}</td>
+				<td><div class="i-item">{{ row.item_name|e }}</div><div class="i-sub" dir="ltr">{{ row.item_code|e }}</div></td>
+				<td>{%- for b in get_item_batches(row) %}<div class="i-batch"><span dir="ltr">{{ b.batch_id|e }}</span>{% if b.expiry_date %} · <span dir="ltr">{{ frappe.utils.format_date(b.expiry_date, "MM/yyyy") }}</span>{% endif %}</div>{%- else %}<span class="i-sub">—</span>{%- endfor %}</td>
+				<td class="i-num" dir="ltr">{{ "%g"|format(row.qty|float) }} {{ _(row.uom)|e }}</td>
 				<td class="i-num">{{ format_money(row.rate, doc.currency) }}</td>
 				<td class="i-num">{{ format_money(row.amount, doc.currency) }}</td>
 			</tr>
@@ -60,12 +60,12 @@
 		<table>
 			<tr><td>{{ _("Net Total") }}</td><td class="i-num">{{ format_money(doc.net_total, doc.currency) }}</td></tr>
 			{%- if doc.discount_amount %}<tr><td>{{ _("Discount") }}</td><td class="i-num">− {{ format_money(doc.discount_amount, doc.currency) }}</td></tr>{% endif %}
-			{%- for t in doc.taxes %}<tr><td>{{ t.description }}</td><td class="i-num">{{ format_money(t.tax_amount, doc.currency) }}</td></tr>{% endfor %}
+			{%- for t in doc.taxes %}<tr><td>{{ t.description|e }}</td><td class="i-num">{{ format_money(t.tax_amount, doc.currency) }}</td></tr>{% endfor %}
 			<tr class="i-grand"><td>{{ _("Grand Total") }}</td><td class="i-num">{{ format_money(doc.rounded_total or doc.grand_total, doc.currency) }}</td></tr>
 			{%- if doc.outstanding_amount and doc.docstatus == 1 %}<tr><td>{{ _("Outstanding") }}</td><td class="i-num">{{ format_money(doc.outstanding_amount, doc.currency) }}</td></tr>{% endif %}
 		</table>
 	</section>
 
-	{%- if id.receipt_footer %}<footer class="i-foot">{{ id.receipt_footer }}</footer>{% endif %}
+	{%- if id.receipt_footer %}<footer class="i-foot">{{ id.receipt_footer|e }}</footer>{% endif %}
 	{%- if id.show_powered_by %}<div class="i-powered">{{ _(id.powered_by) }}</div>{% endif %}
 </div>

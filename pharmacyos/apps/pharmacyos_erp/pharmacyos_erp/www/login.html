@@ -8,7 +8,7 @@
 -#}
 {% extends "frappe/www/login.html" %}
 
-{% block title %}{{ _("Sign in") }} · {{ pharmacyos.product_name }}{% endblock %}
+{% block title %}{{ _("Sign in") }} · {{ pharmacyos.product_name|e }}{% endblock %}
 
 {% block head_include %}
 {{ super() }}
@@ -22,11 +22,11 @@
 {%- set brand = pharmacyos -%}
 {%- set lang_code = "ar" if is_rtl() else ((boot and boot.lang) or "en") -%}
 <div class="pos-login" data-lang="{{ lang_code }}">
-	<aside class="pos-login-brand" aria-label="{{ brand.product_name }}">
+	<aside class="pos-login-brand" aria-label="{{ brand.product_name|e }}">
 		<div class="pos-login-brand-top">
 			<img class="pos-login-mark" src="{{ brand.mark_url }}" alt="" width="40" height="40">
 			<div>
-				<div class="pos-login-product">{{ brand.product_name }}</div>
+				<div class="pos-login-product">{{ brand.product_name|e }}</div>
 				<div class="pos-login-descriptor">{{ _(brand.descriptor) }}</div>
 			</div>
 		</div>
@@ -44,7 +44,7 @@
 		<div class="pos-login-brand-foot">
 			{%- if brand.pharmacy and brand.pharmacy.pharmacy_name -%}
 			<div class="pos-login-tenant">
-				{{ brand.pharmacy.pharmacy_name_ar if lang_code == "ar" and brand.pharmacy.pharmacy_name_ar else brand.pharmacy.pharmacy_name }}
+				{{ (brand.pharmacy.pharmacy_name_ar if lang_code == "ar" and brand.pharmacy.pharmacy_name_ar else brand.pharmacy.pharmacy_name)|e }}
 			</div>
 			{%- endif -%}
 			<div class="pos-login-half">{{ _("Designed & Developed by") }} <strong>HALF</strong></div>
@@ -55,7 +55,7 @@
 		<div class="pos-login-topbar">
 			<div class="pos-login-mobile-brand">
 				<img src="{{ brand.mark_url }}" alt="" width="28" height="28">
-				<span>{{ brand.product_name }}</span>
+				<span>{{ brand.product_name|e }}</span>
 			</div>
 			<nav class="pos-login-lang" aria-label="{{ _('Language') }}">
 				<a href="?_lang=en" lang="en" {% if lang_code != "ar" %}aria-current="true"{% endif %}>English</a>
@@ -68,7 +68,7 @@
 		</div>
 
 		<footer class="pos-login-foot">
-			<span class="pos-login-foot-half">{{ brand.product_name }} · {{ _("Designed & Developed by") }} HALF</span>
+			<span class="pos-login-foot-half">{{ brand.product_name|e }} · {{ _("Designed & Developed by") }} HALF</span>
 			<a href="/attribution">{{ _("Open-source notices") }}</a>
 		</footer>
 	</main>

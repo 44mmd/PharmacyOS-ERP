@@ -59,18 +59,40 @@ On Docker: the official containerised dev workflow is `frappe/frappe_docker` (de
 the same bench commands inside containers. Use it if a native install is impractical, but keep this
 bench layout and do not treat the `pwd.yml` demo compose file as a dev environment.
 
-## Custom app workflow (verified)
+## The `pharmacyos_erp` app
+
+All PharmacyOS functionality is in the custom app at `pharmacyos/apps/pharmacyos_erp` (self-contained,
+movable to `44mmd/pharmacyos_erp` with `git subtree split`, see its README). `setup-dev-bench.sh`
+links it into the bench and installs it on both sites. Manually:
 
 ```bash
-bench new-app pharmacyos_erp                              # scaffold (in its own git repo)
+ln -sfn /path/to/PharmacyOS-ERP/pharmacyos/apps/pharmacyos_erp ~/frappe-bench/apps/pharmacyos_erp
+cd ~/frappe-bench && uv pip install -e apps/pharmacyos_erp --python env/bin/python
+echo pharmacyos_erp >> sites/apps.txt            # make sure the file ends with a newline first
 bench --site pharmacyos.localhost install-app pharmacyos_erp
-bench --site pharmacyos.localhost migrate
+bench --site test.localhost install-app pharmacyos_erp
+bench build --app pharmacyos_erp
 ```
 
-The app must live in its **own repository** and be pulled with `bench get-app <url>`. Do not commit
-it inside this ERPNext fork.
+Development data (fictitious medicines, two branches, receipts with batches, sales, an open purchase
+order — all real ERPNext documents; developer mode only):
 
-## Gotchas found in Phase 0
+```bash
+bench --site pharmacyos.localhost execute pharmacyos_erp.setup.demo_data.create_demo_data
+```
+
+Tests (on the test site only):
+
+```bash
+bench --site test.localhost run-tests --app pharmacyos_erp                     # PharmacyOS (53 tests)
+bench --site test.localhost run-tests --lightmode --module erpnext.stock.doctype.batch.test_batch   # upstream
+```
+
+Navigation (Dock + Sidebars) is generated from `pharmacyos_erp/setup/navigation.py`; after changing it,
+bump `MODIFIED` there and regenerate (`bench --site <site> execute pharmacyos_erp.setup.navigation.write_files`
+in developer mode), then `bench migrate`.
+
+## Gotchas
 
 * Run `bench start` from a persistent terminal or session manager. If redis dies mid-way,
   `bench new-site` / `reinstall` fail with `get_system_settings ... NoneType`. Drop and recreate the site.
@@ -81,3 +103,15 @@ it inside this ERPNext fork.
 * The IQD currency exists but is **disabled** by default. It ships with 3-decimal / 1000-fils formatting
   (`#,###.###`). Decide the display precision (Iraqi retail prices are whole dinars) before going live.
 * `bench get-app payments` (short name) fails, so use the full URL `https://github.com/frappe/payments`.
+* `bench migrate` only re-imports app JSON (sidebars, pages, print formats) whose `modified` is newer
+  than the database copy — bump it when you change them.
+* The `watch` process in the Procfile rebuilds assets on file changes and races manual `bench build`
+  runs (stale or missing RTL CSS). This dev bench comments it out; run `bench build --app pharmacyos_erp`
+  explicitly. Killing one Procfile process stops all of them (honcho), so restart `bench start` after.
+* Frappe v17 rejects SQL functions as strings in `frappe.get_all(fields=...)`; use
+  `{"SUM": "field", "as": "alias"}`.
+* ERPNext v17 requires **Accounts User** to create Sales/POS Invoices and **Sales Manager** for POS
+  opening/closing entries; the PharmacyOS role profiles account for the first, and leave shift
+  opening/closing to managers (see ARCHITECTURE.md).
+* Frappe's login context reads `frappe.local.request`; tests that render `/login` must call
+  `frappe.utils.set_request()` first.

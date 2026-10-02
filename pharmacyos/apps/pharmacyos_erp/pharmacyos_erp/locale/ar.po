@@ -1278,3 +1278,6 @@ msgstr "رقم"
 
 msgid "Due"
 msgstr "الاستحقاق"
+
+msgid "PharmacyOS records every stock movement of this item in the stock ledger. Keep unchecked for services and other non-stock items."
+msgstr "يسجّل PharmacyOS كل حركة مخزون لهذه المادة في سجل المخزون. اتركه غير محدد للخدمات والمواد غير المخزنية."

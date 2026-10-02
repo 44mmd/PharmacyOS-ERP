@@ -122,6 +122,10 @@ def before_uninstall():
 			if name:
 				frappe.delete_doc("Custom Field", name, ignore_permissions=True, force=True)
 	frappe.db.delete("Property Setter", {"doc_type": "Item", "property": "search_fields"})
+	for doctype, fieldname in DESCRIPTION_OVERRIDES:
+		frappe.db.delete(
+			"Property Setter", {"doc_type": doctype, "field_name": fieldname, "property": "description"}
+		)
 	frappe.clear_cache()
 
 
@@ -132,6 +136,7 @@ def ensure_structure():
 	ensure_roles()
 	create_custom_fields(CUSTOM_FIELDS, update=True)
 	ensure_property_setters()
+	ensure_description_overrides()
 	ensure_role_profiles()
 	ensure_dosage_forms()
 
@@ -177,6 +182,20 @@ def ensure_property_setters():
 	new_value = ",".join(fields)
 	if new_value != search_fields:
 		make_property_setter("Item", None, "search_fields", new_value, "Data", for_doctype=True)
+
+
+# Field help texts that name ERPNext on forms pharmacy staff use daily (presentation only).
+DESCRIPTION_OVERRIDES = {
+	("Item", "is_stock_item"): (
+		"PharmacyOS records every stock movement of this item in the stock ledger. "
+		"Keep unchecked for services and other non-stock items."
+	),
+}
+
+
+def ensure_description_overrides():
+	for (doctype, fieldname), text in DESCRIPTION_OVERRIDES.items():
+		make_property_setter(doctype, fieldname, "description", text, "Small Text")
 
 
 def ensure_dosage_forms():

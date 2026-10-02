@@ -1,6 +1,8 @@
 # PharmacyOS ERP — Phase 0 Architecture & Upgrade-Safety Plan
 
-Status: Phase 0 (foundation only). No PharmacyOS features have been built and no production system is connected.
+Status: Phase 0 analysis, followed by milestone 1 of the product transformation (see `PRODUCT.md`,
+`INTEGRATION_API.md`). The custom app now exists at `pharmacyos/apps/pharmacyos_erp`; no ERPNext core
+file is modified and no production system is connected.
 Development setup is in [`DEVELOPMENT.md`](DEVELOPMENT.md).
 
 ## 1. What this repository is

@@ -72,14 +72,34 @@ _sales_validate = [
 ]
 _receipt_validate = [_branch, "pharmacyos_erp.pharmacy.receiving.validate_receipt"]
 
+_outbox = "pharmacyos_erp.integration.outbox"
+_fulfilment = f"{_outbox}.on_fulfilment_document"
+_order_event = f"{_outbox}.on_sales_order"
+
 doc_events = {
-	"Item": {"validate": "pharmacyos_erp.pharmacy.medicine.validate_item"},
-	"Sales Invoice": {"validate": _sales_validate},
+	"Item": {
+		"validate": "pharmacyos_erp.pharmacy.medicine.validate_item",
+		"on_update": f"{_outbox}.on_item",
+	},
+	"Sales Invoice": {"validate": _sales_validate, "on_submit": _fulfilment, "on_cancel": _fulfilment},
 	"POS Invoice": {"validate": _sales_validate},
-	"Delivery Note": {"validate": _sales_validate},
+	"Delivery Note": {"validate": _sales_validate, "on_submit": _fulfilment, "on_cancel": _fulfilment},
 	"Purchase Receipt": {"validate": _receipt_validate},
 	"Purchase Invoice": {"validate": _receipt_validate},
-	"Sales Order": {"validate": _branch},
+	"Sales Order": {
+		"validate": _branch,
+		"on_submit": _order_event,
+		"on_cancel": _order_event,
+		"on_update_after_submit": _order_event,
+	},
 	"Purchase Order": {"validate": _branch},
 	"Stock Entry": {"validate": _branch},
+	# outbox only records when outbound events are enabled (PharmacyOS Settings)
+	"Stock Ledger Entry": {"on_submit": f"{_outbox}.on_stock_ledger_entry"},
+}
+
+scheduler_events = {
+	"cron": {
+		"*/5 * * * *": ["pharmacyos_erp.integration.outbox.process_outbox"],
+	},
 }

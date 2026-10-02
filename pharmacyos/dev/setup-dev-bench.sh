@@ -17,6 +17,8 @@
 #   DB_ROOT_PASSWORD=... ./pharmacyos/dev/setup-dev-bench.sh
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+APP_SRC="${APP_SRC:-$SCRIPT_DIR/../apps/pharmacyos_erp}"
 BENCH_DIR="${BENCH_DIR:-$HOME/frappe-bench}"
 FRAPPE_BRANCH="${FRAPPE_BRANCH:-develop}"
 ERPNEXT_REPO="${ERPNEXT_REPO:-https://github.com/44mmd/PharmacyOS-ERP}"
@@ -72,6 +74,16 @@ if [ ! -d "sites/$TEST_SITE" ]; then
 	bench --site "$TEST_SITE" set-config allow_tests true
 	bench --site "$TEST_SITE" run-tests --lightmode --module erpnext.tests.bootstrap_test_data
 fi
+
+# PharmacyOS ERP custom app (lives in this repository until it moves to its own).
+if [ ! -e apps/pharmacyos_erp ]; then
+	ln -sfn "$APP_SRC" apps/pharmacyos_erp
+	uv pip install -e apps/pharmacyos_erp --python env/bin/python
+	grep -qx pharmacyos_erp sites/apps.txt || { [ -n "$(tail -c1 sites/apps.txt)" ] && echo >> sites/apps.txt; echo pharmacyos_erp >> sites/apps.txt; }
+fi
+for site in "$DEV_SITE" "$TEST_SITE"; do
+	bench --site "$site" list-apps | grep -q pharmacyos_erp || bench --site "$site" install-app pharmacyos_erp
+done
 
 bench build
 
