@@ -351,7 +351,8 @@ def health_check() -> dict:
 		"settings": bool(frappe.db.exists("DocType", "PharmacyOS Settings")),
 		"scheduler_enabled": bool(cint(frappe.db.get_single_value("System Settings", "enable_scheduler"))),
 	}
-	checks["ok"] = checks["database"] and checks["settings"]
+	# backups and website sync stop silently without the scheduler
+	checks["ok"] = checks["database"] and checks["settings"] and checks["scheduler_enabled"]
 	print(json.dumps(checks))
 	return checks
 

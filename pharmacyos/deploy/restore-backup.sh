@@ -74,6 +74,8 @@ bench --site "$SITE" migrate
 
 echo "== 6/6 Health check"
 bench --site "$SITE" set-maintenance-mode off
+# Frappe disables the scheduler on restored sites; PharmacyOS needs it for backups and website sync
+bench --site "$SITE" enable-scheduler
 bench --site "$SITE" execute pharmacyos_erp.backup.service.health_check
 bench --site "$SITE" execute pharmacyos_erp.backup.service.record_restore --kwargs "{'folder': '$FOLDER'}"
 echo "Restore finished. Restart PharmacyOS services (bench restart / PharmacyOS Server service)."
