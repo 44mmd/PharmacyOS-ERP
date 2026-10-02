@@ -1,0 +1,18 @@
+PharmacyOS ERP — Designed & Developed by HALF. © 2026 HALF.
+
+Third-party licences
+--------------------
+PharmacyOS ERP includes third-party software, distributed under its own licence terms:
+
+* ERPNext — GNU General Public License v3.0. © Frappe Technologies Pvt. Ltd. and contributors.
+  Source: https://github.com/frappe/erpnext (this distribution's corresponding source is the
+  PharmacyOS ERP repository at the version shipped).
+* Frappe Framework — MIT License. © Frappe Technologies Pvt. Ltd. and contributors.
+* Electron — MIT License. © Electron contributors / GitHub Inc. Chromium licences: see
+  LICENSES.chromium.html in the installation folder.
+* Tajawal font — SIL Open Font License 1.1.
+* Inter font — SIL Open Font License 1.1.
+
+The full GPL-3.0 text is in license.txt of the PharmacyOS ERP application. ERPNext and Frappe are
+trademarks of Frappe Technologies Pvt. Ltd.; PharmacyOS ERP is not affiliated with or endorsed by
+Frappe Technologies.

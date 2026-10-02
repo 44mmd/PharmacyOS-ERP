@@ -27,6 +27,12 @@ Site-level configuration applied by the app (reversible from the UI, not code ch
 | System Settings → language / time zone (only when country = Iraq) | `ar` / Asia/Baghdad | Arabic-first Iraqi deployment |
 | Custom DocPerm on Item Price (read + select only) | Pharmacy Owner, Pharmacy Manager, Pharmacist, Cashier | ERPNext v17's POS barcode search reads Item Price with the user's permissions, but only Sales/Purchase Master Manager can read it. Frappe copies the standard rules first. The rows are removed on uninstall. This is the one exception to "no Custom DocPerm on core DocTypes". |
 
+Repository-level additions outside `pharmacyos/` (new files, no ERPNext file changed):
+
+| File | Why |
+|---|---|
+| `.github/workflows/pharmacyos-desktop.yml` | Builds the Windows installer. It runs only manually or on `pharmacyos-desktop-v*` tags, never on ERPNext pushes. |
+
 ## Template for a future patch
 
 ```

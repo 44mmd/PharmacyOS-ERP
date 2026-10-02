@@ -67,12 +67,14 @@ fi
 # Separate site for automated tests: tests create/delete fixtures and must never run on the dev site.
 # Mirrors upstream CI (.github/helper/site_config_mariadb.json installs payments + erpnext and
 # server-tests-mariadb.yml warms fixtures with erpnext.tests.bootstrap_test_data).
+if [ "${SKIP_TEST_SITE:-0}" != 1 ]; then
 [ -d apps/payments ] || bench get-app https://github.com/frappe/payments --branch "$FRAPPE_BRANCH" --skip-assets
 if [ ! -d "sites/$TEST_SITE" ]; then
 	bench new-site "$TEST_SITE" --db-root-username "$DB_ROOT_USER" --db-root-password "$DB_ROOT_PASSWORD" \
 		--admin-password "$ADMIN_PASSWORD" --install-app erpnext --install-app payments
 	bench --site "$TEST_SITE" set-config allow_tests true
 	bench --site "$TEST_SITE" run-tests --lightmode --module erpnext.tests.bootstrap_test_data
+fi
 fi
 
 # PharmacyOS ERP custom app (lives in this repository until it moves to its own).
@@ -81,7 +83,8 @@ if [ ! -e apps/pharmacyos_erp ]; then
 	uv pip install -e apps/pharmacyos_erp --python env/bin/python
 	grep -qx pharmacyos_erp sites/apps.txt || { [ -n "$(tail -c1 sites/apps.txt)" ] && echo >> sites/apps.txt; echo pharmacyos_erp >> sites/apps.txt; }
 fi
-for site in "$DEV_SITE" "$TEST_SITE"; do
+SITES=("$DEV_SITE"); [ "${SKIP_TEST_SITE:-0}" = 1 ] || SITES+=("$TEST_SITE")
+for site in "${SITES[@]}"; do
 	bench --site "$site" list-apps | grep -q pharmacyos_erp || bench --site "$site" install-app pharmacyos_erp
 done
 

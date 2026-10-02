@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# PharmacyOS server control (inside the PharmacyOS Linux environment: WSL2 distro or LAN server).
+#   pharmacyos-server start|stop|status|health
+# Services are systemd units created by `bench setup production` (nginx + supervisor) plus MariaDB
+# and Redis; they also start automatically at boot. This script is what the desktop app and the
+# Windows boot task call.
+set -euo pipefail
+BENCH_USER="${PHARMACYOS_USER:-frappe}"
+BENCH_DIR="${PHARMACYOS_BENCH:-/home/$BENCH_USER/frappe-bench}"
+SERVICES=(mariadb redis-server supervisor nginx)
+
+case "${1:-status}" in
+	start) for s in "${SERVICES[@]}"; do systemctl start "$s"; done; supervisorctl start all >/dev/null ;;
+	stop) supervisorctl stop all >/dev/null || true; for s in nginx supervisor; do systemctl stop "$s"; done ;;
+	status) for s in "${SERVICES[@]}"; do printf '%-14s %s\n' "$s" "$(systemctl is-active "$s")"; done; supervisorctl status ;;
+	health)
+		curl -fsS -m 5 http://127.0.0.1/api/method/ping >/dev/null && echo "web ok" || { echo "web down"; exit 1; }
+		su - "$BENCH_USER" -c "cd $BENCH_DIR && bench --site all execute pharmacyos_erp.backup.service.health_check" ;;
+	*) echo "usage: pharmacyos-server start|stop|status|health" >&2; exit 2 ;;
+esac

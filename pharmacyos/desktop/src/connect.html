@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data:; font-src 'self'">
+<title>PharmacyOS ERP</title>
+<style>
+@font-face { font-family: "Tajawal"; src: url(assets/tajawal-arabic-400.woff2) format("woff2"); font-weight: 400; }
+@font-face { font-family: "Tajawal"; src: url(assets/tajawal-arabic-700.woff2) format("woff2"); font-weight: 700; }
+:root { --deep:#063F36; --core:#087B61; --mint:#63E6BE; --soft:#EAFBF5; --clinical:#F8FBFA; --ink:#10231F; --ink2:#63736F; --border:rgba(6,63,54,.14); --warn:#B45309; }
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--clinical); color: var(--ink); font: 15px/1.6 Tajawal, Inter, "Segoe UI", sans-serif; display: grid; place-items: center; padding: 16px; }
+.card { width: min(460px, 100%); background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 28px; box-shadow: 0 8px 24px rgba(6,63,54,.06); }
+.brand { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.brand img { width: 40px; height: 40px; }
+.brand b { display: block; font-size: 18px; color: var(--deep); }
+.brand span { color: var(--ink2); font-size: 13px; }
+h1 { font-size: 18px; margin: 0 0 6px; }
+p { margin: 0 0 16px; color: var(--ink2); }
+.choice { display: grid; gap: 10px; margin-bottom: 16px; }
+.choice label { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--border); border-radius: 10px; padding: 12px; cursor: pointer; }
+.choice label:has(input:checked) { border-color: var(--core); background: var(--soft); }
+.choice small { display: block; color: var(--ink2); }
+input[type=text], select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font: inherit; background: var(--clinical); }
+input[type=text] { direction: ltr; text-align: right; }
+.row { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+button { font: inherit; font-weight: 700; border-radius: 8px; padding: 10px 16px; border: 1px solid var(--border); background: #fff; color: var(--deep); cursor: pointer; }
+button.primary { background: var(--deep); border-color: var(--deep); color: #fff; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid rgba(10,167,126,.35); outline-offset: 1px; }
+.status { margin-top: 12px; font-size: 13px; min-height: 20px; }
+.status.bad { color: var(--warn); } .status.good { color: var(--core); }
+.spinner { width: 28px; height: 28px; border: 3px solid var(--soft); border-top-color: var(--core); border-radius: 50%; animation: spin .9s linear infinite; margin: 8px 0 12px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
+.foot { margin-top: 18px; font-size: 12px; color: var(--ink2); }
+[hidden] { display: none !important; }
+.field { margin-top: 12px; } .field label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+</style>
+</head>
+<body>
+<main class="card" aria-live="polite">
+	<div class="brand">
+		<img src="assets/pharmacyos-mark.svg" alt="">
+		<div><b>PharmacyOS ERP</b><span>نظام تشغيل الصيدلية · Pharmacy Operating System</span></div>
+	</div>
+
+	<section data-view="connecting" hidden>
+		<div class="spinner" role="progressbar" aria-label="جارٍ الاتصال"></div>
+		<h1>جارٍ تشغيل PharmacyOS…</h1>
+		<p data-slot="progress">يتم الاتصال بخادم الصيدلية. Connecting to the pharmacy server…</p>
+	</section>
+
+	<section data-view="offline" hidden>
+		<h1>تعذّر الوصول إلى خادم الصيدلية</h1>
+		<p>تأكد من تشغيل جهاز الخادم وأنه متصل بشبكة الصيدلية، ثم أعد المحاولة. لم يُفقد أي بيع محفوظ.<br>
+		<span lang="en" dir="ltr">The pharmacy server could not be reached. Check that it is on and connected, then retry. Saved sales are not lost.</span></p>
+		<div class="row">
+			<button class="primary" data-action="retry">إعادة المحاولة · Retry</button>
+			<button data-action="settings">إعدادات الاتصال · Settings</button>
+		</div>
+	</section>
+
+	<section data-view="setup" hidden>
+		<h1>إعداد هذا الجهاز · Set up this computer</h1>
+		<p>اختر مكان تشغيل نظام الصيدلية.</p>
+		<form data-form>
+			<div class="choice">
+				<label><input type="radio" name="mode" value="this-pc" checked>
+					<span>هذا الجهاز هو خادم الصيدلية<small>صيدلية بجهاز واحد — This computer runs the pharmacy server</small></span></label>
+				<label><input type="radio" name="mode" value="network">
+					<span>الاتصال بخادم الصيدلية على الشبكة<small>جهاز كاشير أو مكتب — Connect to the pharmacy's server</small></span></label>
+			</div>
+			<div class="field" data-slot="address" hidden>
+				<label for="server">عنوان الخادم · Server address</label>
+				<input id="server" type="text" name="serverUrl" placeholder="192.168.1.10" autocomplete="off" spellcheck="false">
+			</div>
+			<div class="field">
+				<label for="printer">طابعة الوصل · Receipt printer</label>
+				<select id="printer" name="receiptPrinter"><option value="">اسأل عند الطباعة · Ask when printing</option></select>
+			</div>
+			<label class="field" style="display:flex;gap:8px;align-items:center"><input type="checkbox" name="silentReceipts"> طباعة الوصل مباشرة بدون نافذة · Print receipts directly</label>
+			<div class="row">
+				<button type="submit" class="primary">حفظ ومتابعة · Save</button>
+				<button type="button" data-action="test">اختبار الاتصال · Test</button>
+			</div>
+			<div class="status" data-slot="status"></div>
+		</form>
+	</section>
+
+	<div class="foot">Designed &amp; Developed by HALF</div>
+</main>
+<script src="connect.js"></script>
+</body>
+</html>

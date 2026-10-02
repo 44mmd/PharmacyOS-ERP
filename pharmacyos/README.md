@@ -7,6 +7,9 @@ ERPNext core.
 
 * [`apps/pharmacyos_erp`](apps/pharmacyos_erp): **the PharmacyOS ERP Frappe app** (all product code)
 * [`docs/PRODUCT.md`](docs/PRODUCT.md): product transformation — identity, navigation, roles, workflows, remaining gaps
+* [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md): server and Windows desktop deployment, hourly backups, restore, updates, disaster recovery
+* [`desktop/`](desktop): PharmacyOS ERP Windows desktop app (Electron)
+* [`deploy/`](deploy): server install, Windows single-PC setup, backup restore tool
 * [`docs/LOCALIZATION.md`](docs/LOCALIZATION.md): Arabic-first localization — terminology (Batch = الوجبة), RTL/bidi, IQD, dates, Arabic search
 * [`docs/INTEGRATION_API.md`](docs/INTEGRATION_API.md): PharmacyOS ↔ ERP API v1 and outbound events
 * [`FORK_PATCHES.md`](FORK_PATCHES.md): ERPNext core changes (currently none)
