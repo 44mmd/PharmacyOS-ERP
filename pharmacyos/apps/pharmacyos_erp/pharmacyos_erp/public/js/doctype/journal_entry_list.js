@@ -1,7 +1,8 @@
 // Expenses list: "Record Expense" opens a short pharmacy form that posts a real Journal Entry.
 frappe.listview_settings["Journal Entry"] = Object.assign(frappe.listview_settings["Journal Entry"] || {}, {
 	onload(listview) {
-		if (!frappe.model.can_create("Journal Entry")) return;
+		const finance = ["System Manager", "Pharmacy Owner", "Pharmacy Manager", "Branch Manager", "Pharmacy Accountant", "Accounts Manager"];
+		if (!frappe.model.can_create("Journal Entry") || !finance.some((r) => frappe.user.has_role(r))) return;
 		listview.page.add_inner_button(__("Record Expense"), () => pharmacyos.record_expense(() => listview.refresh()));
 	},
 });

@@ -70,6 +70,12 @@ class PharmacyOSSystemStatus {
 			[__("Waiting to send"), ui.ltr(s.pending)],
 			[__("Failed"), ui.ltr(s.failed)],
 		];
+		const c = d.cloud || {};
+		if (c.enabled) {
+			sync_lines.push([__("Website orders checked"), ui.esc(this.when(c.last_pull))]);
+			sync_lines.push([__("Open website orders"), ui.ltr(c.open_website_orders || 0)]);
+			if (c.last_error) sync_lines.push([__("Website connection"), `<span class="pos-error-text">${ui.esc(c.last_error)}</span>`]);
+		}
 		if (s.last_error) sync_lines.push([__("Last error"), `<span class="pos-error-text">${ui.esc(s.last_error)}</span>`]);
 		const rows = d.recent_backups
 			.map(

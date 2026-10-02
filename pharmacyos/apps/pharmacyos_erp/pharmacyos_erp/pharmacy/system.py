@@ -13,6 +13,7 @@ def get_system_status() -> dict:
 	return {
 		"backup": backup_health(),
 		"sync": sync_status(),
+		"cloud": cloud_status(),
 		"recent_backups": frappe.get_all(
 			"PharmacyOS Backup Log",
 			fields=["name", "kind", "status", "started_on", "finished_on", "size_bytes", "verified", "error"],
@@ -20,6 +21,26 @@ def get_system_status() -> dict:
 			limit_page_length=8,
 		),
 		"can_manage": bool(roles & {"System Manager", "Pharmacy Owner"}),
+	}
+
+
+def cloud_status() -> dict:
+	"""Website orders connection (pull side)."""
+	from pharmacyos_erp.integration.cloud import cloud_enabled
+
+	settings = frappe.get_cached_doc("PharmacyOS Settings")
+	return {
+		"enabled": cloud_enabled(),
+		"last_pull": settings.get("cloud_last_pull"),
+		"last_error": settings.get("cloud_last_error"),
+		"open_website_orders": frappe.db.count(
+			"Sales Order",
+			{
+				"pharmacyos_order_id": ["is", "set"],
+				"docstatus": 1,
+				"status": ["not in", ["Completed", "Closed"]],
+			},
+		),
 	}
 
 
@@ -36,4 +57,9 @@ def attention_items() -> list[dict]:
 		items.append(
 			{"kind": "sync", "count": sync["failed"] or sync["pending"] or 1, "state": sync["state"]}
 		)
+	cloud = cloud_status()
+	if cloud["enabled"] and cloud["last_error"]:
+		items.append({"kind": "sync", "count": 1, "state": "offline"})
+	if cloud["open_website_orders"]:
+		items.append({"kind": "web_orders", "count": cloud["open_website_orders"]})
 	return items

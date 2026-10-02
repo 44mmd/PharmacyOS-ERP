@@ -2390,3 +2390,87 @@ msgstr "توقّف قبل الاكتمال (إعادة تشغيل الخادم �
 
 msgid "Sale"
 msgstr "بيع"
+
+msgid "PharmacyOS Cloud (website orders)"
+msgstr "سحابة PharmacyOS (طلبات الموقع)"
+
+msgid "Connect this pharmacy to its PharmacyOS website. Products, prices and sellable stock are sent to the website; website orders are pulled into this system every minute."
+msgstr "اربط هذه الصيدلية بموقع PharmacyOS. تُرسل الأصناف والأسعار والمخزون القابل للبيع إلى الموقع، وتُسحب طلبات الموقع إلى هذا النظام كل دقيقة."
+
+msgid "PharmacyOS Cloud Address"
+msgstr "عنوان سحابة PharmacyOS"
+
+msgid "e.g. https://api.halfpharmacy.com — must be HTTPS in production."
+msgstr "مثل https://api.halfpharmacy.com — يجب أن يكون HTTPS في التشغيل الفعلي."
+
+msgid "Branch for Website Orders"
+msgstr "فرع طلبات الموقع"
+
+msgid "Website orders are reserved and fulfilled from this branch's stock."
+msgstr "تُحجز طلبات الموقع وتُجهَّز من مخزون هذا الفرع."
+
+msgid "Website Payment Method"
+msgstr "طريقة دفع طلبات الموقع"
+
+msgid "Recorded when a delivered website order is invoiced (cash on delivery)."
+msgstr "تُسجَّل عند فوترة طلب الموقع بعد تسليمه (الدفع عند الاستلام)."
+
+msgid "Last Successful Connection"
+msgstr "آخر اتصال ناجح"
+
+msgid "Last Connection Error"
+msgstr "آخر خطأ اتصال"
+
+msgid "Website"
+msgstr "الموقع"
+
+msgid "Test Connection"
+msgstr "اختبار الاتصال"
+
+msgid "Sync Catalog Now"
+msgstr "مزامنة الأصناف الآن"
+
+msgid "Connected to PharmacyOS Cloud."
+msgstr "تم الاتصال بسحابة PharmacyOS."
+
+msgid "Could not connect: {0}"
+msgstr "تعذّر الاتصال: {0}"
+
+msgid "{0} products queued for the website."
+msgstr "تمت جدولة {0} صنف للإرسال إلى الموقع."
+
+msgid "Website orders checked"
+msgstr "آخر فحص لطلبات الموقع"
+
+msgid "Open website orders"
+msgstr "طلبات الموقع المفتوحة"
+
+msgid "Website connection"
+msgstr "الاتصال بالموقع"
+
+msgid "Website orders to prepare"
+msgstr "طلبات موقع بانتظار التجهيز"
+
+msgid "Website order {0}"
+msgstr "طلب الموقع {0}"
+
+msgid "Address: {0}"
+msgstr "العنوان: {0}"
+
+msgid "Payment: {0}"
+msgstr "الدفع: {0}"
+
+msgid "Set the shared secret in PharmacyOS Settings → Integration."
+msgstr "اضبط المفتاح المشترك في إعدادات PharmacyOS ← التكامل."
+
+msgid "Choose the branch for website orders in PharmacyOS Settings."
+msgstr "اختر فرع طلبات الموقع في إعدادات PharmacyOS."
+
+msgid "Order {0} was already delivered; record a return instead."
+msgstr "تم تسليم الطلب {0} مسبقاً؛ سجّل مرتجعاً بدلاً من ذلك."
+
+msgid "Order {0} is cancelled in the pharmacy system."
+msgstr "الطلب {0} ملغى في نظام الصيدلية."
+
+msgid "Could not reach PharmacyOS Cloud: {0}"
+msgstr "تعذّر الوصول إلى سحابة PharmacyOS: {0}"

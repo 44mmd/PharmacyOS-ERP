@@ -87,3 +87,29 @@ are retried up to 5 times, then the event stays `Failed` (visible under System �
 
 Order cancellation from the storefront, partial fulfilment notifications per line, rate limiting per
 integration user, OpenAPI schema generation, and a sandbox receiver for end-to-end tests.
+
+
+## PharmacyOS Cloud connector (website orders) — `integration/cloud.py`
+
+The pharmacy server initiates every exchange, so no inbound port is opened.
+
+* Events go out through the outbox to `{cloud}/integrations/erp/events`: `catalog.changed` (public
+  fields only, with the ERP price), `availability.changed` (sellable quantity per branch, excluding
+  expired batches and reservations) and `order.status_changed`. Sales Order submit and cancel also
+  publish availability, because reservations change sellable stock.
+* Every minute `pull_orders` reads `{cloud}/integrations/erp/orders/feed` and applies each order
+  version idempotently:
+  * an open stage creates the Sales Order once, which reserves stock;
+  * `completed` creates a stock-updating, paid Sales Invoice with FEFO batches, once;
+  * `cancelled` cancels the Sales Order, and is refused after delivery.
+  * It then acknowledges the version. Business errors are acknowledged with `error`, and the Cloud
+    moves the order to pharmacist review. Network errors are retried.
+* Signing: `X-PharmacyOS-Timestamp` +
+  `X-PharmacyOS-Signature: sha256=HMAC(secret, "ts\nMETHOD\npath?query\nsha256(body)")`. Events keep the
+  body signature.
+* Settings: PharmacyOS Settings → Integration (Cloud address, shared secret, branch for website
+  orders, website payment method). Use *Website → Test Connection / Sync Catalog Now*. Status
+  appears on System Status and the dashboard.
+* Cloud side: `44mmd/PharmacyOS` → `docs/ERP_INTEGRATION.md`.
+* Tests: `tests/test_cloud.py` (fake Cloud). A live run of both systems is described in
+  `docs/DEPLOYMENT.md`.

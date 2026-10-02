@@ -133,6 +133,7 @@ def before_uninstall():
 				frappe.delete_doc("Custom Field", name, ignore_permissions=True, force=True)
 	frappe.db.delete("Property Setter", {"doc_type": "Item", "property": "search_fields"})
 	frappe.db.delete("Custom DocPerm", {"parent": "Item Price", "role": ["in", PRICE_READ_ROLES]})
+	frappe.db.delete("Custom DocPerm", {"parent": ["in", SHIFT_DOCTYPES], "role": ["in", SHIFT_ROLES]})
 	for doctype, fieldname in DESCRIPTION_OVERRIDES:
 		frappe.db.delete(
 			"Property Setter", {"doc_type": doctype, "field_name": fieldname, "property": "description"}
@@ -151,6 +152,7 @@ def ensure_structure():
 	ensure_role_profiles()
 	ensure_dosage_forms()
 	ensure_price_read_access()
+	ensure_cashier_shift_access()
 
 
 def ensure_roles():
@@ -183,6 +185,38 @@ def ensure_price_read_access():
 		if not frappe.db.exists("Custom DocPerm", {"parent": "Item Price", "role": role, "permlevel": 0}):
 			add_permission("Item Price", role, 0, ptype="read")
 		update_permission_property("Item Price", role, 0, "select", 1, validate=False)
+
+
+# Counter selling with the minimum ERPNext permissions, applied as Custom DocPerms:
+# * POS shifts: ERPNext v17 lets only Sales Manager open/close them. A cashier must run their own
+#   shift: read/create/submit POS Opening and Closing Entries they own (if_owner) — no cancel, no
+#   delete, no access to other cashiers' shifts.
+# * Batch medicines: selling a batch creates a Serial and Batch Bundle, which ERPNext reserves for
+#   stock roles; without it a cashier cannot sell any batch-tracked medicine.
+# Frappe copies the standard rules first, so existing access is unchanged. Removed on uninstall.
+SHIFT_ROLES = ("Cashier", "Pharmacist")
+COUNTER_PERMISSIONS = {
+	"POS Opening Entry": ("read", "create", "write", "submit", "print", "if_owner"),
+	"POS Closing Entry": ("read", "create", "write", "submit", "print", "if_owner"),
+	"Serial and Batch Bundle": ("read", "create", "write", "submit"),
+}
+SHIFT_DOCTYPES = tuple(COUNTER_PERMISSIONS)
+
+
+def ensure_cashier_shift_access():
+	from frappe.permissions import add_permission, update_permission_property
+
+	for doctype, ptypes in COUNTER_PERMISSIONS.items():
+		if not frappe.db.exists("DocType", doctype):
+			continue
+		for role in SHIFT_ROLES:
+			if not frappe.db.exists("Role", role):
+				continue
+			if not frappe.db.exists("Custom DocPerm", {"parent": doctype, "role": role, "permlevel": 0}):
+				add_permission(doctype, role, 0, ptype="read")
+			for ptype in ptypes:
+				update_permission_property(doctype, role, 0, ptype, 1, validate=False)
+		frappe.clear_cache(doctype=doctype)
 
 
 def ensure_role_profiles():

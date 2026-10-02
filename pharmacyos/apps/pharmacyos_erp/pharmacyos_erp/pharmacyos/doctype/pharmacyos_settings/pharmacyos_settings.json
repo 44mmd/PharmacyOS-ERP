@@ -29,6 +29,13 @@
   "short_shelf_life_action",
   "integration_tab",
   "integration_help",
+  "cloud_section",
+  "cloud_base_url",
+  "online_order_branch",
+  "online_payment_mode",
+  "cloud_cb",
+  "cloud_last_pull",
+  "cloud_last_error",
   "enable_outbound_events",
   "outbound_endpoint",
   "outbound_secret",
@@ -264,11 +271,55 @@
    "default": "1024",
    "non_negative": 1,
    "description": "A backup is skipped with a warning when less space is free."
+  },
+  {
+   "fieldname": "cloud_section",
+   "fieldtype": "Section Break",
+   "label": "PharmacyOS Cloud (website orders)",
+   "description": "Connect this pharmacy to its PharmacyOS website. Products, prices and sellable stock are sent to the website; website orders are pulled into this system every minute."
+  },
+  {
+   "fieldname": "cloud_base_url",
+   "fieldtype": "Data",
+   "label": "PharmacyOS Cloud Address",
+   "options": "URL",
+   "description": "e.g. https://api.halfpharmacy.com — must be HTTPS in production."
+  },
+  {
+   "fieldname": "online_order_branch",
+   "fieldtype": "Link",
+   "options": "Branch",
+   "label": "Branch for Website Orders",
+   "description": "Website orders are reserved and fulfilled from this branch's stock."
+  },
+  {
+   "fieldname": "online_payment_mode",
+   "fieldtype": "Link",
+   "options": "Mode of Payment",
+   "label": "Website Payment Method",
+   "default": "Cash",
+   "description": "Recorded when a delivered website order is invoiced (cash on delivery)."
+  },
+  {
+   "fieldname": "cloud_cb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cloud_last_pull",
+   "fieldtype": "Datetime",
+   "label": "Last Successful Connection",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cloud_last_error",
+   "fieldtype": "Small Text",
+   "label": "Last Connection Error",
+   "read_only": 1
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2026-10-02 20:33:04.238477",
+ "modified": "2026-10-02 21:19:49.527685",
  "modified_by": "Administrator",
  "module": "PharmacyOS",
  "name": "PharmacyOS Settings",

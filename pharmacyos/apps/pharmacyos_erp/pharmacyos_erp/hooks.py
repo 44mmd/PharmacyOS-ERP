@@ -102,7 +102,12 @@ doc_events = {
 
 scheduler_events = {
 	"cron": {
-		"*/5 * * * *": ["pharmacyos_erp.integration.outbox.process_outbox"],
+		# outbound events and website orders (PharmacyOS Cloud), every minute; the pharmacy server
+		# always initiates — nothing listens for inbound connections
+		"* * * * *": [
+			"pharmacyos_erp.integration.outbox.process_outbox",
+			"pharmacyos_erp.integration.cloud.pull_orders",
+		],
 	},
 	# database backup + sales spreadsheet every hour; full backup and day reports once a day
 	"hourly_long": ["pharmacyos_erp.backup.service.hourly"],

@@ -9,6 +9,17 @@ import frappe
 from frappe import _
 from frappe.utils import flt, nowdate
 
+# Recording expenses is a finance task. Cashiers/pharmacists hold ERPNext's Accounts User role only
+# because v17 requires it to invoice, so PharmacyOS limits expenses to these roles explicitly.
+EXPENSE_ROLES = (
+	"System Manager",
+	"Pharmacy Owner",
+	"Pharmacy Manager",
+	"Branch Manager",
+	"Pharmacy Accountant",
+	"Accounts Manager",
+)
+
 
 def _company():
 	return frappe.defaults.get_user_default("Company") or frappe.db.get_single_value(
@@ -18,6 +29,7 @@ def _company():
 
 @frappe.whitelist()
 def get_expense_form_defaults() -> dict:
+	frappe.only_for(EXPENSE_ROLES)
 	company = _company()
 	return {
 		"company": company,
@@ -43,6 +55,7 @@ def record_expense(
 	remark: str | None = None,
 	branch: str | None = None,
 ) -> str:
+	frappe.only_for(EXPENSE_ROLES)
 	amount = flt(amount)
 	if amount <= 0:
 		frappe.throw(_("Enter an amount greater than zero."))

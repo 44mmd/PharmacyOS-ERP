@@ -44,7 +44,8 @@ class TestExpenses(IntegrationTestCase):
 		self.assertRaises(frappe.ValidationError, record_expense, income, 100, "Cash")
 
 	def test_cashier_cannot_post_expenses(self):
-		frappe.set_user(make_user("pos-cashier-exp@example.com", ["Cashier"]))
+		# the real cashier profile includes ERPNext's Accounts User (needed to invoice)
+		frappe.set_user(make_user("pos-cashier-exp@example.com", ["Cashier", "Sales User", "Accounts User"]))
 		try:
 			self.assertRaises(frappe.PermissionError, record_expense, self.expense, 100, "Cash")
 		finally:

@@ -28,9 +28,19 @@ MAX_ATTEMPTS = 5
 BATCH_SIZE = 100
 
 
+def outbound_endpoint(settings=None) -> str | None:
+	"""Explicit endpoint, else the PharmacyOS Cloud events URL derived from the cloud address."""
+	settings = settings or frappe.get_cached_doc("PharmacyOS Settings")
+	if settings.outbound_endpoint:
+		return settings.outbound_endpoint
+	if settings.get("cloud_base_url"):
+		return settings.cloud_base_url.rstrip("/") + "/integrations/erp/events"
+	return None
+
+
 def outbound_enabled() -> bool:
 	settings = frappe.get_cached_doc("PharmacyOS Settings")
-	return bool(cint(settings.enable_outbound_events) and settings.outbound_endpoint)
+	return bool(cint(settings.enable_outbound_events) and outbound_endpoint(settings))
 
 
 def queue_event(event_type: str, reference_doctype: str, reference_name: str, dedupe_key: str) -> None:
@@ -68,8 +78,20 @@ def on_stock_ledger_entry(doc, method=None):
 
 
 def on_sales_order(doc, method=None):
+	if not outbound_enabled():
+		return
 	if doc.get("pharmacyos_order_id"):
 		queue_event("order.status_changed", "Sales Order", doc.name, f"order:{doc.name}")
+	if method in ("on_submit", "on_cancel"):
+		# reservations change sellable stock without a stock ledger entry: tell the storefront
+		for row in doc.items:
+			if row.warehouse and frappe.get_cached_value("Item", row.item_code, "pharmacyos_publish"):
+				queue_event(
+					"availability.changed",
+					"Item",
+					row.item_code,
+					f"availability:{row.item_code}:{row.warehouse}",
+				)
 
 
 def on_fulfilment_document(doc, method=None):
@@ -122,9 +144,14 @@ def build_payload(event) -> dict:
 		)
 		body["data"] = {"sales_order": event.reference_name, **(so or {})}
 	elif event.event_type == "catalog.changed":
+		from pharmacyos_erp.api.v1.catalog import catalog_item
+
+		published = cint(frappe.db.get_value("Item", event.reference_name, "pharmacyos_publish"))
 		body["data"] = {
 			"item_code": event.reference_name,
-			"published": cint(frappe.db.get_value("Item", event.reference_name, "pharmacyos_publish")),
+			"published": published,
+			# public catalog fields only (names, barcodes, selling price) — never costs or margins
+			"item": catalog_item(event.reference_name) if published else None,
 		}
 	return body
 
@@ -173,7 +200,7 @@ def process_outbox() -> None:
 		event.attempts = cint(event.attempts) + 1
 		event.payload = json.dumps(payload, indent=1, default=str)
 		try:
-			response = requests.post(settings.outbound_endpoint, data=body, headers=headers, timeout=timeout)
+			response = requests.post(outbound_endpoint(settings), data=body, headers=headers, timeout=timeout)
 			response.raise_for_status()
 			event.status, event.sent_on, event.last_error = "Sent", now_datetime(), None
 		except Exception as e:
@@ -228,7 +255,7 @@ def sync_status() -> dict:
 	return {
 		"state": state,
 		"enabled": enabled,
-		"endpoint_configured": bool(settings.outbound_endpoint),
+		"endpoint_configured": bool(outbound_endpoint(settings)),
 		"pending": cint(counts.get("Pending")) + cint(counts.get("Failed")) - stuck,
 		"failed": stuck,
 		"last_success": last_sent,

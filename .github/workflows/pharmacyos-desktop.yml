@@ -6,6 +6,11 @@ on:
   workflow_dispatch:
   push:
     tags: ["pharmacyos-desktop-v*"]
+    # PharmacyOS feature branches, only when the desktop app or this workflow changes
+    branches: ["claude/**"]
+    paths:
+      - "pharmacyos/desktop/**"
+      - ".github/workflows/pharmacyos-desktop.yml"
 
 permissions:
   contents: read

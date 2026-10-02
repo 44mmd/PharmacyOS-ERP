@@ -50,6 +50,32 @@ def get_catalog(modified_since: str | None = None, cursor: str | None = None, li
 	has_more = len(rows) > limit
 	rows = rows[:limit]
 
+	items = serialize_items(rows)
+	next_cursor = f"{rows[-1].modified}|{rows[-1].name}" if rows else cursor
+	return {"items": items, "next_cursor": next_cursor, "has_more": has_more}
+
+
+CATALOG_FIELDS = [
+	"name",
+	"item_name",
+	"pharma_name_ar",
+	"pharma_generic_name",
+	"pharma_strength",
+	"pharma_dosage_form",
+	"pharma_pack_size",
+	"pharma_dispensing",
+	"pharma_is_medicine",
+	"brand",
+	"item_group",
+	"stock_uom",
+	"image",
+	"disabled",
+	"modified",
+]
+
+
+def serialize_items(rows) -> list[dict]:
+	"""Public catalog rows (no costs, no stock ledger details)."""
 	codes = [r.name for r in rows] or [""]
 	prices = dict(
 		frappe.get_all(
@@ -63,7 +89,7 @@ def get_catalog(modified_since: str | None = None, cursor: str | None = None, li
 	for b in frappe.get_all("Item Barcode", filters={"parent": ["in", codes]}, fields=["parent", "barcode"]):
 		barcodes.setdefault(b.parent, []).append(b.barcode)
 
-	items = [
+	return [
 		{
 			"item_code": r.name,
 			"name": r.item_name,
@@ -86,5 +112,8 @@ def get_catalog(modified_since: str | None = None, cursor: str | None = None, li
 		}
 		for r in rows
 	]
-	next_cursor = f"{rows[-1].modified}|{rows[-1].name}" if rows else cursor
-	return {"items": items, "next_cursor": next_cursor, "has_more": has_more}
+
+
+def catalog_item(item_code: str) -> dict | None:
+	rows = frappe.get_all("Item", filters={"name": item_code}, fields=CATALOG_FIELDS)
+	return serialize_items(rows)[0] if rows else None

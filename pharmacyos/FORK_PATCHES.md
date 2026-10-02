@@ -24,6 +24,8 @@ Site-level configuration applied by the app (reversible from the UI, not code ch
 | Property Setter Item.search_fields | + Arabic name, generic name, normalized search key | search |
 | Property Setter Sales Invoice.default_print_format | PharmacyOS Invoice | printing |
 | POS Settings search fields | + Arabic name, generic name, normalized search key | POS search |
+| Custom DocPerm on POS Opening/Closing Entry (read, create, write, submit, print, **if_owner**) | Cashier, Pharmacist | So cashiers run their own shift. ERPNext v17 reserves shifts for Sales Manager. No cancel or delete, and no access to other cashiers' shifts. |
+| Custom DocPerm on Serial and Batch Bundle (read, create, write, submit) | Cashier, Pharmacist | Selling a batch medicine creates a bundle, which ERPNext reserves for stock roles. Without it a cashier cannot sell any batch-tracked medicine (found and tested in `test_pos_shift`). |
 | System Settings → language / time zone (only when country = Iraq) | `ar` / Asia/Baghdad | Arabic-first Iraqi deployment |
 | Custom DocPerm on Item Price (read + select only) | Pharmacy Owner, Pharmacy Manager, Pharmacist, Cashier | ERPNext v17's POS barcode search reads Item Price with the user's permissions, but only Sales/Purchase Master Manager can read it. Frappe copies the standard rules first. The rows are removed on uninstall. This is the one exception to "no Custom DocPerm on core DocTypes". |
 

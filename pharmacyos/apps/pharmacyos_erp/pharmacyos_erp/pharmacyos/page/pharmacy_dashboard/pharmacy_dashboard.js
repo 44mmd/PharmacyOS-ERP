@@ -61,12 +61,7 @@ class PharmacyOSDashboard {
 			.catch((err) => {
 				if (token !== this.token) return;
 				this.$root.find("[data-slot=kpis]").html("");
-				for (const sys of d.system || []) {
-			if (sys.kind === "backup") att("danger", "shield-alert", sys.count, __("Backup needs attention"), "/desk/system-status");
-			if (sys.kind === "sync")
-				att("warning", "cloud-off", sys.count, sys.state === "offline" ? __("Changes waiting to sync (offline)") : __("Changes that could not be synced"), "/desk/system-status");
-		}
-		this.$root.find("[data-slot=attention]").html(`<div class="pos-panel" style="grid-column:1/-1">${this.ui.error_state(err)}</div>`);
+				this.$root.find("[data-slot=attention]").html(`<div class="pos-panel" style="grid-column:1/-1">${this.ui.error_state(err)}</div>`);
 			});
 	}
 
@@ -164,6 +159,8 @@ class PharmacyOSDashboard {
 		}
 		for (const sys of d.system || []) {
 			if (sys.kind === "backup") att("danger", "shield-alert", sys.count, __("Backup needs attention"), "/desk/system-status");
+			if (sys.kind === "web_orders")
+				att("info", "globe", sys.count, __("Website orders to prepare"), ui.list_url("Sales Order", { pharmacyos_order_id: ["is", "set"], docstatus: 1, status: ["not in", ["Completed", "Closed"]] }));
 			if (sys.kind === "sync")
 				att("warning", "cloud-off", sys.count, sys.state === "offline" ? __("Changes waiting to sync (offline)") : __("Changes that could not be synced"), "/desk/system-status");
 		}
