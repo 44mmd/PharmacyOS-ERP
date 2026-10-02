@@ -2474,3 +2474,33 @@ msgstr "الطلب {0} ملغى في نظام الصيدلية."
 
 msgid "Could not reach PharmacyOS Cloud: {0}"
 msgstr "تعذّر الوصول إلى سحابة PharmacyOS: {0}"
+
+msgid "PharmacyOS Overview"
+msgstr "نظرة عامة"
+
+msgid "PharmacyOS Pharmacy"
+msgstr "الصيدلية"
+
+msgid "PharmacyOS Inventory"
+msgstr "المخزون"
+
+msgid "PharmacyOS Sales"
+msgstr "المبيعات"
+
+msgid "PharmacyOS Purchasing"
+msgstr "المشتريات"
+
+msgid "PharmacyOS Finance"
+msgstr "المالية"
+
+msgid "PharmacyOS Reports"
+msgstr "التقارير"
+
+msgid "PharmacyOS Team"
+msgstr "الفريق"
+
+msgid "PharmacyOS Intelligence"
+msgstr "التحليلات"
+
+msgid "PharmacyOS System"
+msgstr "النظام"

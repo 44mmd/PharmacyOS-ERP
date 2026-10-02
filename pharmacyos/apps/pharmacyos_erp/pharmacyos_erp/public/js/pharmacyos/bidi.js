@@ -17,6 +17,8 @@ pharmacyos.bidi.SELECTOR = [
 	".page-title .title-text",
 	".awesomplete li a",
 	".point-of-sale-app .item-name",
+	".icon-caption .icon-title", // version-16 desktop icons
+	".title-container .header-title", // version-16 sidebar header
 	".point-of-sale-app .item-display .item-name",
 ].join(",");
 

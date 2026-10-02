@@ -1341,7 +1341,8 @@ html[dir="rtl"] [dir="auto"]:is(
 		.like-disabled-input,
 		.page-title .title-text,
 		.awesomplete li a,
-		.point-of-sale-app .item-name
+		.point-of-sale-app .item-name,
+		.title-container .header-title
 	) {
 	text-align: var(--pos-tech-align);
 }
