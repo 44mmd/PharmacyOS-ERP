@@ -13,8 +13,11 @@ import frappe
 from frappe import _
 from frappe.utils import cint, flt
 
+from pharmacyos_erp.utils.arabic import build_search_key, normalize_arabic
+
 
 def validate_item(doc, method=None):
+	doc.pharma_search_key = compute_search_key(doc)
 	if not doc.get("pharma_is_medicine"):
 		return
 
@@ -32,6 +35,27 @@ def validate_item(doc, method=None):
 			indicator="orange",
 			alert=True,
 		)
+
+
+def compute_search_key(doc) -> str:
+	"""Normalised names, codes, barcodes and ingredients (Arabic and English) for tolerant search."""
+	ingredients = [
+		row.active_ingredient for row in doc.get("pharma_ingredients") or [] if row.active_ingredient
+	]
+	ingredient_ar = (
+		frappe.get_all("Active Ingredient", filters={"name": ["in", ingredients]}, pluck="ingredient_name_ar")
+		if ingredients
+		else []
+	)
+	return build_search_key(
+		doc.get("item_code") or doc.name,
+		doc.get("item_name"),
+		doc.get("pharma_name_ar"),
+		doc.get("pharma_generic_name"),
+		*ingredients,
+		*ingredient_ar,
+		*(row.barcode for row in doc.get("barcodes") or []),
+	)
 
 
 @frappe.whitelist(methods=["POST"])
@@ -128,3 +152,52 @@ def create_medicine(
 			).insert()
 
 	return item.name
+
+
+@frappe.whitelist()
+def search_medicines(query: str, limit: int = 20, medicines_only: int = 0) -> list[dict]:
+	"""Arabic-tolerant search across Arabic/English/generic names, SKU, barcode and ingredients.
+
+	An exact barcode match comes first (scanner input); then items whose normalised search key
+	contains the normalised query (أ/إ/آ → ا, ى → ي, ة → ه, harakat ignored). Uses the caller's
+	Item permissions.
+	"""
+	query = (query or "").strip()
+	if not query:
+		return []
+	limit = min(max(cint(limit), 1), 100)
+	fields = [
+		"name",
+		"item_name",
+		"pharma_name_ar",
+		"pharma_generic_name",
+		"pharma_strength",
+		"pharma_dosage_form",
+		"stock_uom",
+		"pharma_is_medicine",
+	]
+	filters = {"disabled": 0}
+	if cint(medicines_only):
+		filters["pharma_is_medicine"] = 1
+
+	results, seen = [], set()
+	barcode_item = frappe.db.get_value("Item Barcode", {"barcode": query}, "parent")
+	if barcode_item:
+		for row in frappe.get_list("Item", filters={**filters, "name": barcode_item}, fields=fields):
+			row["matched_barcode"] = query
+			results.append(row)
+			seen.add(row.name)
+
+	needle = normalize_arabic(query)
+	if needle:
+		for row in frappe.get_list(
+			"Item",
+			filters={**filters, "pharma_search_key": ["like", f"%{needle}%"]},
+			fields=fields,
+			order_by="item_name asc",
+			limit_page_length=limit,
+		):
+			if row.name not in seen:
+				results.append(row)
+				seen.add(row.name)
+	return results[:limit]

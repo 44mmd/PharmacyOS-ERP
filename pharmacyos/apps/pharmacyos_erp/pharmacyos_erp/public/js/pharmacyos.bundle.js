@@ -2,6 +2,7 @@
 import "./pharmacyos/core";
 import "./pharmacyos/money";
 import "./pharmacyos/ui";
+import "./pharmacyos/bidi";
 import "./pharmacyos/shell";
 import "./pharmacyos/about";
 import "./pharmacyos/medicine";

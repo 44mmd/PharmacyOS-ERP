@@ -1,0 +1,511 @@
+ Default Work In Progress Warehouse , افتراضي العمل في مخزن التقدم 
+"""Customer Provided Item"" cannot be Purchase Item also","""الأصناف المقدمة من الزبائن"" لا يمكن شرائها"
+"""Customer Provided Item"" cannot have Valuation Rate","""الأصناف المقدمة من الزبائن"" لا يمكن ان تحتوي على تكلفة"
+(G) Sum of Change in Stock Value,(ز) مجموع التغير في قيمة المخزون
+"<h3>Print Format Help</h3>\n<hr>\n<h4>Introduction</h4>\n<p>Print Formats are rendered on the server side using the Jinja Templating Language. All forms have access to the <code>doc</code> object which contains information about the document that is being formatted. You can also access common utilities via the <code>frappe</code> module.</p>\n<p>For styling, the Boostrap CSS framework is provided and you can enjoy the full range of classes.</p>\n<hr>\n<h4>References</h4>\n<ol>\n	<li><a href=""http://jinja.pocoo.org/docs/templates/"" target=""_blank"">Jinja Templating Language</a></li>\n	<li><a href=""http://getbootstrap.com"" target=""_blank"">Bootstrap CSS Framework</a></li>\n</ol>\n<hr>\n<h4>Example</h4>\n<pre><code>&lt;h3&gt;{{ doc.select_print_heading or ""Invoice"" }}&lt;/h3&gt;\n&lt;div class=""row""&gt;\n	&lt;div class=""col-md-3 text-right""&gt;Customer Name&lt;/div&gt;\n	&lt;div class=""col-md-9""&gt;{{ doc.customer_name }}&lt;/div&gt;\n&lt;/div&gt;\n&lt;div class=""row""&gt;\n	&lt;div class=""col-md-3 text-right""&gt;Date&lt;/div&gt;\n	&lt;div class=""col-md-9""&gt;{{ doc.get_formatted(""invoice_date"") }}&lt;/div&gt;\n&lt;/div&gt;\n&lt;table class=""table table-bordered""&gt;\n	&lt;tbody&gt;\n		&lt;tr&gt;\n			&lt;th&gt;Sr&lt;/th&gt;\n			&lt;th&gt;Item Name&lt;/th&gt;\n			&lt;th&gt;Description&lt;/th&gt;\n			&lt;th class=""text-right""&gt;Qty&lt;/th&gt;\n			&lt;th class=""text-right""&gt;Rate&lt;/th&gt;\n			&lt;th class=""text-right""&gt;Amount&lt;/th&gt;\n		&lt;/tr&gt;\n		{%- for row in doc.items -%}\n		&lt;tr&gt;\n			&lt;td style=""width: 3%;""&gt;{{ row.idx }}&lt;/td&gt;\n			&lt;td style=""width: 20%;""&gt;\n				{{ row.item_name }}\n				{% if row.item_code != row.item_name -%}\n				&lt;br&gt;Item Code: {{ row.item_code}}\n				{%- endif %}\n			&lt;/td&gt;\n			&lt;td style=""width: 37%;""&gt;\n				&lt;div style=""border: 0px;""&gt;{{ row.description }}&lt;/div&gt;&lt;/td&gt;\n			&lt;td style=""width: 10%; text-align: right;""&gt;{{ row.qty }} {{ row.uom or row.stock_uom }}&lt;/td&gt;\n			&lt;td style=""width: 15%; text-align: right;""&gt;{{\n				row.get_formatted(""rate"", doc) }}&lt;/td&gt;\n			&lt;td style=""width: 15%; text-align: right;""&gt;{{\n				row.get_formatted(""amount"", doc) }}&lt;/td&gt;\n		&lt;/tr&gt;\n		{%- endfor -%}\n	&lt;/tbody&gt;\n&lt;/table&gt;</code></pre>\n<hr>\n<h4>Common Functions</h4>\n<table class=""table table-bordered"">\n	<tbody>\n		<tr>\n			<td style=""width: 30%;""><code>doc.get_formatted(""[fieldname]"", [parent_doc])</code></td>\n			<td>Get document value formatted as Date, Currency, etc. Pass parent <code>doc</code> for currency type fields.</td>\n		</tr>\n		<tr>\n			<td style=""width: 30%;""><code>frappe.db.get_value(""[doctype]"", ""[name]"", ""fieldname"")</code></td>\n			<td>Get value from another document.</td>\n		</tr>\n	</tbody>\n</table>\n","<h3>مساعدة تنسيق الطباعة</h3>\n<hr>\n<h4>مقدمة</h4>\n<p>يتم عرض تنسيقات الطباعة على جانب الخادم باستخدام لغة قوالب Jinja. جميع النماذج لديها إمكانية الوصول إلى كائن <code>doc</code> الذي يحتوي على معلومات حول المستند الذي يتم تنسيقه. يمكنك أيضًا الوصول إلى الأدوات المساعدة الشائعة عبر وحدة <code>frappe</code>.</p>\n<p>للتنسيق، يتم توفير إطار عمل Bootstrap CSS ويمكنك الاستفادة من مجموعة الفئات الكاملة.</p>\n<hr>\n<h4>المراجع</h4>\n<ol>\n	<li><a href=""http://jinja.pocoo.org/docs/templates/"" target=""_blank"">لغة قوالب Jinja</a></li>\n	<li><a href=""http://getbootstrap.com"" target=""_blank"">إطار عمل Bootstrap CSS</a></li>\n</ol>\n<hr>\n<h4>مثال</h4>\n<pre><code>&lt;h3&gt;{{ doc.select_print_heading or ""فاتورة"" }}&lt;/h3&gt;\n&lt;div class=""row""&gt;\n	&lt;div class=""col-md-3 text-right""&gt;اسم الزبون&lt;/div&gt;\n	&lt;div class=""col-md-9""&gt;{{ doc.customer_name }}&lt;/div&gt;\n&lt;/div&gt;\n&lt;div class=""row""&gt;\n	&lt;div class=""col-md-3 text-right""&gt;التاريخ&lt;/div&gt;\n	&lt;div class=""col-md-9""&gt;{{ doc.get_formatted(""invoice_date"") }}&lt;/div&gt;\n&lt;/div&gt;\n&lt;table class=""table table-bordered""&gt;\n	&lt;tbody&gt;\n		&lt;tr&gt;\n			&lt;th&gt;م&lt;/th&gt;\n			&lt;th&gt;اسم السلعة&lt;/th&gt;\n			&lt;th&gt;الوصف&lt;/th&gt;\n			&lt;th class=""text-right""&gt;الكمية&lt;/th&gt;\n			&lt;th class=""text-right""&gt;السعر&lt;/th&gt;\n			&lt;th class=""text-right""&gt;المبلغ&lt;/th&gt;\n		&lt;/tr&gt;\n		{%- for row in doc.items -%}\n		&lt;tr&gt;\n			&lt;td style=""width: 3%;""&gt;{{ row.idx }}&lt;/td&gt;\n			&lt;td style=""width: 20%;""&gt;\n				{{ row.item_name }}\n				{% if row.item_code != row.item_name -%}\n				&lt;br&gt;رمز السلعة: {{ row.item_code}}\n				{%- endif %}\n			&lt;/td&gt;\n			&lt;td style=""width: 37%;""&gt;\n				&lt;div style=""border: 0px;""&gt;{{ row.description }}&lt;/div&gt;&lt;/td&gt;\n			&lt;td style=""width: 10%; text-align: right;""&gt;{{ row.qty }} {{ row.uom or row.stock_uom }}&lt;/td&gt;\n			&lt;td style=""width: 15%; text-align: right;""&gt;{{\n				row.get_formatted(""rate"", doc) }}&lt;/td&gt;\n			&lt;td style=""width: 15%; text-align: right;""&gt;{{\n				row.get_formatted(""amount"", doc) }}&lt;/td&gt;\n		&lt;/tr&gt;\n		{%- endfor -%}\n	&lt;/tbody&gt;\n&lt;/table&gt;</code></pre>\n<hr>\n<h4>الدوال الشائعة</h4>\n<table class=""table table-bordered"">\n	<tbody>\n		<tr>\n			<td style=""width: 30%;""><code>doc.get_formatted(""[fieldname]"", [parent_doc])</code></td>\n			<td>الحصول على قيمة المستند منسقة كتاريخ أو عملة وما إلى ذلك. مرر المستند الأصلي <code>doc</code> لحقول نوع العملة.</td>\n		</tr>\n		<tr>\n			<td style=""width: 30%;""><code>frappe.db.get_value(""[doctype]"", ""[name]"", ""fieldname"")</code></td>\n			<td>الحصول على قيمة من مستند آخر.</td>\n		</tr>\n	</tbody>\n</table>\n"
+"<h4>Email Reply Example</h4>\n\n<pre>Order Overdue\n\nTransaction {{ name }} has exceeded Due Date. Please take necessary action.\n\nDetails\n\n- Customer: {{ customer }}\n- Amount: {{ grand_total }}\n</pre>\n\n<h4>How to get fieldnames</h4>\n\n<p>The fieldnames you can use in your email template are the fields in the document from which you are sending the email. You can find out the fields of any documents via Setup &gt; Customize Form View and selecting the document type (e.g. Sales Invoice)</p>\n\n<h4>Templating</h4>\n\n<p>Templates are compiled using the Jinja Templating Language. To learn more about Jinja, <a class=""strong"" href=""http://jinja.pocoo.org/docs/dev/templates/"">read this documentation.</a></p>\n","<h4>مثال على رد البريد الإلكتروني</h4>\n\n<pre>طلب متأخر\n\nالمعاملة {{ name }} تجاوزت بسبب تاريخ. يرجى اتخاذ الإجراء اللازم.\n\nالتفاصيل\n\n- الزبون: {{ customer }}\n- المبلغ: {{ grand_total }}\n</pre>\n\n<h4>كيفية الحصول على أسماء الحقول</h4>\n\n<p>أسماء الحقول التي يمكنك استخدامها في قالب البريد الإلكتروني هي الحقول الموجودة في المستند الذي ترسل منه البريد الإلكتروني. يمكنك معرفة حقول أي مستندات عبر الإعدادات &gt; عرض تخصيص النموذج واختيار نوع الوثيقة (مثل فاتورة مبيعات)</p>\n\n<h4>القوالب</h4>\n\n<p>يتم تجميع القوالب باستخدام لغة قوالب جينجا. لمعرفة المزيد عن جينجا، <a class=""strong"" href=""http://jinja.pocoo.org/docs/dev/templates/"">اقرأ هذه الوثائق.</a></p>\n"
+<h5>Message Example</h5>\n\n<pre>&lt;h3&gt;Order Overdue&lt;/h3&gt;\n\n&lt;p&gt;Transaction {{ doc.name }} has exceeded Due Date. Please take necessary action.&lt;/p&gt;\n\n&lt;!-- show last comment --&gt;\n{% if comments %}\nLast comment: {{ comments[-1].comment }} by {{ comments[-1].by }}\n{% endif %}\n\n&lt;h4&gt;Details&lt;/h4&gt;\n\n&lt;ul&gt;\n&lt;li&gt;Customer: {{ doc.customer }}\n&lt;li&gt;Amount: {{ doc.grand_total }}\n&lt;/ul&gt;\n</pre>,<h5>مثال الرسالة</h5>\n\n<pre>&lt;h3&gt;طلب متأخر&lt;/h3&gt;\n\n&lt;p&gt;المعاملة {{ doc.name }} تجاوزت تاريخ الاستحقاق. يرجى اتخاذ الإجراء اللازم.&lt;/p&gt;\n\n&lt;!-- عرض آخر تعليق --&gt;\n{% if comments %}\nآخر تعليق: {{ comments[-1].comment }} بواسطة {{ comments[-1].by }}\n{% endif %}\n\n&lt;h4&gt;التفاصيل&lt;/h4&gt;\n\n&lt;ul&gt;\n&lt;li&gt;الزبون: {{ doc.customer }}\n&lt;li&gt;المبلغ: {{ doc.grand_total }}\n&lt;/ul&gt;\n</pre>
+Accepted Warehouse,مخزن مقبول
+Actual Batch Quantity,كمية الوجبة الفعلية
+Actual Qty in Warehouse,الكمية الفعلية في المخزن
+Add Customers,إضافة الزبائن
+Add the rest of your organization as your users. You can also add invite Customers to your portal by adding them from Contacts,أضف بقية أفراد مؤسستك كمستخدمين. يمكنك أيضا إضافة دعوة الزبائن إلى بوابتك عن طريق إضافتهم من جهات الاتصال
+Against Customer Order {0},مقابل طلب الزبون {0}
+Against Stock Entry,ضد دخول المخزون
+All Customer Contact,كافة جهات اتصال الزبون
+All Customer Groups,جميع مجموعات الزبائن
+"Any one of following filters required: warehouse, Item Code, Item Group",يلزم استخدام أحد عوامل التصفية التالية: المخزن، رمز الصنف، مجموعة الأصناف
+"As there are sufficient Sub Assembly Items, Work Order is not required for Warehouse {0}.",نظرًا لوجود عناصر تجميع فرعية كافية، فإن أمر العمل غير مطلوب للمخزن {0}.
+"As there are sufficient raw materials, Material Request is not required for Warehouse {0}.",نظرًا لوجود مواد خام كافية ، فإن طلب المواد ليس مطلوبًا للمخزن {0}.
+At Row #{0}: The picked quantity {1} for the item {2} is greater than available stock {3} for the batch {4} in the warehouse {5}. Please restock the item.,في الصف #{0}: الكمية المختارة {1} للصنف {2} أكبر من المخزون المتاح {3} للوجبة {4} في المخزن {5}. يرجى إعادة تخزين الصنف.
+At Row #{0}: The picked quantity {1} for the item {2} is greater than available stock {3} in the warehouse {4}.,في الصف #{0}: الكمية المختارة {1} للصنف {2} أكبر من المخزون المتاح {3} في المخزن {4}.
+At row {0}: Batch No is mandatory for Item {1},في الصف {0}: رقم الوجبة إلزامي للعنصر {1}
+At row {0}: Qty is mandatory for the batch {1},في الصف {0}: الكمية إلزامية للوجبة {1}
+Auto Opt In (For all customers),الاشتراك التلقائي (لجميع الزبائن)
+Automatically Create New Batch,إنشاء وجبة جديدة تلقائيا
+Available Batch Qty at From Warehouse,متوفر (كمية وجبة) عند (من المخزن)
+Available Batch Qty at Warehouse,الكمية المتاحة من الوجبة فى المخزن
+Available Batch Report,تقرير الوجبة المتاحة
+Available Qty at Source Warehouse,الكمية المتاحة في مخزن المصدر
+Available Qty at Target Warehouse,الكمية المتوفرة في مخزن تارجت
+Available Qty at WIP Warehouse,الكمية المتوفرة في مخزن ويب
+Available Qty at Warehouse,الكمية المتاحة في مخزن
+BOM Update Batch,وجبة تحديث قائمة المواد
+Backflush Materials From WIP Warehouse,مواد التنظيف العكسي من مخزن العمل قيد التنفيذ
+Backflush Raw Materials From Work-in-Progress Warehouse,المواد الخام Backflush من مخزن في التقدم في العمل
+Batch,الوجبات
+Batch Description,وصف الوجبة
+Batch Details,تفاصيل الوجبة
+Batch Expiry Date,تاريخ انتهاء صلاحية الوجبة
+Batch ID,هوية الوجبة
+Batch Item Expiry Status,حالة انتهاء صلاحية الوجبة الصنف
+Batch No,رقم وجبة
+Batch No is mandatory,رقم الوجبة إلزامي
+Batch No {0} is linked with Item {1} which has serial no. Please scan serial no instead.,رقم الوجبة {0} مرتبط بالعنصر {1} الذي يحمل رقمًا تسلسليًا. يرجى مسح الرقم التسلسلي بدلاً من ذلك.
+"Batch No {0} is not present in the original {1} {2}, hence you can't return it against the {1} {2}",رقم الوجبة {0} غير موجود في الوجبة الأصلية {1} {2}، لذا لا يمكنك إرجاعه مقابل الوجبة {1} {2}
+Batch Nos,أرقام الوجبات
+Batch Nos are created successfully,تم إنشاء أرقام الوجبات بنجاح
+Batch Not Available for Return,الوجبة غير متاحة للإرجاع
+Batch Number Series,سلسلة رقم الوجبة
+Batch Qty,كمية الوجبة
+Batch Qty updated successfully,تم تحديث كمية الوجبة بنجاح
+Batch Qty updated to {0},تم تحديث كمية الوجبة إلى {0}
+Batch Quantity,كمية الوجبة
+Batch Size,حجم الوجبة
+Batch UOM,وجبة UOM
+Batch and Serial No,رقم الوجبة والرقم التسلسلي
+Batch {0} and Warehouse,الوجبة {0} والمخزن
+Batch {0} is not available in warehouse {1},الوجبة {0} غير متوفرة في المخزن {1}
+Batch {0} of Item {1} has expired.,الوجبة {0} للعنصر {1} انتهت صلاحيتها\n<br>\nBatch {0} of Item {1} has expired.
+Batch {0} of Item {1} is disabled.,تم تعطيل الوجبة {0} من الصنف {1}.
+Batch-Wise Balance History,وجبة الحكيم التاريخ الرصيد
+"Can not filter based on Customer, if grouped by Customer",لا يمكن التصفية بناءً على الزبون ، إذا تم تجميعه بواسطة الزبون
+Cannot change Attributes after stock transaction. Make a new Item and transfer stock to the new Item,لا يمكن تغيير سمات بعد معاملة المخزون. جعل عنصر جديد ونقل المخزون إلى البند الجديد
+"Cannot enable Item-wise Inventory Account, as there are existing Stock Ledger Entries for the company {0} with Warehouse-wise Inventory Account. Please cancel the stock transactions first and try again.",لا يمكن تفعيل حساب المخزون حسب الصنف، لوجود قيود دفترية للمخزون للشركة {0} مع حساب مخزون حسب المخزن. يرجى إلغاء معاملات المخزون أولاً ثم المحاولة مرة أخرى.
+Cannot find Item or Warehouse with this Barcode,لا يمكن العثور على المنتج أو المخزن باستخدام هذا الرمز الشريطي
+Change in Stock Value,التغير في قيمة المخزون
+Changing Customer Group for the selected Customer is not allowed.,لا يسمح بتغيير مجموعة الزبائن للزبون المحدد.
+Check Availability in Warehouse,تحقق من التوفر في المخزن
+Child warehouse exists for this warehouse. You can not delete this warehouse.,مخزن فرعي موجود لهذا المخزن. لا يمكنك حذف هذا المخزن.\n<br>\nChild warehouse exists for this warehouse. You can not delete this warehouse.
+Classification of Customers by region,تصنيف الزبائن حسب المنطقة
+Click this button if you encounter a negative stock error for a serial or batch item. The system will fetch the available serials or batches automatically.,انقر على هذا الزر إذا واجهت خطأً في المخزون السلبي لعنصر ذي رقم تسلسلي أو وجبة معينة. سيقوم النظام بجلب الأرقام التسلسلية أو الوجبات المتاحة تلقائيًا.
+Company which internal customer represents,الشركة التي يمثلها الزبون الداخلي
+Company which internal customer represents.,الشركة التي يمثلها الزبون الداخلي.
+Consider Rejected Warehouses,ضع في اعتبارك المخازن المرفوضة
+Control Historical Stock Transactions,مراقبة معاملات المخزون التاريخية
+Could not auto create Customer due to the following missing mandatory field(s):,تعذر إنشاء الزبون تلقائيًا بسبب الحقول الإلزامية التالية المفقودة:
+Create Job Card based on Batch Size,إنشاء بطاقة عمل بناءً على حجم الوجبة
+Create New Customer,إنشاء زبون جديد
+Credit limit has been crossed for customer {0} ({1}/{2}),تم تجاوز حد الائتمان للزبون {0} ({1} / {2})
+Credit limit reached for customer {0},تم بلوغ حد الائتمان للزبون {0}
+Current Serial / Batch Bundle,حزمة الأرقام التسلسلية/الوجبات الحالية
+Customer,الزبون
+Customer / Item / Item Group,الزبون / المنتج / مجموعة المنتجات
+Customer / Lead Address,الزبون/ عنوان الزبون المحتمل
+Customer > Customer Group > Territory,الزبون > مجموعة الزبائن > المنطقة
+Customer Acquisition and Loyalty,اكتساب الزبائن و الولاء
+Customer Address,عنوان الزبون
+Customer Addresses And Contacts,عناوين الزبائن وجهات الإتصال
+Customer Advances,تقدم الزبائن
+Customer Code,رمز الزبون
+Customer Contact,معلومات اتصال الزبون
+Customer Contact Email,البريد الالكتروني للزبون
+Customer Credit Balance,رصيد الزبون
+Customer Credit Limit,حد ائتمان الزبون
+Customer Currency,عملة الزبون
+Customer Defaults,حالات تخلف الزبائن عن السداد
+Customer Details,تفاصيل الزبون
+Customer Feedback,ملاحظات الزبون
+Customer Group,مجموعة الزبون
+Customer Group Item,عنصر مجموعة الزبائن
+Customer Group Name,أسم فئة الزبون
+Customer Groups,مجموعات الزبون
+Customer Item,منتج الزبون
+Customer Items,منتجات الزبون
+Customer LPO,الزبون لبو
+Customer LPO No.,الزبون لبو رقم
+Customer Mobile No,رقم محمول الزبون
+Customer Name,اسم الزبون
+Customer Naming By,تسمية الزبائن بواسطة
+Customer Number,رقم الزبون
+Customer Number At Supplier,رقم الزبون لدى المورد
+Customer Numbers,أرقام الزبائن
+Customer PO,PO الزبائن
+Customer PO Details,تفاصيل طلب شراء الزبون
+Customer Portal Users,مستخدمو بوابة الزبائن
+Customer Primary Address,عنوان الزبون الرئيسي
+Customer Primary Contact,جهة الاتصال الرئيسية للزبون
+Customer Provided,الزبائن المقدمة
+Customer Provided Item Cost,تكلفة السلعة المقدمة من الزبون
+Customer Service,خدمة الزبائن
+Customer Service Representative,ممثل خدمة الزبائن
+Customer Territory,منطقة الزبائن
+Customer Type,نوع الزبون
+Customer Warehouse,مخزن الزبائن
+Customer Warehouse (Optional),مخزن الزبون (اختياري)
+Customer Warehouse {0} does not belong to Customer {1}.,مخزن الزبون {0} لا ينتمي إلى الزبون {1}.
+Customer contact updated successfully.,تم تحديث جهة اتصال الزبون بنجاح.
+Customer is required,الزبون مطلوب
+Customer isn't enrolled in any Loyalty Program,الزبون غير مسجل في أي برنامج ولاء
+Customer or Item,زبون أو بند
+Customer {0} does not belong to project {1},الزبون {0} لا ينتمي الى المشروع {1}\n<br>\nCustomer {0} does not belong to project {1}
+Customer's Item Code,كود صنف الزبون
+Customer's Purchase Order Date,تاريخ امر الشراء الزبون
+Customer's Vendor,مورد الزبون
+Customer-wise Item Price,سعر البند الزبائن الحكيم
+Customer/Lead Name,اسم الزبون / الزبون المتوقع
+Customers,الزبائن
+Customers not selected.,الزبائن لم يتم اختيارهم.
+Default Customer Group,المجموعة الافتراضية الزبائن
+Default In-Transit Warehouse,مخزن النقل الافتراضي
+Default Scrap Warehouse,مخزن الخردة الافتراضي
+Default Source Warehouse,المخزن المصدر الافتراضي
+Default Stock UOM,افتراضي وحدة قياس المخزون
+Default Stock Valuation Method,طريقة التقييم الافتراضية للمخزون
+Default Warehouse for Sales Return,المخزن الافتراضي لعائد المبيعات
+Default settings for your stock-related transactions,الإعدادات الافتراضية لمعاملاتك المتعلقة بالمخزون
+Delivery Warehouse,مخزن تسليم
+Different 'Source Warehouse' and 'Target Warehouse' can be set for each row.,"يمكن تحديد ""مخزن المصدر"" و""مخزن الهدف"" بشكل مختلف لكل صف."
+Disabled Warehouse {0} cannot be used for this transaction.,لا يمكن استخدام المخزن المعطل {0} لهذه المعاملة.
+Do you want to notify all the customers by email?,هل تريد أن تخطر جميع الزبائن عن طريق البريد الإلكتروني؟
+Duplicate Customer Group,مجموعة زبائن مكررة
+Duplicate customer group found in the customer group table,تم العثور على مجموعة زبائن مكررة في جدول مجموعات الزبائن
+Enter customer's email,أدخل البريد الإلكتروني الخاص بالزبون
+Enter customer's phone number,أدخل رقم هاتف الزبون
+"Example: ABCD.#####. If series is set and Batch No is not mentioned in transactions, then automatic batch number will be created based on this series. If you always want to explicitly mention Batch No for this item, leave this blank. Note: this setting will take priority over the Naming Series Prefix in Stock Settings.",مثال: ABCD. #####. إذا تم ضبط المسلسل ولم يتم ذكر رقم الوجبة في المعاملات ، فسيتم إنشاء رقم الوجبة تلقائيًا استنادًا إلى هذه السلسلة. إذا كنت تريد دائمًا الإشارة صراحة إلى Batch No لهذا العنصر ، فاترك هذا فارغًا. ملاحظة: سيأخذ هذا الإعداد الأولوية على بادئة Naming Series في إعدادات المخزون.
+Existing Customer,زبون حالي
+Expected Stock Value,القيمة المتوقعة للمخزون
+Expired Batches,وجبات منتهية الصلاحية
+Fetch Customers,جلب الزبائن
+Fetch Items from Warehouse,جلب العناصر من المخزن
+Field {0} on document {1} is neither a Mobile number field nor a Customer or User link,الحقل {0} في المستند {1} ليس حقل رقم جوال ولا رابط زبون أو مستخدم
+Finished Good Serial / Batch,المنتج النهائي رقم تسلسلي / وجبة
+Finished Goods Warehouse,مخزن البضائع الجاهزة
+"For 'Product Bundle' items, Warehouse, Serial No and Batch No will be considered from the 'Packing List' table. If Warehouse and Batch No are same for all packing items for any 'Product Bundle' item, those values can be entered in the main Item table, values will be copied to 'Packing List' table.",لبنود حزمة المنتج والمخزن والرقم المتسلسل ورقم الوجبة ستأخذ بعين الاعتبار من جدول قائمة التغليف. اذا كان للمخزن ورقم الوجبة نفس  البند من بنود التغليف لأي بند من حزمة المنتج. هذه القيم يمكن ادخالها في جدول البند الرئيسي. والقيم سيتم نسخها الى جدول قائمة التغليف.
+For All Stock Asset Accounts,لجميع حسابات أصول المخزون
+For Warehouse,لمخزن
+"For projected and forecast quantities, the system will consider all child warehouses under the selected parent warehouse.",بالنسبة للكميات المتوقعة والمتنبأ بها، سيأخذ النظام في الاعتبار جميع المخازن الفرعية التابعة للمخزن الرئيسي المحدد.
+"For the convenience of customers, these codes can be used in print formats like Invoices and Delivery Notes",لتسهيل الأمر على الزبائن، يمكن استخدام هذه الرموز في نماذج الطباعة مثل الفواتير وإشعارات التسليم.
+"For the {0}, no stock is available for the return in the warehouse {1}.",بالنسبة لـ {0}، لا يوجد مخزون متاح للإرجاع في المخزن {1}.
+From Customer,من الزبائن
+Get Customer Group Details,احصل على تفاصيل مجموعة الزبائن
+Get Stock,احصل على المخزون
+Group By Customer,المجموعة حسب الزبون
+Group Warehouses cannot be used in transactions. Please change the value of {0},لا يمكن استخدام مخازن المجموعة في المعاملات. يرجى تغيير قيمة {0}
+Group node warehouse is not allowed to select for transactions,لا يسمح مخزن عقدة مجموعة لتحديد للمعاملات
+Has Batch No,ووجبة واحدة لا
+"If Auto Opt In is checked, then the customers will be automatically linked with the concerned Loyalty Program (on save)",في حال تم تحديد خيار الاشتراك التلقائي، سيتم ربط الزبائن تلقائيًا ببرنامج الولاء المعني (عند الحفظ).
+"If blank, parent Warehouse Account or company default will be considered in transactions",إذا كان فارغًا ، فسيتم اعتبار حساب المخزن الأصلي أو حساب الشركة الافتراضي في المعاملات
+If different than customer address,إذا كان مختلفا عن عنوان الزبون
+If enabled then system won't override the picked qty / batches / serial numbers / warehouse.,في حال تفعيل هذا الخيار، لن يقوم النظام بتجاوز الكمية المختارة / الوجبات / الأرقام التسلسلية / المخزن.
+"If enabled, do not update serial / batch values in the stock transactions on creation of auto Serial \n / Batch Bundle. ",في حالة التمكين، لا تقم بتحديث قيم الرقم التسلسلي / الوجبة في معاملات المخزون عند إنشاء حزمة الرقم التسلسلي التلقائي \n / حزمة الوجبة. 
+"If enabled, the source and target warehouse in the Material Transfer Stock Entry must be different else an error will be thrown. If inventory dimensions are present, same source and target warehouse can be allowed but atleast any one of the inventory dimension fields must be different.",في حال تفعيل هذه الخاصية، يجب أن يختلف مخزن المصدر عن مخزن الوجهة في إدخال مخزون نقل المواد، وإلا سيظهر خطأ. أما إذا كانت أبعاد المخزون موجودة، فيمكن السماح باستخدام نفس مخزن المصدر ومخزن الوجهة، ولكن يجب أن يختلف حقل واحد على الأقل من حقول أبعاد المخزون.
+"If enabled, the system will use the inventory account set in the Item Master or Item Group or Brand. Otherwise, it will use the inventory account set in the Warehouse.",في حال تفعيل هذا الخيار، سيستخدم النظام حساب المخزون المُحدد في بيانات الصنف الرئيسية أو مجموعة الأصناف أو العلامة التجارية. وإلا، فسيستخدم حساب المخزون المُحدد في المخزن.
+"If enabled, the system will use the moving average valuation method to calculate the valuation rate for the batched items and will not consider the individual batch-wise incoming rate.",في حالة التمكين، سيستخدم النظام طريقة التقييم بالمتوسط المتحرك لحساب معدل التقييم للعناصر المجمعة ولن يأخذ في الاعتبار المعدل الوارد لكل وجبة على حدة.
+"If mentioned, the system will allow only the users with this Role to create or modify any stock transaction earlier than the latest stock transaction for a specific item and warehouse. If set as blank, it allows all users to create/edit back-dated transactions.",في حال تحديد هذا الخيار، سيسمح النظام فقط للمستخدمين الحاصلين على هذا الدور بإنشاء أو تعديل أي معاملة مخزون سابقة لأحدث معاملة مخزون لنفس الصنف والمخزن. أما في حال تركه فارغًا، فسيسمح لجميع المستخدمين بإنشاء/تعديل المعاملات بأثر رجعي.
+"If the BOM results in Scrap material, the Scrap Warehouse needs to be selected.",إذا نتج عن قائمة المواد مواد خردة، فيجب تحديد مخزن الخردة.
+"If the reorder check is set at the Group warehouse level, the available quantity becomes the sum of the projected quantities of all its child warehouses.",إذا تم تعيين فحص إعادة الطلب على مستوى مخزن المجموعة، فإن الكمية المتاحة تصبح مجموع الكميات المتوقعة لجميع المخازن الفرعية التابعة لها.
+"If yes, then this warehouse will be used to store rejected materials",إذا كانت الإجابة بنعم، فسيتم استخدام هذا المخزن لتخزين المواد المرفوضة
+In Transit Warehouse,مخزن النقل
+"In the case of multi-tier program, Customers will be auto assigned to the concerned tier as per their spent",في حالة البرنامج متعدد المستويات، سيتم تعيين الزبائن تلقائيًا إلى المستوى المعني وفقًا لإنفاقهم
+"In this section, you can define Company-wide transaction-related defaults for this Item. Eg. Default Warehouse, Default Price List, Supplier, etc.",في هذا القسم، يمكنك تحديد الإعدادات الافتراضية المتعلقة بالمعاملات على مستوى الشركة لهذا العنصر. على سبيل المثال: المخزن الافتراضي، وقائمة الأسعار الافتراضية، والمورد الافتراضي، وما إلى ذلك.
+Inactive Customers,الزبائن الغير النشطين
+Include Expired Batches,يشمل الوجبات منتهية الصلاحية
+Incorrect Batch Consumed,تم استهلاك وجبة غير صحيحة
+Incorrect Check in (group) Warehouse for Reorder,تسجيل دخول غير صحيح (مجموعة) إلى مخزن إعادة الطلب
+Incorrect Serial and Batch Bundle,رقم تسلسلي وحزمة وجبات غير صحيحين
+Incorrect Warehouse,مخزن غير صحيح
+Insufficient Stock for Batch,المخزون غير كافٍ للوجبة
+Invalid Blanket Order for the selected Customer and Item,طلب فارغ غير صالح للزبون والعنصر المحدد
+Invalid Serial and Batch Bundle,رقم تسلسلي وحزمة وجبات غير صالحة
+Invalid Source and Target Warehouse,مصدر ومخزن هدف غير صالحين
+Invalid Warehouse,مخزن غير صالح
+Is Customer Provided Item,هل الزبون يقدم الصنف
+Is Group Warehouse,مخزن المجموعة
+Is Internal Customer,هو زبون داخلي
+Is Rejected Warehouse,مخزن مرفوض
+Item Code: {0} is not available under warehouse {1}.,رمز العنصر: {0} غير متوفر ضمن المخزن {1}.
+Item Customer Detail,تفاصيل الزبون لهذا البند
+"Item Price appears multiple times based on Price List, Supplier/Customer, Currency, Item, Batch, UOM, Qty, and Dates.",يظهر سعر الصنف عدة مرات بناءً على قائمة الأسعار، والمورد/الزبون، والعملة، والصنف، والوجبة، ووحدة القياس، والكمية، والتواريخ.
+Item Warehouse based reposting has been enabled.,تم تفعيل إعادة النشر بناءً على مخزن العناصر.
+Item and Warehouse,المنتج والمخزن
+Item is removed since no serial / batch no selected.,تمت إزالة العنصر لعدم تحديد رقم تسلسلي/رقم وجبة.
+Items under this warehouse will be suggested,وسيتم اقتراح العناصر الموجودة تحت هذا المخزن
+Job Worker Warehouse,مخزن عامل التوظيف
+Last Scanned Warehouse,آخر مخزن تم مسحه ضوئيًا
+Last Stock Transaction for item {0} under warehouse {1} was on {2}.,كانت آخر معاملة مخزون للبند {0} تحت المخزن {1} في {2}.
+Link with Customer,التواصل مع الزبون
+Linking to Customer Failed. Please try again.,فشل الاتصال بالزبون. يرجى المحاولة مرة أخرى.
+Make Serial No / Batch from Work Order,إنشاء رقم تسلسلي / وجبة من أمر العمل
+Make Stock Entry,جعل دخول المخزون
+Material from Customer,مواد من الزبون
+Maximum Samples - {0} can be retained for Batch {1} and Item {2}.,الحد الأقصى للعينات - {0} يمكن الاحتفاظ بالوجبة {1} والبند {2}.
+Maximum Samples - {0} have already been retained for Batch {1} and Item {2} in Batch {3}.,الحد الأقصى للعينات - {0} تم الاحتفاظ به مسبقا للوجبة {1} و العنصر {2} في الوجبة {3}.
+Name of the Document Type (DocType) you want this field to be linked to. e.g. Customer,اسم نوع الوثيقة (DOCTYPE) تريد هذا الحقل لتكون مرتبطة. على سبيل المثال الزبائن
+New Batch ID (Optional),معرف الوجبة الجديد (اختياري)
+New Batch Qty,جديد وجبة الكمية
+New Customers,الزبائن الجدد
+New Serial No cannot have Warehouse. Warehouse must be set by Stock Entry or Purchase Receipt,المسلسل الجديد غير ممكن للمخزن . يجب ان يكون المخزن مجهز من حركة المخزون او المشتريات المستلمة
+No Customers found with selected options.,لم يتم العثور على زبائن بالخيارات المحددة.
+No Serial / Batches are available for return,لا تتوفر أرقام تسلسلية/وجبات للإرجاع
+No accounting entries for the following warehouses,لا القيود المحاسبية للمخازن التالية
+No available quantity to reserve for item {0} in warehouse {1},لا توجد كمية متاحة للحجز للصنف {0} في المخزن {1}
+No billing email found for customer: {0},لم يتم العثور على بريد إلكتروني للفواتير خاص بالزبون: {0}
+No difference found for stock account {0},لم يتم العثور على أي فرق في حساب المخزون {0}
+No primary email found for customer: {0},لم يتم العثور على بريد إلكتروني أساسي للزبون: {0}
+No reserved stock to unreserve.,لا توجد مخزون محجوزة لإلغاء حجزها.
+No stock transactions can be created or modified before this date.,لا يمكن إنشاء أو تعديل أي معاملات مخزون قبل هذا التاريخ.
+Non stock items,البنود غير المخزون
+Not allowed to update stock transactions older than {0},غير مسموح بتحديث معاملات المخزون الأقدم من {0}\n<br>\nNot allowed to update stock transactions older than {0}
+Not in stock,ليس في المخزون
+Notification: customer {0} has no Mobile number set,إشعار: الزبون {0} ليس لديه رقم جوال مُسجل
+Notify Customers via Email,إعلام الزبائن عبر البريد الإلكتروني
+Notify customer and agent via email on the day of the appointment.,إخطار الزبون والوكيل عبر البريد الإلكتروني في يوم الموعد.
+"On submission of the stock transaction, system will auto create the Serial and Batch Bundle based on the Serial No / Batch fields.",عند تقديم معاملة المخزون، سيقوم النظام تلقائيًا بإنشاء حزمة الرقم التسلسلي وحزمة الوجبة بناءً على حقول الرقم التسلسلي / الوجبة.
+Only show Customer of these Customer Groups,أظهر فقط زبون مجموعات الزبائن هذه
+POS Customer Group,مجموعة زبائن نقطة البيع
+Parent Batch,وجبة الأم
+Parent Customer Group,مجموعة زبائن أولياء الأمور
+Parent Warehouse,المخزن الأصل
+Partial Stock Reservation,حجز جزئي للمخزون
+Pick Serial / Batch,اختر الرقم التسلسلي / الوجبة
+Pick Serial / Batch Based On,اختر الرقم التسلسلي / الوجبة بناءً على
+Pick Serial / Batch No,اختر الرقم التسلسلي / رقم الوجبة
+Please Select a Customer,الرجاء تحديد زبون
+Please create Customer from Lead {0}.,الرجاء إنشاء زبون من الزبون المحتمل {0}.
+Please enter Item Code to get Batch Number,الرجاء إدخال رمز العنصر للحصول على رقم الوجبة\n<br>\nPlease enter Item Code to get Batch Number
+Please enter Item Code to get batch no,الرجاء إدخال كود البند للحصول على رقم الوجبة
+Please enter Warehouse and Date,الرجاء إدخال المخزن والتاريخ
+Please select Customer first,يرجى اختيار الزبون أولا
+Please select Serial/Batch Nos to reserve or change Reservation Based On to Qty.,يرجى تحديد الأرقام التسلسلية/أرقام الوجبات للحجز أو تغيير الحجز بناءً على الكمية.
+Please select Stock Asset Account,الرجاء تحديد حساب أصول المخزون
+Please select a Customer,يرجى تحديد الزبون
+Please select a Warehouse,الرجاء اختيار مخزن
+Please select a customer for fetching payments.,يرجى اختيار زبون لجلب المدفوعات.
+Please select an item code before setting the warehouse.,يرجى تحديد رمز المنتج قبل تحديد المخزن.
+"Please select at least one filter: Item Code, Batch, or Serial No.",يرجى تحديد فلتر واحد على الأقل: رمز الصنف، أو رقم الوجبة، أو الرقم التسلسلي.
+Please select either the Item or Warehouse or Warehouse Type filter to generate the report.,"يرجى تحديد إما عامل التصفية ""المنتج"" أو ""المخزن"" أو ""نوع المخزن"" لإنشاء التقرير."
+Please select the Warehouse first,يرجى تحديد المخزن أولاً
+Please select the customer.,يرجى اختيار الزبون.
+Please set Customer Address to determine if the transaction is an export.,يرجى تحديد عنوان الزبون لتحديد ما إذا كانت المعاملة عبارة عن تصدير.
+Please set Fiscal Code for the customer '{0}',يرجى تحديد الرمز الضريبي للزبون '{0}'
+Please set Tax ID for the customer '{0}',يرجى تعيين رقم التعريف الضريبي للزبون '{0}'
+Please set account in Warehouse {0},يرجى تعيين الحساب في مخزن {0}
+Please set default UOM in Stock Settings,يرجى تعيين الافتراضي UOM في إعدادات المخزون
+Please set the Customer Address,يرجى ضبط عنوان الزبون
+Please set the Target Warehouse in the Job Card,يرجى تحديد المخزن المستهدف في بطاقة الوظيفة
+Please set the WIP Warehouse in the Job Card,يرجى تحديد مخزن العمل قيد التنفيذ في بطاقة العمل
+Process Statement Of Accounts Customer,بيان العملية لحسابات الزبائن
+Production Plan Material Request Warehouse,مخزن طلب مواد خطة الإنتاج
+Project wise Stock Tracking ,مشروع تتبع حركة المخزون الحكمة
+Putaway Rule already exists for Item {0} in Warehouse {1}.,توجد بالفعل قاعدة التخزين للعنصر {0} في المخزن {1}.
+Qty (Warehouse),الكمية (المخزن)
+Qty as per Stock UOM,الكمية حسب المخزون لوحدة قياس المخزون
+Quick Stock Balance,رصيد سريع المخزون
+Rate at which Customer Currency is converted to customer's base currency,المعدل الذي يتم تحويل العملة إلى عملة الأساس الزبائن الزبون
+Rate at which Price list currency is converted to customer's base currency,المعدل الذي يتم تحويل سعر العملة العملة الأساسية القائمة لالزبائن
+Rate at which customer's currency is converted to company's base currency,المعدل الذي يتم تحويل العملة إلى عملة الزبون قاعدة الشركة
+Raw Material Warehouse,مخزن المواد الخام
+Raw Materials to Customer,المواد الخام للزبون
+Recalculate Batch Qty,إعادة حساب كمية الوجبة
+Receive from Customer,استلام من الزبون
+Received Stock Entries,تلقى إدخالات المخزون
+Reconcile All Serial Nos / Batches,مطابقة جميع الأرقام التسلسلية / الوجبات
+"Reference: {0}, Item Code: {1} and Customer: {2}",المرجع: {0}، رمز العنصر: {1} والزبون: {2}
+Rejected Serial and Batch Bundle,تم رفض الرقم التسلسلي وحزمة الوجبات
+Rejected Warehouse,رفض مخزن
+Reorder level based on Warehouse,مستوى إعادة الطلب بناء على مخزن
+Reserve Warehouse,احتياطي مخزن
+Return Qty from Rejected Warehouse,كمية الإرجاع من المخزن المرفوض
+Return Raw Material to Customer,إعادة المواد الخام إلى الزبون
+Rounding gain/loss Entry for Stock Transfer,قيد تقريب الربح/الخسارة لنقل المخزون
+Row # {0}: Please add Serial and Batch Bundle for Item {1},الصف رقم {0}: يرجى إضافة الرقم التسلسلي وحزمة الوجبة للعنصر {1}
+Row #{0}: A reorder entry already exists for warehouse {1} with reorder type {2}.,الصف #{0}: يوجد بالفعل إدخال إعادة طلب للمخزن {1} بنوع إعادة الطلب {2}.
+Row #{0}: Accepted Warehouse and Rejected Warehouse cannot be same,الصف #{0}: لا يمكن أن يكون المخزن المقبول هو نفسه المخزن المرفوض
+Row #{0}: Accepted Warehouse is mandatory for the accepted Item {1},الصف #{0}: المخزن المقبول إلزامي للصنف المقبول {1}
+Row #{0}: Batch No {1} is already selected.,الصف #{0}: تم تحديد رقم الوجبة {1} بالفعل.
+Row #{0}: Customer Provided Item {1} against Subcontracting Inward Order Item {2} ({3}) cannot be added multiple times.,الصف #{0}: لا يمكن إضافة العنصر المقدم من الزبون {1} مقابل عنصر طلب التعاقد الداخلي {2} ({3}) عدة مرات.
+Row #{0}: Customer Provided Item {1} cannot be added multiple times in the Subcontracting Inward process.,الصف #{0}: لا يمكن إضافة العنصر المقدم من الزبون {1} عدة مرات في عملية التعاقد من الباطن الواردة.
+Row #{0}: Customer Provided Item {1} cannot be added multiple times.,الصف #{0}: لا يمكن إضافة العنصر المقدم من الزبون {1} عدة مرات.
+Row #{0}: Customer Provided Item {1} does not exist in the Required Items table linked to the Subcontracting Inward Order.,الصف #{0}: العنصر المقدم من الزبون {1} غير موجود في جدول العناصر المطلوبة المرتبط بأمر التوريد الداخلي للتعاقد من الباطن.
+Row #{0}: Customer Provided Item {1} exceeds quantity available through Subcontracting Inward Order,الصف #{0}: يتجاوز المنتج المقدم من الزبون {1} الكمية المتاحة من خلال طلب الشراء الداخلي للتعاقد من الباطن
+Row #{0}: Customer Provided Item {1} has insufficient quantity in the Subcontracting Inward Order. Available quantity is {2}.,الصف #{0}: الكمية المتوفرة من الصنف المقدم من الزبون {1} غير كافية في طلب الشراء الداخلي للمقاول من الباطن. الكمية المتاحة هي {2}.
+Row #{0}: Customer Provided Item {1} is not a part of Subcontracting Inward Order {2},الصف #{0}: العنصر المقدم من الزبون {1} ليس جزءًا من أمر الشراء الداخلي للتعاقد من الباطن {2}
+Row #{0}: Customer Provided Item {1} is not a part of Work Order {2},الصف #{0}: العنصر المقدم من الزبون {1} ليس جزءًا من أمر العمل {2}
+"Row #{0}: For Customer Provided Item {1}, Source Warehouse must be {2}",الصف #{0}: بالنسبة للمنتج المقدم من الزبون {1}، يجب أن يكون مخزن المصدر {2}
+Row #{0}: Item {1} has no stock in warehouse {2}.,الصف #{0}: العنصر {1} ليس لديه مخزون في المخزن {2}.
+"Row #{0}: Item {1} in warehouse {2}: Available {3}, Needed {4}.",الصف #{0}: العنصر {1} في المخزن {2}: متوفر {3}، مطلوب {4}.
+Row #{0}: Item {1} is not a Customer Provided Item.,الصف #{0}: العنصر {1} ليس عنصرًا مقدمًا من الزبون.
+Row #{0}: Item {1} is not a Serialized/Batched Item. It cannot have a Serial No/Batch No against it.,الصف # {0}: العنصر {1} ليس عنصرًا تسلسليًا / مُجمَّع. لا يمكن أن يكون له رقم مسلسل / لا وجبة ضده.
+Row #{0}: Overconsumption of Customer Provided Item {1} against Work Order {2} is not allowed in the Subcontracting Inward process.,الصف #{0}: لا يُسمح بالاستهلاك الزائد للعنصر المقدم من الزبون {1} مقابل أمر العمل {2} في عملية التعاقد من الباطن.
+Row #{0}: Please select the Finished Good Item against which this Customer Provided Item will be used.,الصف #{0}: يرجى تحديد عنصر المنتج النهائي الذي سيتم استخدام هذا العنصر المقدم من الزبون معه.
+Row #{0}: Please select the Sub Assembly Warehouse,الصف #{0}: الرجاء تحديد مخزن التجميع الفرعي
+Row #{0}: Rejected Warehouse is mandatory for the rejected Item {1},الصف #{0}: المخزن المرفوض إلزامي للعنصر المرفوض {1}
+Row #{0}: Source Warehouse must be same as Customer Warehouse {1} from the linked Subcontracting Inward Order,الصف #{0}: يجب أن يكون مخزن المصدر هو نفسه مخزن الزبون {1} من أمر التوريد الداخلي المرتبط بالتعاقد من الباطن
+Row #{0}: Source Warehouse {1} for item {2} cannot be a customer warehouse.,الصف #{0}: لا يمكن أن يكون مخزن المصدر {1} للعنصر {2} مخزن زبون.
+Row #{0}: Source Warehouse {1} for item {2} must be same as Source Warehouse {3} in the Work Order.,الصف #{0}: يجب أن يكون مخزن المصدر {1} للعنصر {2} هو نفسه مخزن المصدر {3} في أمر العمل.
+Row #{0}: Source and Target Warehouse cannot be the same for Material Transfer,الصف #{0}: لا يمكن أن يكون مخزن المصدر ومخزن الهدف متطابقين لنقل المواد
+"Row #{0}: Source, Target Warehouse and Inventory Dimensions cannot be the exact same for Material Transfer",الصف #{0}: لا يمكن أن تكون أبعاد المخزن المصدر والمخزن الهدف والمخزون متطابقة تمامًا في عملية نقل المواد.
+Row #{0}: Stock cannot be reserved for Item {1} against a disabled Batch {2}.,الصف #{0}: لا يمكن حجز المخزون للصنف {1} مقابل وجبة معطلة {2}.
+Row #{0}: Stock cannot be reserved in group warehouse {1}.,الصف #{0}: لا يمكن حجز المخزون في مخزن المجموعة {1}.
+Row #{0}: Stock is reserved for item {1} in warehouse {2}.,الصف #{0}: تم حجز المخزون للصنف {1} في المخزن {2}.
+Row #{0}: Stock not available to reserve for Item {1} against Batch {2} in Warehouse {3}.,الصف #{0}: المخزون غير متاح للحجز للصنف {1} مقابل الوجبة {2} في المخزن {3}.
+Row #{0}: Stock not available to reserve for the Item {1} in Warehouse {2}.,الصف #{0}: المخزون غير متاح للحجز للصنف {1} في المخزن {2}.
+Row #{0}: Target Warehouse must be same as Customer Warehouse {1} from the linked Subcontracting Inward Order,الصف #{0}: يجب أن يكون المخزن المستهدف هو نفسه مخزن الزبون {1} من أمر الشراء الداخلي المرتبط بالتعاقد من الباطن
+Row #{0}: The batch {1} has already expired.,الصف رقم {0}: انتهت صلاحية الوجبة {1} بالفعل.
+Row #{0}: The warehouse {1} is not a child warehouse of a group warehouse {2},الصف #{0}: المخزن {1} ليس مخزنًا فرعيًا لمخزن مجموعة {2}
+Row #{1}: Warehouse is mandatory for stock Item {0},الصف #{1}: المخزن إلزامي لعنصر المخزون {0}
+Row #{idx}: Cannot select Supplier Warehouse while suppling raw materials to subcontractor.,الصف #{idx}: لا يمكن تحديد مخزن المورد أثناء توريد المواد الخام إلى المقاول من الباطن.
+Row No {0}: Warehouse is required. Please set a Default Warehouse for Item {1} and Company {2},رقم الصف {0}: مطلوب تحديد مخزن. يُرجى تحديد مخزن افتراضي للصنف {1} والشركة {2}
+Row {0}: Delivery Warehouse ({1}) and Customer Warehouse ({2}) can not be same,الصف {0}: لا يمكن أن يكون مخزن التسليم ({1}) ومخزن الزبون ({2}) متماثلين
+Row {0}: Delivery Warehouse cannot be same as Customer Warehouse for Item {1}.,الصف {0}: لا يمكن أن يكون مخزن التسليم هو نفسه مخزن الزبون بالنسبة للعنصر {1}.
+Row {0}: From Warehouse is mandatory for internal transfers,الصف {0}: من المخزن إلزامي للتحويلات الداخلية
+Row {0}: Target Warehouse is mandatory for internal transfers,الصف {0}: المخزن المستهدف إلزامي للتحويلات الداخلية
+"Sales Order {0} already exists against Customer's Purchase Order {1}. To allow multiple Sales Orders, Enable {2} in {3}",يوجد بالفعل أمر بيع {0} مرتبط بأمر شراء الزبون {1}. للسماح بإنشاء أوامر بيع متعددة، فعّل الخيار {2} في {3}.
+Same item and warehouse combination already entered.,تم إدخال نفس المنتج ونفس تركيبة المخزن مسبقاً.
+Sample Retention Warehouse,مخزن الاحتفاظ بالعينات
+Scan Batch No,رقم وجبة المسح
+Scrap Warehouse,الخردة مخزن
+"Search by customer name, phone, email.",البحث عن طريق اسم الزبون ، الهاتف ، البريد الإلكتروني.
+Search by invoice id or customer name,البحث عن طريق معرف الفاتورة أو اسم الزبون
+Select Batch No,حدد رقم الوجبة
+Select Customers By,حدد الزبائن حسب
+Select Serial and Batch,حدد التسلسل والوجبة
+Select Target Warehouse,حدد مخزن الهدف
+Select Warehouse...,حدد مخزن ...
+Select Warehouses to get Stock for Materials Planning,اختر المخازن للحصول على المخزون اللازم لتخطيط المواد
+Select a Customer,اختر زبوناً
+Select the Warehouse,اختر المخزن
+Select the customer or supplier.,حدد الزبون أو المورد.
+"Select, to make the customer searchable with these fields",حدد، لجعل الزبون قابلا للبحث باستخدام هذه الحقول
+Serial & Batch Item,رقم التسلسل ورقم الوجبة
+Serial / Batch Bundle,حزمة تسلسلية / وجبة
+Serial / Batch No,الرقم التسلسلي / رقم الوجبة
+Serial / Batch Nos,أرقام التسلسل / الوجبات
+Serial No / Batch,رقم المسلسل / الوجبة
+Serial No and Batch,الرقم التسلسلي والوجبة
+Serial No and Batch Traceability,إمكانية تتبع الرقم التسلسلي والوجبة
+Serial No {0} is already assigned to customer {1}. Can only be returned against the customer {1},الرقم التسلسلي {0} مُخصص بالفعل للزبون {1}. لا يمكن إرجاعه إلا للزبون {1}.
+Serial Nos / Batch Nos,الأرقام التسلسلية / أرقام الوجبات
+Serial and Batch,التسلسل والوجبة
+Serial and Batch Bundle,حزمة التسلسل والوجبة
+Serial and Batch Bundle created,تم إنشاء حزمة التسلسل والوجبة
+Serial and Batch Bundle updated,تم تحديث حزمة التسلسل والوجبة
+Serial and Batch Details,تفاصيل الرقم التسلسلي والوجبة
+Serial and Batch No,الرقم التسلسلي ورقم الوجبة
+Serial and Batch Nos,أرقام التسلسل والوجبة
+Serial and Batch Summary,ملخص الأرقام التسلسلية والوجبات
+Serial numbers unavailable for Item {0} under warehouse {1}. Please try changing warehouse.,الأرقام التسلسلية غير متوفرة للعنصر {0} الموجود في المخزن {1}. يرجى محاولة تغيير المخزن.
+Set Delivery Warehouse,مخزن توصيل المجموعات
+Set From Warehouse,مجموعة من المخزن
+Set Reserve Warehouse,تعيين مخزن الاحتياطي
+Set Valuation Rate Based on Source Warehouse,تحديد سعر التقييم بناءً على مخزن المصدر
+Set Warehouse,مخزن المجموعة
+Set this if the customer is a Public Administration company.,حدد هذا إذا كان الزبون شركة إدارة عامة.
+Sets 'Accepted Warehouse' in each row of the Items table.,"يقوم بتعيين ""المخزن المقبول"" في كل صف من جدول العناصر."
+Sets 'Rejected Warehouse' in each row of the Items table.,"يُعيّن ""مخزن مرفوض"" في كل صف من جدول العناصر."
+Sets 'Reserve Warehouse' in each row of the Supplied Items table.,"يقوم بتعيين ""مخزن احتياطي"" في كل صف من جدول العناصر الموردة."
+Sets 'Source Warehouse' in each row of the items table.,يعيّن &quot;مخزن المصدر&quot; في كل صف من جدول العناصر.
+Sets 'Target Warehouse' in each row of the items table.,يعيّن &quot;المخزن المستهدف&quot; في كل صف من جدول العناصر.
+Sets 'Warehouse' in each row of the Items table.,يعيّن &quot;المخزن&quot; في كل صف من جدول السلع.
+Show Disabled Warehouses,عرض المخازن المخصصة لذوي الاحتياجات الخاصة
+Show Stock Ageing Data,عرض البيانات شيخوخة المخزون
+Show Warehouse-wise Stock,عرض المخزن الحكيمة
+"Since {0} are Serial No/Batch No items, you cannot enable 'Recreate Stock Ledgers' in Repost Item Valuation.","بما أن {0} هي عناصر ذات رقم تسلسلي/رقم وجبة، فلا يمكنك تمكين ""إعادة إنشاء دفاتر المخزون"" في تقييم العناصر المعاد نشرها."
+Skip Material Transfer to WIP Warehouse,تخطي نقل المواد إلى مخزن WIP
+Source Warehouse,مصدر مخزن
+Source Warehouse Address,عنوان مخزن المصدر
+Source Warehouse Address Link,رابط عنوان مخزن المصدر
+Source Warehouse is mandatory for the Item {0}.,يُعد مخزن المصدر إلزاميًا للعنصر {0}.
+Source Warehouse {0} must be same as Customer Warehouse {1} in the Subcontracting Inward Order.,يجب أن يكون مخزن المصدر {0} هو نفسه مخزن الزبون {1} في أمر التوريد الداخلي للتعاقد من الباطن.
+Source and target warehouse must be different,ويجب أن تكون مصدر ومخزن الهدف مختلفة
+Split Batch,تقسيم وجبة
+Stock Asset Account,حساب أصول المخزون
+Stock Entry (Outward GIT),إدخال المخزون (GIT للخارج)
+Stock Entry Child,المخزون دخول الطفل
+Stock Entry Type,نوع إدخال المخزون
+Stock Entry {0} created,المخزون الدخول {0} خلق
+Stock In Hand,المخزون، إلى داخل، أعطى
+Stock Movement,حركة المخزون
+Stock Partially Reserved,المخزون محجوزة جزئياً
+Stock Qty,المخزون الكمية
+Stock Qty vs Batch Qty,كمية المخزون مقابل كمية الوجبة
+Stock Reservation,حجز المخزون
+Stock Reservation Warehouse Mismatch,عدم تطابق مخزن حجز المخزون
+Stock Reserved,المخزون محجوزة
+Stock UOM,وحدة قياس المخزون
+Stock Unreservation,عدم وجود حجز على المخزون
+Stock Uom,وحدة قياس المخزون
+Stock and Account Value Comparison,المخزون وقيمة الحساب مقارنة
+Stock cannot be reserved in group warehouse {0}.,لا يمكن حجز المخزون في مخزن المجموعة {0}.
+Stock cannot be reserved in the group warehouse {0}.,لا يمكن حجز المخزون في مخزن المجموعة {0}.
+Stock not available for Item {0} in Warehouse {1}.,المخزون غير متوفر للصنف {0} في المخزن {1}.
+Stock transactions that are older than the mentioned days cannot be modified.,لا يمكن تعديل معاملات المخزون التي مضى عليها أكثر من الأيام المذكورة.
+Sub Assembly Warehouse,مخزن التجميع الفرعي
+Successfully linked to Customer,تم ربط الزبون بنجاح
+Supplier Number At Customer,رقم المورد لدى الزبون
+Supplier Warehouse,المورد مخزن
+Supplier delivers to Customer,المورد يسلم للزبون
+System will automatically create the serial numbers / batch for the Finished Good on submission of work order,سيقوم النظام تلقائيًا بإنشاء الأرقام التسلسلية / الوجبات للمنتج النهائي عند تقديم أمر العمل
+Target Warehouse Address,عنوان المخزن المستهدف
+Target Warehouse Address Link,رابط عنوان مخزن تارجت
+Target Warehouse Reservation Error,خطأ في حجز مخزن تارجت
+Target Warehouse for Finished Good must be same as Finished Good Warehouse {0} in Work Order {1} linked to the Subcontracting Inward Order.,يجب أن يكون المخزن المستهدف للمنتج النهائي هو نفسه مخزن المنتج النهائي {0} في أمر العمل {1} المرتبط بأمر التوريد الداخلي للمقاول من الباطن.
+Target Warehouse is required before Submit,يلزم وجود مخزن Target قبل الإرسال
+Target Warehouse is set for some items but the customer is not an internal customer.,تم إعداد مخزن Target لبعض المنتجات، لكن الزبون ليس زبوناً داخلياً.
+Target Warehouse {0} must be same as Delivery Warehouse {1} in the Subcontracting Inward Order Item.,يجب أن يكون المخزن المستهدف {0} هو نفسه مخزن التسليم {1} في بند أمر التوريد الداخلي للتعاقد من الباطن.
+"The Batch {0} has negative batch quantity {1}. To fix this, go to the batch and click on Recalculate Batch Qty. If the issue still persists, create an inward entry.","تحتوي الوجبة {0} على كمية سالبة {1}. لحل هذه المشكلة، انتقل إلى الوجبة وانقر على ""إعادة حساب كمية الوجبة"". إذا استمرت المشكلة، فأنشئ إدخالًا داخليًا."
+The Serial No at Row #{0}: {1} is not available in warehouse {2}.,الرقم التسلسلي في الصف #{0}: {1} غير متوفر في المخزن {2}.
+The last scanned warehouse has been cleared and won't be set in the subsequently scanned items,تم مسح آخر مخزن تم مسحه ضوئيًا ولن يتم تعيينه في العناصر التي سيتم مسحها ضوئيًا لاحقًا
+The lowest tier must have a minimum spent amount of 0. Customers need to be part of a tier as soon as they are enrolled in the program.,يجب أن يكون الحد الأدنى للإنفاق في أدنى مستوى هو 0. يجب أن يكون الزبائن جزءًا من مستوى بمجرد تسجيلهم في البرنامج.
+The selected item cannot have Batch,العنصر المحدد لا يمكن أن يكون وجبة
+"The stock for the item {0} in the {1} warehouse was negative on the {2}. You should create a positive entry {3} before the date {4} and time {5} to post the correct valuation rate. For more details, please read the <a href='https://docs.erpnext.com/docs/user/manual/en/stock-adjustment-cogs-with-negative-stock'>documentation</a>.",كان رصيد الصنف {0} في المخزن {1} سالبًا في {2}. يجب عليك إنشاء قيد موجب {3} قبل التاريخ {4} والوقت {5} لتسجيل معدل التقييم الصحيح. لمزيد من التفاصيل، يُرجى قراءة الوثائق <a href='https://docs.erpnext.com/docs/user/manual/en/stock-adjustment-cogs-with-negative-stock'></a>.
+"The stock has been reserved for the following Items and Warehouses, un-reserve the same to {0} the Stock Reconciliation: <br /><br /> {1}",تم حجز المخزون للأصناف والمخازن التالية، قم بإلغاء حجزها في {0} تسوية المخزون: <br /><br /> {1}
+The user cannot submit the Serial and Batch Bundle manually,لا يمكن للمستخدم إرسال حزمة الرقم التسلسلي والوجبة يدويًا
+The user will be able to transfer additional materials from the store to the Work in Progress (WIP) warehouse.,سيتمكن المستخدم من نقل مواد إضافية من المتجر إلى مخزن العمل قيد التقدم (WIP).
+"The users with this Role are allowed to create/modify a stock transaction, even though the transaction is frozen.",يُسمح للمستخدمين الذين لديهم هذا الدور بإنشاء/تعديل معاملة مخزون، حتى لو كانت المعاملة مجمدة.
+The warehouse where you store finished Items before they are shipped.,المخزن الذي يتم فيه تخزين المنتجات النهائية قبل شحنها.
+"The warehouse where you store your raw materials. Each required item can have a separate source warehouse. Group warehouse also can be selected as source warehouse. On submission of the Work Order, the raw materials will be reserved in these warehouses for production usage.",المخزن الذي تُخزّن فيه المواد الخام. يمكن تخصيص مخزن مصدر منفصل لكل صنف مطلوب. كما يُمكن اختيار مخزن المجموعة كمخزن مصدر. عند تقديم أمر العمل، تُحجز المواد الخام في هذه المخازن لاستخدامها في الإنتاج.
+The warehouse where your Items will be transferred when you begin production. Group Warehouse can also be selected as a Work in Progress warehouse.,المخزن الذي ستُنقل إليه منتجاتك عند بدء الإنتاج. يمكن أيضاً اختيار مخزن المجموعة كمخزن للمنتجات قيد التصنيع.
+"Then Pricing Rules are filtered out based on Customer, Customer Group, Territory, Supplier, Supplier Type, Campaign, Sales Partner etc.",ثم يتم تصفية قواعد التسعير بناءً على الزبون، ومجموعة الزبائن، والمنطقة، والمورد، ونوع المورد، والحملة، وشريك المبيعات، وما إلى ذلك.
+There is no batch found against the {0}: {1},لم يتم العثور على وجبة بالمقابلة مع {0}: {1}
+This field is used to set the 'Customer'.,"يُستخدم هذا الحقل لتعيين ""الزبون""."
+This is a root customer group and cannot be edited.,هذه هي مجموعة الزبائن الجذرية والتي لا يمكن تحريرها.
+This tool helps you to update or fix the quantity and valuation of stock in the system. It is typically used to synchronise the system values and what actually exists in your warehouses.,تساعدك هذه الأداة على تحديث أو تصحيح كمية وقيمة المخزون في النظام. وتُستخدم عادةً لمزامنة قيم النظام مع ما هو موجود فعلياً في مخازنك.
+To Warehouse,لمخزن
+To Warehouse (Optional),إلى مخزن (اختياري)
+To be Delivered to Customer,سيتم تسليمها إلى الزبون
+Total Stock Value,إجمالي قيمة المخزون
+Transfer From Warehouses,النقل من المخازن
+Transfer Materials For Warehouse {0},نقل المواد للمخزن {0}
+Unreserving Stock...,إلغاء الحجز على المخزون...
+Update Batch Qty,تحديث كمية الوجبة
+Use Batch-wise Valuation,استخدم التقييم على أساس الوجبات
+Use Default Warehouse,استخدام المخزن الافتراضي
+Use Serial No / Batch Fields,استخدم حقول الرقم التسلسلي / الوجبة
+Valuation rate for customer provided items has been set to zero.,تم تحديد معدل تقييم العناصر التي يقدمها الزبائن عند الصفر.
+Via Customer Portal,عبر بوابة الزبائن
+View Stock Balance,عرض رصيد المخزون
+WIP Warehouse,مخزن WIP
+Warehouse,المخازن
+Warehouse Capacity Summary,ملخص سعة المخزن
+Warehouse Capacity for Item '{0}' must be greater than the existing stock level of {1} {2}.,يجب أن تكون سعة المخزن للصنف '{0}' أكبر من مستوى المخزون الحالي للصنف {1} {2}.
+Warehouse Contact Info,معلومات الأتصال بالمخزن
+Warehouse Detail,تفاصيل المخزن
+Warehouse Details,تفاصيل المخزن
+Warehouse Disabled?,هل المخزن معطل؟
+Warehouse Name,اسم المخزن
+Warehouse Settings,إعدادات المخازن
+Warehouse Type,نوع المخزن
+Warehouse Wise Stock Balance,موازنة المخزون في المخزن
+Warehouse and Reference,مخزن والمراجع
+Warehouse can not be deleted as stock ledger entry exists for this warehouse.,لا يمكن حذف مخزن كما دخول دفتر الأستاذ موجود لهذا المخزن.\n<br>\nWarehouse can not be deleted as stock ledger entry exists for this warehouse.
+Warehouse cannot be changed for Serial No.,المخزن لا يمكن ان يكون متغير لرقم تسلسلى.\n<br>\nWarehouse cannot be changed for Serial No.
+Warehouse is mandatory,المخزن إلزامي
+Warehouse not found against the account {0},لم يتم العثور على المخزن مقابل الحساب {0}
+Warehouse required for stock Item {0},مخزن المخزون المطلوبة لل تفاصيل {0}
+Warehouse wise Item Balance Age and Value,مخزن الحكيم البند الرصيد العمر والقيمة
+Warehouse {0} can not be deleted as quantity exists for Item {1},مخزن {0} لا يمكن حذف كما توجد كمية القطعة ل {1}
+Warehouse {0} does not belong to Company {1}.,المخزن {0} لا ينتمي إلى الشركة {1}.
+Warehouse {0} does not belong to company {1},مخزن {0} لا تنتمي إلى شركة {1}
+Warehouse {0} does not exist,المخزن {0} غير موجود
+"Warehouse {0} is not allowed for Sales Order {1}, it should be {2}",لا يُسمح باستخدام المخزن {0} في أمر البيع {1}، بل يجب أن يكون {2}
+"Warehouse {0} is not linked to any account, please mention the account in the warehouse record or set default inventory account in company {1}.",المخزن {0} غير مرتبط بأي حساب، يرجى ذكر الحساب في سجل المخزن أو تعيين حساب المخزون الافتراضي في الشركة {1}.
+Warehouse: {0} does not belong to {1},المخزن: {0} لا ينتمي إلى {1}
+Warehouses,المخازن
+Warehouses with child nodes cannot be converted to ledger,المخازن مع العقد التابعة لا يمكن أن يتم تحويلها إلى دفتر الاستاذ
+Warehouses with existing transaction can not be converted to group.,لا يمكن تحويل المخازن مع المعاملات الحالية إلى مجموعة.\n<br>\nWarehouses with existing transaction can not be converted to group.
+Warehouses with existing transaction can not be converted to ledger.,المخازن مع الصفقة الحالية لا يمكن أن يتم تحويلها إلى دفتر الأستاذ.
+Warning on Negative Stock,تحذير بشأن المخزون السلبية
+Warning: Sales Order {0} already exists against Customer's Purchase Order {1},تحذير: أمر البيع {0} موجود مسبقاً لأمر الشراء الخاص بالزبون {1}\n<br>\nWarning: Sales Order {0} already exists against Customer's Purchase Order {1}
+"When a parent warehouse is chosen, the system conducts Project Qty checks against the associated child warehouses",عند اختيار مخزن رئيسي، يقوم النظام بإجراء فحوصات كمية المشروع مقابل المخازن الفرعية المرتبطة به.
+Work-in-Progress Warehouse,مخزن العمل قيد التنفيذ
+Work-in-Progress Warehouse is required before Submit,مخزن أعمال جارية مطلوب قبل التسجيل\n<br>\nWork-in-Progress Warehouse is required before Submit
+You are not authorized to make/edit Stock Transactions for Item {0} under warehouse {1} before this time.,أنت غير مخول بإجراء/تعديل معاملات المخزون للصنف {0} ضمن المخزن {1} قبل هذا الوقت.
+You have to enable auto re-order in Stock Settings to maintain re-order levels.,يجب عليك تمكين الطلب التلقائي في إعدادات المخزون للحفاظ على مستويات إعادة الطلب.
+You must select a customer before adding an item.,يجب عليك تحديد زبون قبل إضافة عنصر.
+{0} Account not found against Customer {1}.,{0} لم يتم العثور على حساب مقابل الزبون {1}.
+{0} Account: {1} ({2}) must be in either customer billing currency: {3} or Company default currency: {4},الحساب {0} : {1} ({2}) يجب أن يكون إما بعملة فوترة الزبون: {3} أو العملة الافتراضية للشركة {4}
+{0} not allowed to transact with {1}. Please change the Company or add the Company in the 'Allowed To Transact With'-Section in the Customer record.,"لا يُسمح لـ {0} بالتعامل مع {1}. يُرجى تغيير الشركة أو إضافتها في قسم ""مسموح بالتعامل معه"" في سجل الزبون."
+{0} qty of Item {1} is being received into Warehouse {2} with capacity {3}.,يتم استلام كمية {0} من الصنف {1} في المخزن {2} بسعة {3}.
+"{0} units are reserved for Item {1} in Warehouse {2}, please un-reserve the same to {3} the Stock Reconciliation.",تم حجز الوحدات {0} للصنف {1} في المخزن {2}، يرجى إلغاء حجزها لـ {3} في عملية مطابقة المخزون.

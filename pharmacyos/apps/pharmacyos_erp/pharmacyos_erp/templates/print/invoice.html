@@ -19,8 +19,8 @@
 			<div class="i-doc-ar" dir="rtl">{% if doc.is_return %}إشعار دائن{% else %}فاتورة{% endif %}</div>
 			<table class="i-kv">
 				<tr><td>{{ _("No.") }}</td><td dir="ltr">{{ doc.name|e }}</td></tr>
-				<tr><td>{{ _("Date") }}</td><td dir="ltr">{{ frappe.utils.format_date(doc.posting_date) }}</td></tr>
-				{%- if doc.due_date and doc.due_date != doc.posting_date %}<tr><td>{{ _("Due") }}</td><td dir="ltr">{{ frappe.utils.format_date(doc.due_date) }}</td></tr>{% endif %}
+				<tr><td>{{ _("Date") }}</td><td><bdi>{{ format_display_date(doc.posting_date) }}</bdi></td></tr>
+				{%- if doc.due_date and doc.due_date != doc.posting_date %}<tr><td>{{ _("Due") }}</td><td><bdi>{{ format_display_date(doc.due_date) }}</bdi></td></tr>{% endif %}
 			</table>
 		</div>
 	</header>

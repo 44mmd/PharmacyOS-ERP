@@ -122,6 +122,7 @@ def before_uninstall():
 			if name:
 				frappe.delete_doc("Custom Field", name, ignore_permissions=True, force=True)
 	frappe.db.delete("Property Setter", {"doc_type": "Item", "property": "search_fields"})
+	frappe.db.delete("Custom DocPerm", {"parent": "Item Price", "role": ["in", PRICE_READ_ROLES]})
 	for doctype, fieldname in DESCRIPTION_OVERRIDES:
 		frappe.db.delete(
 			"Property Setter", {"doc_type": doctype, "field_name": fieldname, "property": "description"}
@@ -139,6 +140,7 @@ def ensure_structure():
 	ensure_description_overrides()
 	ensure_role_profiles()
 	ensure_dosage_forms()
+	ensure_price_read_access()
 
 
 def ensure_roles():
@@ -152,6 +154,25 @@ def ensure_roles():
 					"is_custom": 0,
 				}
 			).insert(ignore_permissions=True)
+
+
+# ERPNext v17 lets only Sales/Purchase Master Manager read Item Price, but the POS barcode/serial
+# search reads it with the caller's permissions, so a cashier's scan fails with "Insufficient
+# Permission for Item Price". The only exception to the "no Custom DocPerm on core DocTypes" rule:
+# read-only access for the roles that sell. Frappe copies the standard rules first, so existing
+# access is unchanged; the rows are removed on uninstall.
+PRICE_READ_ROLES = ("Pharmacy Owner", "Pharmacy Manager", "Pharmacist", "Cashier")
+
+
+def ensure_price_read_access():
+	from frappe.permissions import add_permission, update_permission_property
+
+	for role in PRICE_READ_ROLES:
+		if not frappe.db.exists("Role", role):
+			continue
+		if not frappe.db.exists("Custom DocPerm", {"parent": "Item Price", "role": role, "permlevel": 0}):
+			add_permission("Item Price", role, 0, ptype="read")
+		update_permission_property("Item Price", role, 0, "select", 1, validate=False)
 
 
 def ensure_role_profiles():
@@ -176,7 +197,7 @@ def ensure_property_setters():
 	# Make Arabic and generic names searchable wherever an Item link is searched.
 	search_fields = frappe.get_meta("Item").search_fields or ""
 	fields = [f.strip() for f in search_fields.split(",") if f.strip()]
-	for extra in ("pharma_name_ar", "pharma_generic_name"):
+	for extra in ("pharma_name_ar", "pharma_generic_name", "pharma_search_key"):
 		if extra not in fields:
 			fields.append(extra)
 	new_value = ",".join(fields)
@@ -225,6 +246,7 @@ def compile_translations():
 
 def apply_recommended_configuration():
 	configure_branding()
+	configure_locale()
 	configure_currency()
 	configure_stock()
 	configure_pos_search()
@@ -274,6 +296,21 @@ def configure_branding():
 	)
 
 
+def configure_locale():
+	"""Iraqi deployments default to Arabic (RTL) and Baghdad time.
+
+	Applied only when the site's country is Iraq, so other deployments (and upstream test sites) keep
+	their language. Users still switch per account (My Settings → Language), and English stays fully
+	available. Only defaults are set here; existing users' explicit language choices are untouched.
+	"""
+	if frappe.db.get_single_value("System Settings", "country") != "Iraq":
+		return
+	frappe.db.set_single_value("System Settings", "time_zone", "Asia/Baghdad")
+	if frappe.db.exists("Language", "ar"):
+		frappe.db.set_single_value("System Settings", "language", "ar")
+		frappe.db.set_default("lang", "ar")
+
+
 def configure_currency():
 	"""Enable IQD with locale-aware symbol and right-side placement.
 
@@ -311,7 +348,7 @@ def configure_pos_search():
 	pos_settings = frappe.get_single("POS Settings")
 	existing = {row.fieldname for row in pos_settings.get("pos_search_fields", [])}
 	changed = False
-	for fieldname in ("pharma_name_ar", "pharma_generic_name"):
+	for fieldname in ("pharma_name_ar", "pharma_generic_name", "pharma_search_key"):
 		df = searchable.get(fieldname)
 		if df and fieldname not in existing:
 			pos_settings.append(

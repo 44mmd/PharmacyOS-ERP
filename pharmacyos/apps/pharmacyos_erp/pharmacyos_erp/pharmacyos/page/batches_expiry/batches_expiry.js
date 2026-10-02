@@ -195,7 +195,7 @@ class PharmacyOSBatchesExpiry {
 		};
 		const source = (r) =>
 			r.source_doctype && r.source_name
-				? `<a href="${ui.form_url(r.source_doctype, r.source_name)}" class="pos-muted">${ui.esc(r.source_name)}</a>`
+				? `<a href="${ui.form_url(r.source_doctype, r.source_name)}" class="pos-muted pos-ltr pos-nowrap">${ui.esc(r.source_name)}</a>`
 				: "<span class='pos-muted'>—</span>";
 
 		const table = `
@@ -217,12 +217,12 @@ class PharmacyOSBatchesExpiry {
 							(r) => `<tr>
 							<td>${cell_medicine(r)}</td>
 							<td><a href="${ui.form_url("Batch", r.batch)}"><span class="pos-code">${ui.esc(r.batch_id)}</span></a></td>
-							<td>${ui.esc(r.warehouse)}</td>
+							<td><bdi dir="auto">${ui.esc(r.warehouse)}</bdi></td>
 							<td class="num">${pharmacyos.format_qty(r.qty)} <span class="pos-muted">${ui.esc(__(r.uom || ""))}</span></td>
 							<td><span class="pos-num">${ui.date(r.expiry_date)}</span><br><span class="pos-days">${ui.days_text(r.days)}</span></td>
 							<td>${ui.chip(r.status)}</td>
 							<td class="num">${pharmacyos.format_money(r.value)}</td>
-							<td>${ui.esc(r.supplier || "—")}</td>
+							<td><bdi dir="auto">${ui.esc(r.supplier || "—")}</bdi></td>
 							<td>${source(r)}</td>
 						</tr>`
 						)

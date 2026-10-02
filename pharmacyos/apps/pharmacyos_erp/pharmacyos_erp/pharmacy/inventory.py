@@ -24,6 +24,7 @@ from frappe.utils import cint, flt
 from pharmacyos_erp.permissions import require_pharmacy_role
 from pharmacyos_erp.pharmacy.branches import get_permitted_warehouses, resolve_warehouses
 from pharmacyos_erp.pharmacy.expiry import enrich, get_batch_stock, get_windows
+from pharmacyos_erp.utils.arabic import normalize_arabic
 
 STATES = ("out", "expired", "low", "expiring", "ok")
 
@@ -41,12 +42,9 @@ def _items(search=None, medicines_only=False, item_codes=None):
 		filters["name"] = ["in", item_codes or [""]]
 	or_filters = None
 	if search:
-		like = f"%{search.strip()}%"
 		or_filters = {
-			"name": ["like", like],
-			"item_name": ["like", like],
-			"pharma_name_ar": ["like", like],
-			"pharma_generic_name": ["like", like],
+			"name": ["like", f"%{search.strip()}%"],
+			"pharma_search_key": ["like", f"%{normalize_arabic(search)}%"],
 		}
 	return {
 		i.name: i

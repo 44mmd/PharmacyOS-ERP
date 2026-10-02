@@ -74,7 +74,7 @@ msgid "Batch Qty"
 msgstr "كمية الوجبة"
 
 msgid "Has Batch No"
-msgstr "يتتبع رقم الوجبة"
+msgstr "يُتتبَّع بالوجبة"
 
 msgid "Batch Number Series"
 msgstr "تسلسل أرقام الوجبات"
@@ -83,13 +83,13 @@ msgid "Serial and Batch Bundle"
 msgstr "حزمة الوجبات والأرقام التسلسلية"
 
 msgid "Expiry Date"
-msgstr "تاريخ انتهاء الصلاحية"
+msgstr "تاريخ الانتهاء"
 
 msgid "Manufacturing Date"
 msgstr "تاريخ التصنيع"
 
 msgid "Has Expiry Date"
-msgstr "له تاريخ انتهاء صلاحية"
+msgstr "له تاريخ انتهاء"
 
 msgid "Shelf Life In Days"
 msgstr "مدة الصلاحية (أيام)"
@@ -101,19 +101,19 @@ msgid "Medicines"
 msgstr "الأدوية"
 
 msgid "All Products"
-msgstr "كل المواد"
+msgstr "كل الأصناف"
 
 msgid "Item"
-msgstr "المادة"
+msgstr "الصنف"
 
 msgid "Items"
-msgstr "المواد"
+msgstr "الأصناف"
 
 msgid "Item Code"
-msgstr "رمز المادة"
+msgstr "رقم الصنف"
 
 msgid "Item Name"
-msgstr "اسم المادة"
+msgstr "اسم الصنف"
 
 msgid "Warehouse"
 msgstr "المخزن"
@@ -122,23 +122,23 @@ msgid "Warehouses"
 msgstr "المخازن"
 
 msgid "Supplier"
-msgstr "المورّد"
+msgstr "المورد"
 
 msgid "Suppliers"
-msgstr "المورّدون"
+msgstr "الموردون"
 
 # --- navigation ---------------------------------------------------------------------------
 msgid "Overview"
 msgstr "نظرة عامة"
 
 msgid "Dashboard"
-msgstr "لوحة القيادة"
+msgstr "لوحة التحكم"
 
 msgid "Needs attention"
-msgstr "يحتاج إلى متابعة"
+msgstr "يحتاج انتباهك"
 
 msgid "Needs Attention"
-msgstr "يحتاج إلى متابعة"
+msgstr "يحتاج انتباهك"
 
 msgid "Pharmacy"
 msgstr "الصيدلية"
@@ -168,10 +168,10 @@ msgid "System"
 msgstr "النظام"
 
 msgid "Administration"
-msgstr "الإدارة"
+msgstr "النظام"
 
 msgid "Batches & Expiry"
-msgstr "الوجبات والصلاحية"
+msgstr "الوجبات وتواريخ الانتهاء"
 
 msgid "Inventory Health"
 msgstr "صحة المخزون"
@@ -180,7 +180,7 @@ msgid "Reorder Suggestions"
 msgstr "اقتراحات إعادة الطلب"
 
 msgid "Expiry Intelligence"
-msgstr "تحليل الصلاحية"
+msgstr "مراقبة الصلاحية"
 
 msgid "Medicine data"
 msgstr "بيانات الأدوية"
@@ -192,10 +192,10 @@ msgid "Active Ingredients"
 msgstr "المواد الفعالة"
 
 msgid "Dosage Form"
-msgstr "الشكل الصيدلاني"
+msgstr "الشكل الدوائي"
 
 msgid "Dosage Forms"
-msgstr "الأشكال الصيدلانية"
+msgstr "الأشكال الدوائية"
 
 msgid "Regulatory Class"
 msgstr "التصنيف الرقابي"
@@ -219,7 +219,7 @@ msgid "Pricing"
 msgstr "التسعير"
 
 msgid "Item Prices"
-msgstr "أسعار المواد"
+msgstr "أسعار الأصناف"
 
 msgid "Price Lists"
 msgstr "قوائم الأسعار"
@@ -228,7 +228,7 @@ msgid "Stock"
 msgstr "المخزون"
 
 msgid "Stock Transfers"
-msgstr "تحويلات المخزون"
+msgstr "نقل المخزون"
 
 msgid "Stock Entries"
 msgstr "حركات المخزون"
@@ -252,7 +252,7 @@ msgid "POS"
 msgstr "نقطة البيع"
 
 msgid "Sales Invoices"
-msgstr "فواتير المبيعات"
+msgstr "الفواتير"
 
 msgid "Returns"
 msgstr "المرتجعات"
@@ -264,16 +264,16 @@ msgid "Sales Orders"
 msgstr "طلبات البيع"
 
 msgid "POS sessions"
-msgstr "جلسات نقطة البيع"
+msgstr "ورديات نقطة البيع"
 
 msgid "POS Profiles"
 msgstr "ملفات نقطة البيع"
 
 msgid "Opening Entries"
-msgstr "قيود الافتتاح"
+msgstr "فتح الورديات"
 
 msgid "Closing Entries"
-msgstr "قيود الإغلاق"
+msgstr "إغلاق الورديات"
 
 msgid "Promotions"
 msgstr "العروض"
@@ -288,19 +288,19 @@ msgid "Purchase Orders"
 msgstr "أوامر الشراء"
 
 msgid "Purchase Receipts"
-msgstr "استلامات المشتريات"
+msgstr "استلام المشتريات"
 
 msgid "Supplier Invoices"
-msgstr "فواتير المورّدين"
+msgstr "فواتير الموردين"
 
 msgid "Supplier Returns"
-msgstr "مرتجعات المورّدين"
+msgstr "مرتجعات الموردين"
 
 msgid "Purchase Analysis"
 msgstr "تحليل المشتريات"
 
 msgid "Supplier Obligations"
-msgstr "التزامات المورّدين"
+msgstr "مستحقات الموردين"
 
 msgid "Payments"
 msgstr "المدفوعات"
@@ -345,7 +345,7 @@ msgid "Role Profiles"
 msgstr "ملفات الأدوار"
 
 msgid "Role Permissions"
-msgstr "صلاحيات الأدوار"
+msgstr "الأدوار والصلاحيات"
 
 msgid "Analytics"
 msgstr "التحليلات"
@@ -357,10 +357,10 @@ msgid "Sync Events"
 msgstr "أحداث المزامنة"
 
 msgid "Audit"
-msgstr "التدقيق"
+msgstr "سجل النشاط"
 
 msgid "Document History"
-msgstr "سجل المستندات"
+msgstr "سجل التعديلات"
 
 msgid "PharmacyOS Settings"
 msgstr "إعدادات PharmacyOS"
@@ -432,7 +432,7 @@ msgid "Critical"
 msgstr "حرج"
 
 msgid "Expiring Soon"
-msgstr "قارب على الانتهاء"
+msgstr "قريب الانتهاء"
 
 msgid "Healthy"
 msgstr "سليم"
@@ -447,19 +447,19 @@ msgid "Low Stock"
 msgstr "مخزون منخفض"
 
 msgid "Expiring"
-msgstr "قارب على الانتهاء"
+msgstr "قريب الانتهاء"
 
 msgid "Has Expired Stock"
 msgstr "يحتوي مخزوناً منتهي الصلاحية"
 
 msgid "{0} days ago"
-msgstr "منذ {0} يوم"
+msgstr "منذ {0} يوماً"
 
 msgid "today"
 msgstr "اليوم"
 
 msgid "in {0} days"
-msgstr "بعد {0} يوم"
+msgstr "بعد {0} يوماً"
 
 # --- states -------------------------------------------------------------------------------
 msgid "Loading"
@@ -509,7 +509,7 @@ msgid "Over the Counter"
 msgstr "بدون وصفة"
 
 msgid "Prescription Required"
-msgstr "يتطلب وصفة طبية"
+msgstr "يحتاج وصفة طبية"
 
 msgid "Storage"
 msgstr "الخزن"
@@ -572,7 +572,7 @@ msgid "Ingredient Name (Arabic)"
 msgstr "اسم المادة الفعالة (عربي)"
 
 msgid "Dosage Form (Arabic)"
-msgstr "الشكل الصيدلاني (عربي)"
+msgstr "الشكل الدوائي (عربي)"
 
 msgid "ATC Code"
 msgstr "رمز ATC"
@@ -594,7 +594,7 @@ msgid "Pharmacy Logo"
 msgstr "شعار الصيدلية"
 
 msgid "Receipt Footer"
-msgstr "تذييل الإيصال"
+msgstr "تذييل الوصل"
 
 msgid "Critical Window (Days)"
 msgstr "نافذة الحالة الحرجة (أيام)"
@@ -669,7 +669,7 @@ msgid "Add Medicine"
 msgstr "إضافة دواء"
 
 msgid "Batch & Expiry"
-msgstr "الوجبة والصلاحية"
+msgstr "الوجبة والانتهاء"
 
 msgid "{0} of {1} medicine rows still need a batch number and expiry date."
 msgstr "{0} من {1} أسطر أدوية ما زالت تحتاج رقم وجبة وتاريخ انتهاء."
@@ -708,7 +708,7 @@ msgid "Scan the pack barcode"
 msgstr "امسح باركود العبوة"
 
 msgid "SKU / Item Code"
-msgstr "رمز المادة"
+msgstr "رقم الصنف"
 
 msgid "Leave empty to generate one"
 msgstr "اتركه فارغاً لإنشائه تلقائياً"
@@ -723,10 +723,10 @@ msgid "Stock Unit"
 msgstr "وحدة المخزون"
 
 msgid "Supplier & Brand"
-msgstr "المورّد والعلامة التجارية"
+msgstr "المورد والعلامة التجارية"
 
 msgid "Preferred Supplier"
-msgstr "المورّد المفضّل"
+msgstr "المورد المفضّل"
 
 msgid "Price & Stock"
 msgstr "السعر والمخزون"
@@ -750,7 +750,7 @@ msgid "Reorder Quantity"
 msgstr "كمية إعادة الطلب"
 
 msgid "Medicines are created with batch and expiry tracking. The supplier's batch number and expiry date are entered when the stock is received."
-msgstr "تُنشأ الأدوية مع تتبّع الوجبة والصلاحية. يُدخل رقم وجبة المورّد وتاريخ الانتهاء عند استلام المخزون."
+msgstr "تُنشأ الأدوية مع تتبّع الوجبة والصلاحية. يُدخل رقم وجبة المورد وتاريخ الانتهاء عند استلام المخزون."
 
 msgid "Create Medicine"
 msgstr "إنشاء الدواء"
@@ -780,16 +780,16 @@ msgid "Sales today"
 msgstr "مبيعات اليوم"
 
 msgid "{0} transactions · {1} returns"
-msgstr "{0} عملية · {1} مرتجع"
+msgstr "العمليات: {0} · المرتجعات: {1}"
 
 msgid "Net revenue today"
-msgstr "صافي الإيراد اليوم"
+msgstr "إيرادات اليوم"
 
 msgid "7 days: {0}"
 msgstr "آخر 7 أيام: {0}"
 
 msgid "Gross profit today"
-msgstr "إجمالي الربح اليوم"
+msgstr "إجمالي ربح اليوم"
 
 msgid "Not available"
 msgstr "غير متاح"
@@ -813,10 +813,10 @@ msgid "My sales today"
 msgstr "مبيعاتي اليوم"
 
 msgid "Expired batches — {0}"
-msgstr "وجبات منتهية — {0}"
+msgstr "وجبات منتهية الصلاحية — {0}"
 
 msgid "Expiring within 30 days"
-msgstr "تنتهي خلال 30 يوماً"
+msgstr "قريبة الانتهاء (خلال 30 يوماً)"
 
 msgid "Out of stock"
 msgstr "نفد من المخزون"
@@ -828,13 +828,13 @@ msgid "Negative stock balances"
 msgstr "أرصدة مخزون سالبة"
 
 msgid "Orders awaiting delivery"
-msgstr "طلبات بانتظار التوريد"
+msgstr "طلبات شراء معلّقة"
 
 msgid "Receipts in progress (draft)"
 msgstr "استلامات قيد الإدخال (مسودة)"
 
 msgid "Unpaid supplier invoices — {0}"
-msgstr "فواتير مورّدين غير مسددة — {0}"
+msgstr "فواتير موردين غير مسددة — {0}"
 
 msgid "Your role does not include this information."
 msgstr "دورك لا يتضمن هذه المعلومات."
@@ -846,7 +846,7 @@ msgid "Last 30 days"
 msgstr "آخر 30 يوماً"
 
 msgid "{0} sold"
-msgstr "بيع {0}"
+msgstr "المباع: {0}"
 
 msgid "No sales in the last 30 days"
 msgstr "لا مبيعات خلال آخر 30 يوماً"
@@ -858,13 +858,13 @@ msgid "No sales in 60 days"
 msgstr "بلا مبيعات منذ 60 يوماً"
 
 msgid "{0} in stock"
-msgstr "{0} في المخزون"
+msgstr "المتوفر: {0}"
 
 msgid "Everything in stock has sold recently"
 msgstr "كل ما في المخزون بيع مؤخراً"
 
 msgid "Recent sales"
-msgstr "أحدث المبيعات"
+msgstr "آخر المبيعات"
 
 msgid "No sales this week"
 msgstr "لا مبيعات هذا الأسبوع"
@@ -873,7 +873,7 @@ msgid "All invoices"
 msgstr "كل الفواتير"
 
 msgid "Recent stock movement"
-msgstr "أحدث حركات المخزون"
+msgstr "آخر حركات المخزون"
 
 msgid "No stock movement yet"
 msgstr "لا توجد حركة مخزون بعد"
@@ -897,16 +897,16 @@ msgid "All batches"
 msgstr "كل الوجبات"
 
 msgid "30 days"
-msgstr "30 يوماً"
+msgstr "خلال 30 يوماً"
 
 msgid "60 days"
-msgstr "60 يوماً"
+msgstr "خلال 60 يوماً"
 
 msgid "90 days"
-msgstr "90 يوماً"
+msgstr "خلال 90 يوماً"
 
 msgid "Expiry window"
-msgstr "نافذة الصلاحية"
+msgstr "فترة الانتهاء"
 
 msgid "All batches in stock"
 msgstr "كل الوجبات في المخزون"
@@ -921,7 +921,7 @@ msgid "Expiring within 90 days"
 msgstr "تنتهي خلال 90 يوماً"
 
 msgid "{0} batches"
-msgstr "{0} وجبة"
+msgstr "عدد الوجبات: {0}"
 
 msgid "Expired — value at risk"
 msgstr "منتهية — القيمة المعرّضة للخطر"
@@ -954,7 +954,7 @@ msgid "Nothing expires in this window"
 msgstr "لا شيء ينتهي ضمن هذه الفترة"
 
 msgid "Expiry"
-msgstr "الصلاحية"
+msgstr "الانتهاء"
 
 msgid "Value at Risk"
 msgstr "القيمة المعرّضة للخطر"
@@ -981,7 +981,7 @@ msgid "Stock state"
 msgstr "حالة المخزون"
 
 msgid "{0} medicines"
-msgstr "{0} دواء"
+msgstr "عدد الأدوية: {0}"
 
 msgid "No matching medicines"
 msgstr "لا توجد أدوية مطابقة"
@@ -1020,7 +1020,7 @@ msgid "At risk by warehouse"
 msgstr "المعرّض للخطر حسب المخزن"
 
 msgid "At risk by supplier"
-msgstr "المعرّض للخطر حسب المورّد"
+msgstr "المعرّض للخطر حسب المورد"
 
 msgid "Values are estimates: batch quantity × current valuation rate. “At risk” means expired or expiring within the selected window."
 msgstr "القيم تقديرية: كمية الوجبة × سعر التقييم الحالي. «معرّض للخطر» يعني منتهي الصلاحية أو ينتهي خلال الفترة المحددة."
@@ -1062,10 +1062,10 @@ msgid "No warehouse at risk"
 msgstr "لا يوجد مخزن معرّض للخطر"
 
 msgid "Supplier not recorded"
-msgstr "المورّد غير مسجّل"
+msgstr "المورد غير مسجّل"
 
 msgid "No supplier at risk"
-msgstr "لا يوجد مورّد معرّض للخطر"
+msgstr "لا يوجد مورد معرّض للخطر"
 
 msgid "Search medicine"
 msgstr "ابحث عن دواء"
@@ -1080,7 +1080,7 @@ msgid "Suggested when projected stock (on hand + ordered − reserved) is below 
 msgstr "يُقترح عندما يكون المخزون المتوقع (الموجود + المطلوب − المحجوز) أقل من حد إعادة الطلب. الكمية المقترحة = الأكبر بين كمية إعادة الطلب والنقص. تُضبط حدود إعادة الطلب لكل مخزن في بطاقة الدواء."
 
 msgid "{0} suggestions"
-msgstr "{0} اقتراح"
+msgstr "عدد الاقتراحات: {0}"
 
 msgid "Nothing to reorder"
 msgstr "لا شيء لإعادة طلبه"
@@ -1095,7 +1095,7 @@ msgid "Order from {0}"
 msgstr "الطلب من {0}"
 
 msgid "Order (choose supplier)"
-msgstr "طلب (اختر المورّد)"
+msgstr "طلب (اختر المورد)"
 
 msgid "Projected"
 msgstr "المتوقع"
@@ -1110,10 +1110,10 @@ msgid "Not set"
 msgstr "غير محدد"
 
 msgid "Choose supplier"
-msgstr "اختر المورّد"
+msgstr "اختر المورد"
 
 msgid "The selected medicines have different preferred suppliers. One draft order is created for the supplier you choose."
-msgstr "للأدوية المحددة مورّدون مفضّلون مختلفون. سيُنشأ أمر مسودة واحد للمورّد الذي تختاره."
+msgstr "للأدوية المحددة موردون مفضّلون مختلفون. سيُنشأ أمر مسودة واحد للمورد الذي تختاره."
 
 msgid "Create Draft Order"
 msgstr "إنشاء أمر مسودة"
@@ -1143,7 +1143,7 @@ msgid "Medicines are normally tracked by batch and expiry date. Enable <b>Has Ba
 msgstr "تُتتبّع الأدوية عادةً بالوجبة وتاريخ الانتهاء. فعّل <b>يتتبع رقم الوجبة</b> و<b>له تاريخ انتهاء صلاحية</b> ليطبّق PharmacyOS فحوصات الصلاحية ومبدأ الأقرب انتهاءً أولاً."
 
 msgid "Batch & Expiry Tracking"
-msgstr "تتبّع الوجبة والصلاحية"
+msgstr "تتبّع الوجبة وتاريخ الانتهاء"
 
 msgid "You are not allowed to create medicines."
 msgstr "غير مسموح لك بإنشاء أدوية."
@@ -1239,7 +1239,7 @@ msgid "Event Type"
 msgstr "نوع الحدث"
 
 msgid "Pharmacy Dashboard"
-msgstr "لوحة الصيدلية"
+msgstr "لوحة التحكم"
 
 msgid "Available"
 msgstr "المتاح"
@@ -1281,3 +1281,908 @@ msgstr "الاستحقاق"
 
 msgid "PharmacyOS records every stock movement of this item in the stock ledger. Keep unchecked for services and other non-stock items."
 msgstr "يسجّل PharmacyOS كل حركة مخزون لهذه المادة في سجل المخزون. اتركه غير محدد للخدمات والمواد غير المخزنية."
+
+msgid "Purchases"
+msgstr "المشتريات"
+
+msgid "Customer"
+msgstr "الزبون"
+
+msgid "Customer Name"
+msgstr "اسم الزبون"
+
+msgid "Invoices"
+msgstr "الفواتير"
+
+msgid "Expenses"
+msgstr "المصروفات"
+
+msgid "Expense"
+msgstr "مصروف"
+
+msgid "Settings"
+msgstr "الإعدادات"
+
+msgid "Roles & Permissions"
+msgstr "الأدوار والصلاحيات"
+
+msgid "Barcode"
+msgstr "الباركود"
+
+msgid "Barcodes"
+msgstr "الباركود"
+
+msgid "Scan Barcode"
+msgstr "امسح الباركود"
+
+msgid "Prescription"
+msgstr "الوصفة الطبية"
+
+msgid "Purchase Order"
+msgstr "أمر شراء"
+
+msgid "Purchase Receipt"
+msgstr "استلام مشتريات"
+
+msgid "Stock Transfer"
+msgstr "نقل مخزون"
+
+msgid "Material Transfer"
+msgstr "نقل مخزون"
+
+msgid "Inventory Value"
+msgstr "قيمة المخزون"
+
+msgid "Reorder"
+msgstr "إعادة الطلب"
+
+msgid "Audit Log"
+msgstr "سجل النشاط"
+
+msgid "Activity Log"
+msgstr "سجل النشاط"
+
+msgid "Batch Quantity"
+msgstr "كمية الوجبة"
+
+msgid "Batch UOM"
+msgstr "وحدة الوجبة"
+
+msgid "Batch Details"
+msgstr "تفاصيل الوجبة"
+
+msgid "Batch Description"
+msgstr "وصف الوجبة"
+
+msgid "Parent Batch"
+msgstr "الوجبة الأصل"
+
+msgid "Role Profile"
+msgstr "ملف الأدوار"
+
+msgid "User"
+msgstr "المستخدم"
+
+msgid "Item Group"
+msgstr "الفئة"
+
+msgid "Stock Entry"
+msgstr "حركة مخزون"
+
+msgid "Payment Entry"
+msgstr "سند دفع"
+
+msgid "Journal Entry"
+msgstr "قيد يومية"
+
+msgid "Point of Sale"
+msgstr "نقطة البيع"
+
+msgid "Notification"
+msgstr "الإشعارات"
+
+msgid "Notifications"
+msgstr "الإشعارات"
+
+msgid "Search"
+msgstr "بحث"
+
+msgid "Filter"
+msgstr "تصفية"
+
+msgid "Filters"
+msgstr "تصفية"
+
+msgid "My Settings"
+msgstr "إعداداتي"
+
+msgid "Toggle Full Width"
+msgstr "تبديل العرض الكامل"
+
+msgid "About"
+msgstr "حول النظام"
+
+msgid "Logout"
+msgstr "تسجيل الخروج"
+
+msgid "Default Unit of Measure"
+msgstr "وحدة القياس الأساسية"
+
+msgid "Maintain Stock"
+msgstr "يُتابع في المخزون"
+
+msgid "Disabled"
+msgstr "معطّل"
+
+msgid "Standard Selling Rate"
+msgstr "سعر البيع الأساسي"
+
+msgid "Valuation Rate"
+msgstr "كلفة الوحدة"
+
+msgid "Allow Sales"
+msgstr "متاح للبيع"
+
+msgid "Allow Purchase"
+msgstr "متاح للشراء"
+
+msgid "Description"
+msgstr "الوصف"
+
+msgid "Brand"
+msgstr "العلامة التجارية"
+
+msgid "Details"
+msgstr "التفاصيل"
+
+msgid "Accounting"
+msgstr "المحاسبة"
+
+msgid "Tax"
+msgstr "الضريبة"
+
+msgid "Quality"
+msgstr "الجودة"
+
+msgid "Manufacturing"
+msgstr "التصنيع"
+
+msgid "Connections"
+msgstr "الارتباطات"
+
+msgid "Stock Levels"
+msgstr "مستويات المخزون"
+
+msgid "UOM"
+msgstr "وحدة القياس"
+
+msgid "Stock UOM"
+msgstr "وحدة المخزون"
+
+msgid "Auto re-order"
+msgstr "إعادة الطلب التلقائي"
+
+msgid "Reorder Qty"
+msgstr "كمية إعادة الطلب"
+
+msgid "English Name"
+msgstr "الاسم الإنكليزي"
+
+msgid "Qty"
+msgstr "الكمية"
+
+msgid "Quantity"
+msgstr "الكمية"
+
+msgid "Rate"
+msgstr "السعر"
+
+msgid "Price"
+msgstr "السعر"
+
+msgid "Amount"
+msgstr "المبلغ"
+
+msgid "Discount"
+msgstr "الخصم"
+
+msgid "Discount Amount"
+msgstr "مبلغ الخصم"
+
+msgid "Total"
+msgstr "الإجمالي"
+
+msgid "Net Total"
+msgstr "الصافي"
+
+msgid "Grand Total"
+msgstr "الإجمالي الكلي"
+
+msgid "Rounded Total"
+msgstr "الإجمالي المقرّب"
+
+msgid "Rounding Adjustment"
+msgstr "فرق التقريب"
+
+msgid "Paid Amount"
+msgstr "المبلغ المدفوع"
+
+msgid "Change Amount"
+msgstr "الباقي"
+
+msgid "Outstanding Amount"
+msgstr "المبلغ المتبقي"
+
+msgid "Mode of Payment"
+msgstr "طريقة الدفع"
+
+msgid "Payment Method"
+msgstr "طريقة الدفع"
+
+msgid "Posting Date"
+msgstr "التاريخ"
+
+msgid "Posting Time"
+msgstr "الوقت"
+
+msgid "Due Date"
+msgstr "تاريخ الاستحقاق"
+
+msgid "Payment Due Date"
+msgstr "تاريخ الاستحقاق"
+
+msgid "Edit Posting Date and Time"
+msgstr "تعديل التاريخ والوقت"
+
+msgid "Update Stock"
+msgstr "تحديث المخزون"
+
+msgid "Is Return"
+msgstr "مرتجع"
+
+msgid "Is Return (Credit Note)"
+msgstr "مرتجع (إشعار دائن)"
+
+msgid "Return Against"
+msgstr "مرتجع من الفاتورة"
+
+msgid "Return Against Purchase Receipt"
+msgstr "مرتجع من استلام المشتريات"
+
+msgid "Source Warehouse"
+msgstr "المخزن المصدر"
+
+msgid "Target Warehouse"
+msgstr "المخزن الهدف"
+
+msgid "Accepted Warehouse"
+msgstr "مخزن الاستلام"
+
+msgid "Rejected Warehouse"
+msgstr "مخزن المرفوضات"
+
+msgid "Received Quantity"
+msgstr "الكمية المستلمة"
+
+msgid "Accepted Quantity"
+msgstr "الكمية المقبولة"
+
+msgid "Rejected Quantity"
+msgstr "الكمية المرفوضة"
+
+msgid "Supplier Name"
+msgstr "اسم المورد"
+
+msgid "Supplier Delivery Note"
+msgstr "رقم وصل المورد"
+
+msgid "Date"
+msgstr "التاريخ"
+
+msgid "Title"
+msgstr "العنوان"
+
+msgid "Remarks"
+msgstr "ملاحظات"
+
+msgid "Remark"
+msgstr "ملاحظة"
+
+msgid "Company"
+msgstr "الشركة"
+
+msgid "Currency"
+msgstr "العملة"
+
+msgid "Price List"
+msgstr "قائمة الأسعار"
+
+msgid "Price List Rate"
+msgstr "سعر القائمة"
+
+msgid "Net Rate"
+msgstr "السعر الصافي"
+
+msgid "Net Amount"
+msgstr "المبلغ الصافي"
+
+msgid "Write Off"
+msgstr "شطب"
+
+msgid "Write Off Amount"
+msgstr "مبلغ الشطب"
+
+msgid "Taxes and Charges"
+msgstr "الضرائب والرسوم"
+
+msgid "Total Quantity"
+msgstr "إجمالي الكمية"
+
+msgid "In Words"
+msgstr "المبلغ كتابةً"
+
+msgid "Status"
+msgstr "الحالة"
+
+msgid "Draft"
+msgstr "مسودة"
+
+msgid "Submitted"
+msgstr "معتمد"
+
+msgid "Cancelled"
+msgstr "ملغى"
+
+msgid "Submit"
+msgstr "اعتماد"
+
+msgid "Cancel"
+msgstr "إلغاء"
+
+msgid "Save"
+msgstr "حفظ"
+
+msgid "Paid"
+msgstr "مدفوع"
+
+msgid "Unpaid"
+msgstr "غير مدفوع"
+
+msgid "Overdue"
+msgstr "متأخر السداد"
+
+msgid "Delivery Note"
+msgstr "وصل تسليم"
+
+msgid "Sales Order"
+msgstr "طلب بيع"
+
+msgid "Purchase Invoice"
+msgstr "فاتورة شراء"
+
+msgid "Sales Invoice"
+msgstr "فاتورة بيع"
+
+msgid "Serial No"
+msgstr "الرقم التسلسلي"
+
+msgid "Available Batch Qty at Warehouse"
+msgstr "كمية الوجبة المتوفرة في المخزن"
+
+msgid "Pick Serial / Batch No"
+msgstr "اختر الوجبة / الرقم التسلسلي"
+
+msgid "Use Serial No / Batch Fields"
+msgstr "استخدام حقول الوجبة / الرقم التسلسلي"
+
+msgid "Serial and Batch No"
+msgstr "الوجبة والرقم التسلسلي"
+
+msgid "Add Serial / Batch No"
+msgstr "إضافة الوجبة / الرقم التسلسلي"
+
+msgid "Customer Group"
+msgstr "فئة الزبون"
+
+msgid "Customer Type"
+msgstr "نوع الزبون"
+
+msgid "Supplier Group"
+msgstr "فئة المورد"
+
+msgid "Mobile No"
+msgstr "رقم الموبايل"
+
+msgid "Phone"
+msgstr "الهاتف"
+
+msgid "Phone Number"
+msgstr "رقم الهاتف"
+
+msgid "Search by item code, serial number or barcode"
+msgstr "بحث عن دواء أو باركود"
+
+msgid "Item Cart"
+msgstr "السلة"
+
+msgid "Cart"
+msgstr "السلة"
+
+msgid "Edit Cart"
+msgstr "تعديل السلة"
+
+msgid "No items in cart"
+msgstr "السلة فارغة"
+
+msgid "Checkout"
+msgstr "إتمام البيع"
+
+msgid "Complete Order"
+msgstr "إتمام البيع"
+
+msgid "Print Receipt"
+msgstr "طباعة الوصل"
+
+msgid "Email Receipt"
+msgstr "إرسال الوصل بالبريد"
+
+msgid "Edit Receipt"
+msgstr "تعديل الوصل"
+
+msgid "New Order"
+msgstr "بيع جديد"
+
+msgid "New Invoice"
+msgstr "فاتورة جديدة"
+
+msgid "Recent Orders"
+msgstr "آخر المبيعات"
+
+msgid "Hide Recent Orders"
+msgstr "إخفاء آخر المبيعات"
+
+msgid "Close the POS"
+msgstr "إغلاق نقطة البيع"
+
+msgid "POS Closed"
+msgstr "تم إغلاق نقطة البيع"
+
+msgid "POS Profile"
+msgstr "ملف نقطة البيع"
+
+msgid "Create POS Opening Entry"
+msgstr "فتح وردية نقطة البيع"
+
+msgid "Opening Amount"
+msgstr "مبلغ الافتتاح"
+
+msgid "Add Discount"
+msgstr "إضافة خصم"
+
+msgid "Add Order Discount"
+msgstr "خصم على الفاتورة"
+
+msgid "Clear"
+msgstr "مسح"
+
+msgid "Hold"
+msgstr "تعليق"
+
+msgid "All Items"
+msgstr "كل الأصناف"
+
+msgid "Items not found."
+msgstr "لم يتم العثور على أصناف."
+
+msgid "No items found. Scan barcode again."
+msgstr "لم يُعثر على الصنف. امسح الباركود مرة أخرى."
+
+msgid "Total Items"
+msgstr "عدد الأصناف"
+
+msgid "Remaining Amount"
+msgstr "المبلغ المتبقي"
+
+msgid "Item Details"
+msgstr "تفاصيل الصنف"
+
+msgid "Search by customer name, phone, email."
+msgstr "ابحث باسم الزبون أو الهاتف أو البريد."
+
+msgid "You must select a customer before adding an item."
+msgstr "اختر الزبون قبل إضافة صنف."
+
+msgid "You cannot submit the order without payment."
+msgstr "لا يمكن إتمام البيع بدون دفع."
+
+msgid "You cannot submit an empty order."
+msgstr "لا يمكن إتمام بيع فارغ."
+
+msgid "Quantity Available"
+msgstr "الكمية المتوفرة"
+
+msgid "Not Available"
+msgstr "غير متوفر"
+
+msgid "Returned"
+msgstr "مُرجع"
+
+msgid "Sold by"
+msgstr "البائع"
+
+msgid "Payment Received"
+msgstr "تم استلام المبلغ"
+
+msgid "Payment of {0} received successfully."
+msgstr "تم استلام {0} بنجاح."
+
+msgid "Select a Payment Method."
+msgstr "اختر طريقة الدفع."
+
+msgid "Select item group"
+msgstr "اختر الفئة"
+
+msgid "discount applied"
+msgstr "تم تطبيق الخصم"
+
+# Iraqi (Levantine) month names, used by PharmacyOS date display
+msgctxt "Month"
+msgid "January"
+msgstr "كانون الثاني"
+
+msgctxt "Month"
+msgid "February"
+msgstr "شباط"
+
+msgctxt "Month"
+msgid "March"
+msgstr "آذار"
+
+msgctxt "Month"
+msgid "April"
+msgstr "نيسان"
+
+msgctxt "Month"
+msgid "May"
+msgstr "أيار"
+
+msgctxt "Month"
+msgid "June"
+msgstr "حزيران"
+
+msgctxt "Month"
+msgid "July"
+msgstr "تموز"
+
+msgctxt "Month"
+msgid "August"
+msgstr "آب"
+
+msgctxt "Month"
+msgid "September"
+msgstr "أيلول"
+
+msgctxt "Month"
+msgid "October"
+msgstr "تشرين الأول"
+
+msgctxt "Month"
+msgid "November"
+msgstr "تشرين الثاني"
+
+msgctxt "Month"
+msgid "December"
+msgstr "كانون الأول"
+
+# Arabic plural forms selected by context (see pharmacyos.ui.days_text)
+msgctxt "one"
+msgid "{0} days"
+msgstr "يوم واحد"
+
+msgctxt "two"
+msgid "{0} days"
+msgstr "يومان"
+
+msgctxt "few"
+msgid "{0} days"
+msgstr "{0} أيام"
+
+msgctxt "many"
+msgid "{0} days"
+msgstr "{0} يوماً"
+
+msgctxt "one"
+msgid "in {0} days"
+msgstr "بعد يوم واحد"
+
+msgctxt "two"
+msgid "in {0} days"
+msgstr "بعد يومين"
+
+msgctxt "few"
+msgid "in {0} days"
+msgstr "بعد {0} أيام"
+
+msgctxt "many"
+msgid "in {0} days"
+msgstr "بعد {0} يوماً"
+
+msgctxt "one"
+msgid "{0} days ago"
+msgstr "منذ يوم واحد"
+
+msgctxt "two"
+msgid "{0} days ago"
+msgstr "منذ يومين"
+
+msgctxt "few"
+msgid "{0} days ago"
+msgstr "منذ {0} أيام"
+
+msgctxt "many"
+msgid "{0} days ago"
+msgstr "منذ {0} يوماً"
+
+
+msgid "Margin {0}"
+msgstr "الهامش {0}"
+
+msgid "Unpaid supplier invoices"
+msgstr "فواتير موردين غير مسددة"
+
+msgctxt "greeting"
+msgid "{0}, {1}"
+msgstr "{0}، {1}"
+
+msgid "Add Filter"
+msgstr "إضافة تصفية"
+
+msgid "Add Item"
+msgstr "إضافة صنف"
+
+msgid "Address"
+msgstr "العنوان"
+
+msgid "Abbreviation"
+msgstr "الاختصار"
+
+msgid "As printed on the pack, e.g. 500 mg, 250 mg/5 ml."
+msgstr "كما هو مطبوع على العبوة، مثل 500 mg أو 250 mg/5 ml."
+
+msgid "Ascending"
+msgstr "تصاعدي"
+
+msgid "Descending"
+msgstr "تنازلي"
+
+msgid "Sort"
+msgstr "ترتيب"
+
+msgid "Copy"
+msgstr "نسخ"
+
+msgid "Duplicate"
+msgstr "نسخة مكررة"
+
+msgid "Assign"
+msgstr "إسناد"
+
+msgid "Assigned To"
+msgstr "مُسند إلى"
+
+msgid "Attachments"
+msgstr "المرفقات"
+
+msgid "Tags"
+msgstr "الوسوم"
+
+msgid "Share"
+msgstr "مشاركة"
+
+msgid "Batches expiring within this many days are marked Critical."
+msgstr "الوجبات التي تنتهي خلال هذا العدد من الأيام تُعدّ حرجة."
+
+msgid "Batches expiring within this many days are marked Expiring Soon."
+msgstr "الوجبات التي تنتهي خلال هذا العدد من الأيام تُعدّ قريبة الانتهاء."
+
+msgid "Created On"
+msgstr "تاريخ الإنشاء"
+
+msgid "Last Updated On"
+msgstr "آخر تحديث"
+
+msgid "Last Edited By"
+msgstr "آخر تعديل بواسطة"
+
+msgid "Documents"
+msgstr "المستندات"
+
+msgid "Edit Filters"
+msgstr "تعديل التصفية"
+
+msgid "Enabled"
+msgstr "مفعّل"
+
+msgid "Enables pharmacy fields, batch & expiry checks and FEFO guidance for this item."
+msgstr "يفعّل حقول الصيدلية وفحوص الوجبة وتاريخ الانتهاء وإرشاد FEFO لهذا الصنف."
+
+msgid "Has Variants"
+msgstr "له متغيرات"
+
+msgid "Variant Of"
+msgstr "متغير من"
+
+msgid "ID"
+msgstr "المعرّف"
+
+msgid "Is Fixed Asset"
+msgstr "أصل ثابت"
+
+msgid "Identifier the PharmacyOS backend uses for this branch."
+msgstr "المعرّف الذي يستخدمه نظام PharmacyOS لهذا الفرع."
+
+msgid "Include this item in the catalog and availability returned by the PharmacyOS integration API."
+msgstr "تضمين هذا الصنف في الكتالوج والتوفر الذي تعيده واجهة تكامل PharmacyOS."
+
+msgid "Integration"
+msgstr "التكامل"
+
+msgid "International non-proprietary (generic) name, e.g. Paracetamol."
+msgstr "الاسم العلمي الدولي غير التجاري، مثل Paracetamol."
+
+msgid "Item Type"
+msgstr "نوع الصنف"
+
+msgid "List View"
+msgstr "عرض القائمة"
+
+msgid "Report View"
+msgstr "عرض التقرير"
+
+msgid "Menu"
+msgstr "القائمة"
+
+msgid "Next Document"
+msgstr "المستند التالي"
+
+msgid "Previous Document"
+msgstr "المستند السابق"
+
+msgid "Nos"
+msgstr "قطعة"
+
+msgid "Not Saved"
+msgstr "غير محفوظ"
+
+msgid "Off"
+msgstr "إيقاف"
+
+msgid "Purpose"
+msgstr "الغرض"
+
+msgid "Sales & Purchase"
+msgstr "بيع وشراء"
+
+msgid "PharmacyOS Customer ID"
+msgstr "معرّف الزبون في PharmacyOS"
+
+msgid "PharmacyOS Order ID"
+msgstr "رقم الطلب في PharmacyOS"
+
+msgid "PharmacyOS Payload Hash"
+msgstr "بصمة بيانات PharmacyOS"
+
+msgid "Printed at the bottom of invoices and receipts, e.g. return policy."
+msgstr "يُطبع أسفل الفواتير والوصولات، مثل سياسة الإرجاع."
+
+msgid "Recorded for information and reporting. PharmacyOS does not enforce prescription rules automatically."
+msgstr "يُسجَّل للمعلومات والتقارير. لا يفرض PharmacyOS قواعد الوصفة الطبية تلقائياً."
+
+msgid "Search Key"
+msgstr "مفتاح البحث"
+
+msgid "Sellable stock of this branch. Branch dashboards and the integration API read stock from this warehouse."
+msgstr "المخزون القابل للبيع في هذا الفرع. تقرأ لوحات الفرع وواجهة التكامل المخزون من هذا المخزن."
+
+msgid "Set by the PharmacyOS integration API; guarantees an online order is created only once."
+msgstr "تضبطه واجهة تكامل PharmacyOS لضمان إنشاء الطلب الإلكتروني مرة واحدة فقط."
+
+msgid "Used to sign each request body with HMAC-SHA256 (header X-PharmacyOS-Signature)."
+msgstr "يُستخدم لتوقيع كل طلب باستخدام HMAC-SHA256 (الترويسة X-PharmacyOS-Signature)."
+
+msgid "When a sale uses a batch that expires later than another available batch in the same warehouse: Warn shows a message, Block stops the save. Expired batches are always rejected by ERPNext."
+msgstr "عند بيع وجبة تنتهي بعد وجبة أخرى متوفرة في نفس المخزن: «تنبيه» يعرض رسالة، و«منع» يوقف الحفظ. الوجبات المنتهية تُرفض دائماً."
+
+msgid "e.g. 2 x 10 tablets, 100 ml bottle."
+msgstr "مثل 2 x 10 أقراص، أو قنينة 100 ml."
+
+msgid "e.g. 500 mg, 250 mg/5 ml"
+msgstr "مثل 500 mg أو 250 mg/5 ml"
+
+msgid "e.g. Tablet, Capsule, Syrup, Injection."
+msgstr "مثل أقراص، كبسول، شراب، حقن."
+
+# Dosage Form records (DocType is translated_doctype: link values display in Arabic).
+# "Patch" is left out: Frappe uses it for database patches.
+msgid "Tablet"
+msgstr "أقراص"
+
+msgid "Capsule"
+msgstr "كبسول"
+
+msgid "Syrup"
+msgstr "شراب"
+
+msgid "Suspension"
+msgstr "معلق"
+
+msgid "Cream"
+msgstr "كريم"
+
+msgid "Ointment"
+msgstr "مرهم"
+
+msgid "Gel"
+msgstr "جل"
+
+msgid "Drops"
+msgstr "قطرات"
+
+msgid "Inhaler"
+msgstr "بخاخ استنشاق"
+
+msgid "Nasal Spray"
+msgstr "بخاخ أنفي"
+
+msgid "Suppository"
+msgstr "تحاميل"
+
+msgid "Sachet"
+msgstr "أكياس"
+
+msgid "Solution"
+msgstr "محلول"
+
+
+msgid "Point Of Sale"
+msgstr "نقطة البيع"
+
+msgid "Create a new {0}"
+msgstr "إنشاء {0} جديد"
+
+msgid "Filtered by: {0}."
+msgstr "التصفية حسب: {0}."
+
+msgid "Last Edited By {0}"
+msgstr "آخر تعديل بواسطة {0}"
+
+msgid "Last Edited By You"
+msgstr "آخر تعديل بواسطتك"
+
+msgid "Terms"
+msgstr "الشروط"
+
+msgid "Is Subcontracted"
+msgstr "تعاقد من الباطن"
+
+msgid "Download"
+msgstr "تنزيل"
+
+msgid "Upload"
+msgstr "رفع"
+
+msgid "Get Items From"
+msgstr "جلب الأصناف من"
+
+msgid "Tools"
+msgstr "الأدوات"
+
+msgid "Add Row"
+msgstr "إضافة صف"
+
+msgctxt "Title of the 'row number' column"
+msgid "No."
+msgstr "م"
+
+msgid "This is the pharmacy's own business identity, used on invoices and receipts. The platform itself remains PharmacyOS."
+msgstr "هذه هي الهوية التجارية للصيدلية نفسها، وتظهر على الفواتير والوصولات. أما المنصة فتبقى PharmacyOS."

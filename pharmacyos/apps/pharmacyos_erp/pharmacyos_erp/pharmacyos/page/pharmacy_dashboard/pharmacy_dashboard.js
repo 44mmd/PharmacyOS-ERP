@@ -29,7 +29,7 @@ class PharmacyOSDashboard {
 		const h = new Date().getHours();
 		const name = (frappe.boot.user.first_name || frappe.session.user_fullname || "").split(" ")[0];
 		const g = h < 12 ? __("Good morning") : h < 18 ? __("Good afternoon") : __("Good evening");
-		return name ? `${g}, ${name}` : g;
+		return name ? __("{0}, {1}", [g, name], "greeting") : g;
 	}
 
 	render_shell() {
@@ -71,7 +71,7 @@ class PharmacyOSDashboard {
 		const branch_label = this.branch ? pharmacyos.branch_label(this.branch) : __("All branches");
 		this.$root
 			.find("[data-slot=context]")
-			.html(`${ui.esc(frappe.datetime.str_to_user(d.date))} · ${ui.esc(branch_label)}`);
+			.html(`${ui.esc(ui.date(d.date))} · ${ui.esc(branch_label)}`);
 
 		// KPIs ------------------------------------------------------------------------------------
 		const kpi = ({ label, icon, value, sub = "", href = null, primary = false }) => {
@@ -111,7 +111,7 @@ class PharmacyOSDashboard {
 				sub: gp
 					? gp.value === null
 						? __("Needs stock-updating invoices")
-						: `${gp.margin !== null ? __("{0}% margin", [gp.margin]) : ""}${gp.partial ? " · " + __("partial") : ""}`
+						: `${gp.margin !== null ? __("Margin {0}", [ui.ltr(`${gp.margin}%`)]) : ""}${gp.partial ? " · " + __("partial") : ""}`
 					: "",
 			})
 		);
@@ -133,13 +133,16 @@ class PharmacyOSDashboard {
 		const st = d.stock;
 		const p = d.purchasing || {};
 		const items = [];
-		const att = (tone, icon, count, label, href) =>
+		// the amount sits on its own line so a truncated label never cuts into a number
+		const att = (tone, icon, count, label, href, value = "") =>
 			items.push(`<a class="pos-attention-item pos-fade-in" data-tone="${count ? tone : "ok"}" data-zero="${count ? 0 : 1}" href="${href}">
 				<span class="pos-attention-icon">${ui.icon(count ? icon : "circle-check", "sm")}</span>
 				<span class="pos-attention-body"><span class="pos-attention-count">${count}</span>
-				<span class="pos-attention-label">${ui.esc(label)}</span></span></a>`);
+				<span class="pos-attention-label">${ui.esc(label)}</span>${
+					value ? `<span class="pos-attention-value">${value}</span>` : ""
+				}</span></a>`);
 		if (st) {
-			att("danger", "circle-x", st.expired_batches, __("Expired batches — {0}", [money(st.expired_value)]), "/desk/batches-expiry?bucket=expired");
+			att("danger", "circle-x", st.expired_batches, __("Expired batches"), "/desk/batches-expiry?bucket=expired", st.expired_batches ? money(st.expired_value) : "");
 			att("warning", "calendar-clock", st.expiring_30, __("Expiring within 30 days"), "/desk/batches-expiry?bucket=30");
 			att("danger", "package-x", st.counts.out, __("Out of stock"), "/desk/inventory-health?state=out");
 			att("warning", "trending-down", st.counts.low, __("Low stock"), "/desk/inventory-health?state=low");
@@ -152,7 +155,7 @@ class PharmacyOSDashboard {
 			att("info", "package-check", p.draft_receipts, __("Receipts in progress (draft)"), ui.list_url("Purchase Receipt", { docstatus: 0 }));
 		}
 		if (p.supplier_obligations) {
-			att("info", "hand-coins", p.supplier_obligations.count, __("Unpaid supplier invoices — {0}", [money(p.supplier_obligations.value)]), "/desk/query-report/Accounts Payable");
+			att("info", "hand-coins", p.supplier_obligations.count, __("Unpaid supplier invoices"), "/desk/query-report/Accounts Payable", p.supplier_obligations.count ? money(p.supplier_obligations.value) : "");
 		}
 		this.$root.find("[data-slot=attention]").html(items.join("") || ui.state({ kind: "denied", title: __("No access") }));
 
@@ -212,7 +215,7 @@ class PharmacyOSDashboard {
 					? `<ul class="pos-list">${sales
 							.map(
 								(r) => `<li><div class="pos-list-main"><a href="${ui.form_url("Sales Invoice", r.name)}"><span class="pos-cell-title">${ui.esc(r.customer_name)}</span>
-									<span class="pos-cell-sub">${ui.esc(r.name)} · ${ui.esc(frappe.datetime.str_to_user(r.posting_date))}</span></a></div>
+									<span class="pos-cell-sub">${ui.esc(r.name)} · ${ui.esc(ui.date(r.posting_date))}</span></a></div>
 									<div class="pos-list-end">${r.is_return ? `<span class="pos-chip" data-status="info">${__("Return")}</span> ` : ""}${money(r.base_grand_total)}</div></li>`
 							)
 							.join("")}</ul>`

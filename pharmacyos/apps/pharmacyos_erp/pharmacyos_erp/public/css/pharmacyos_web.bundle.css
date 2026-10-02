@@ -196,6 +196,14 @@ body[data-path="login"] .navbar {
 	color: var(--pl-ink-2);
 	text-decoration: none;
 }
+.pos-login-lang {
+	align-items: center;
+}
+.pos-login-lang-sep {
+	color: var(--pl-border);
+	font-size: 12px;
+	padding: 0 2px;
+}
 .pos-login-lang a[aria-current="true"] {
 	background: #eafbf5;
 	color: var(--pl-deep);

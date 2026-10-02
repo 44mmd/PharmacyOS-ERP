@@ -11,6 +11,7 @@ ROUTE_OPTIONS = "\nOral\nTopical\nInjection\nInhalation\nOphthalmic\nOtic\nNasal
 STORAGE_OPTIONS = "\nRoom Temperature (15-25 °C)\nCool (8-15 °C)\nRefrigerated (2-8 °C)\nFrozen\nOther"
 
 MEDICINE_DEP = "eval:doc.pharma_is_medicine"
+SEARCH_KEY_LENGTH = 1000
 
 CUSTOM_FIELDS = {
 	"Item": [
@@ -156,6 +157,20 @@ CUSTOM_FIELDS = {
 			"insert_after": "pharma_storefront_section",
 			"default": "0",
 			"description": "Include this item in the catalog and availability returned by the PharmacyOS integration API.",
+		},
+		{
+			# normalised Arabic/English search text (see utils/arabic.py); maintained on validate
+			"fieldname": "pharma_search_key",
+			# Data (varchar) so ERPNext's POS search fields accept it
+			"fieldtype": "Data",
+			"length": SEARCH_KEY_LENGTH,
+			"label": "Search Key",
+			"insert_after": "pharmacyos_publish",
+			"hidden": 1,
+			"read_only": 1,
+			"no_copy": 1,
+			"print_hide": 1,
+			"report_hide": 1,
 		},
 	],
 	"Branch": [

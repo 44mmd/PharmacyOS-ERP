@@ -26,3 +26,21 @@ def boot_session(bootinfo):
 		"branch": get_current_branch(),
 		"pharmacy_roles": sorted(roles & set(PHARMACY_ROLES)),
 	}
+	focus_apps_screen(bootinfo, roles)
+
+
+# Upstream apps whose tiles pharmacy staff do not need on the apps screen / app switcher.
+UPSTREAM_APP_TILES = ("erpnext", "frappe")
+
+
+def focus_apps_screen(bootinfo, roles):
+	"""Show only PharmacyOS ERP on the apps screen and app switcher for pharmacy staff.
+
+	Presentation only: the ERPNext/Framework shells, routes and permissions are unchanged, and
+	System Managers (and users without a PharmacyOS role) still see every app.
+	"""
+	if "System Manager" in roles or not roles & set(PHARMACY_ROLES):
+		return
+	for app in bootinfo.get("app_data") or []:
+		if app.get("app_name") in UPSTREAM_APP_TILES:
+			app["on_apps_screen"] = False

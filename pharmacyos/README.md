@@ -7,6 +7,7 @@ ERPNext core.
 
 * [`apps/pharmacyos_erp`](apps/pharmacyos_erp): **the PharmacyOS ERP Frappe app** (all product code)
 * [`docs/PRODUCT.md`](docs/PRODUCT.md): product transformation — identity, navigation, roles, workflows, remaining gaps
+* [`docs/LOCALIZATION.md`](docs/LOCALIZATION.md): Arabic-first localization — terminology (Batch = الوجبة), RTL/bidi, IQD, dates, Arabic search
 * [`docs/INTEGRATION_API.md`](docs/INTEGRATION_API.md): PharmacyOS ↔ ERP API v1 and outbound events
 * [`FORK_PATCHES.md`](FORK_PATCHES.md): ERPNext core changes (currently none)
 * [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md): Phase 0 architecture, gap matrix, integration and UI strategy

@@ -58,8 +58,9 @@
 				<span>{{ brand.product_name|e }}</span>
 			</div>
 			<nav class="pos-login-lang" aria-label="{{ _('Language') }}">
-				<a href="?_lang=en" lang="en" {% if lang_code != "ar" %}aria-current="true"{% endif %}>English</a>
-				<a href="?_lang=ar" lang="ar" {% if lang_code == "ar" %}aria-current="true"{% endif %}>العربية</a>
+				<a href="?_lang=ar" lang="ar" dir="rtl" {% if lang_code == "ar" %}aria-current="true"{% endif %}>العربية</a>
+				<span class="pos-login-lang-sep" aria-hidden="true">|</span>
+				<a href="?_lang=en" lang="en" dir="ltr" {% if lang_code != "ar" %}aria-current="true"{% endif %}>English</a>
 			</nav>
 		</div>
 

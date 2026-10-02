@@ -20,6 +20,7 @@ from frappe.utils import cint, date_diff, flt, getdate, nowdate
 
 from pharmacyos_erp.permissions import require_pharmacy_role
 from pharmacyos_erp.pharmacy.branches import get_permitted_warehouses, resolve_warehouses
+from pharmacyos_erp.utils.arabic import normalize_arabic
 
 BUCKETS = ("expired", "30", "60", "90", "all")
 
@@ -108,7 +109,15 @@ def enrich(rows: list[dict]) -> list[dict]:
 		for i in frappe.get_all(
 			"Item",
 			filters={"name": ["in", item_codes]},
-			fields=["name", "item_name", "pharma_name_ar", "stock_uom", "pharma_is_medicine", "item_group"],
+			fields=[
+				"name",
+				"item_name",
+				"pharma_name_ar",
+				"pharma_generic_name",
+				"stock_uom",
+				"pharma_is_medicine",
+				"item_group",
+			],
 		)
 	}
 	warehouses = list({r["warehouse"] for r in rows})
@@ -139,6 +148,7 @@ def enrich(rows: list[dict]) -> list[dict]:
 				"item_code": batch.item,
 				"item_name": item.get("item_name"),
 				"name_ar": item.get("pharma_name_ar"),
+				"generic_name": item.get("pharma_generic_name"),
 				"is_medicine": cint(item.get("pharma_is_medicine")),
 				"item_group": item.get("item_group"),
 				"uom": item.get("stock_uom"),
@@ -162,13 +172,13 @@ def filter_rows(rows, search=None, medicines_only=False):
 	if medicines_only:
 		rows = [r for r in rows if r["is_medicine"]]
 	if search:
-		needle = search.strip().lower()
+		needle = normalize_arabic(search)
 		rows = [
 			r
 			for r in rows
 			if any(
-				needle in (str(r.get(k) or "")).lower()
-				for k in ("batch_id", "item_code", "item_name", "name_ar")
+				needle in normalize_arabic(r.get(k))
+				for k in ("batch_id", "item_code", "item_name", "name_ar", "generic_name")
 			)
 		]
 	return rows

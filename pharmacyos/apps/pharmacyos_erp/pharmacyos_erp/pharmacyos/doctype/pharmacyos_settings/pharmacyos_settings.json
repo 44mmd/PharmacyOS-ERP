@@ -42,8 +42,8 @@
   },
   {
    "fieldname": "identity_help",
-   "fieldtype": "HTML",
-   "options": "<p class=\"text-muted small\">This is the pharmacy's own business identity, used on invoices and receipts. The platform itself remains PharmacyOS.</p>"
+   "fieldtype": "Section Break",
+   "description": "This is the pharmacy's own business identity, used on invoices and receipts. The platform itself remains PharmacyOS."
   },
   {
    "fieldname": "pharmacy_name",
@@ -204,7 +204,7 @@
  ],
  "issingle": 1,
  "links": [],
- "modified": "2026-10-02 00:00:00.000000",
+ "modified": "2026-10-02 17:02:55.729683",
  "modified_by": "Administrator",
  "module": "PharmacyOS",
  "name": "PharmacyOS Settings",

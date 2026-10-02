@@ -197,9 +197,6 @@ body.dock-pinned .dock {
 	border-radius: 0 3px 3px 0;
 	background: var(--pos-mint);
 }
-[dir="rtl"] .dock-item.active::before {
-	border-radius: 3px 0 0 3px;
-}
 .dock-item:focus-visible {
 	outline-color: var(--pos-mint);
 }
@@ -363,8 +360,12 @@ body.dock-pinned .dock {
 }
 /* numbers, SKUs and barcodes stay LTR inside RTL layouts */
 .pos-ltr {
-	direction: ltr;
+	direction: var(--pos-tech-dir);
 	unicode-bidi: isolate;
+}
+
+.pos-nowrap {
+	white-space: nowrap;
 }
 
 /* toolbar / filters */
@@ -701,6 +702,15 @@ a.pos-kpi:focus-visible {
 	font-variant-numeric: tabular-nums;
 	line-height: 1.1;
 }
+.pos-attention-value {
+	display: block;
+	margin-top: 2px;
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--pos-ink);
+	font-variant-numeric: tabular-nums;
+	unicode-bidi: isolate;
+}
 .pos-attention-label {
 	font-size: 12.5px;
 	line-height: 1.3;
@@ -841,7 +851,7 @@ a.pos-kpi:focus-visible {
 	background: var(--pos-clinical);
 	border: 1px solid var(--pos-border);
 	color: var(--pos-ink);
-	direction: ltr;
+	direction: var(--pos-tech-dir);
 	unicode-bidi: isolate;
 	white-space: nowrap;
 }
@@ -1203,4 +1213,150 @@ a.pos-kpi:focus-visible {
 	.pos-pager {
 		display: none !important;
 	}
+}
+
+/* ================================================================ Arabic-first RTL & bidi
+   Frappe flips the layout for RTL languages (html[dir=rtl], css-rtl bundle). This layer handles
+   what a mirror cannot: comfortable Arabic line height, mixed Arabic/English values, and
+   technical identifiers that must stay left-to-right (barcodes, SKUs, batch numbers, phones,
+   e-mails, URLs, strengths). Direction only affects rendering — scanner input is untouched.
+
+   Frappe derives the RTL stylesheet by running rtlcss over this file, which would flip a literal
+   `direction: ltr` / `text-align: right`. These rules are already written for RTL, so the values
+   come from custom properties rtlcss leaves alone. */
+:root {
+	--pos-tech-dir: ltr; /* technical identifiers read left-to-right in every language */
+	--pos-tech-align: right; /* start edge of an RTL field */
+}
+
+html[dir="rtl"] body {
+	line-height: 1.6;
+}
+html[dir="rtl"] :is(h1, h2, h3, h4, .page-title .title-text, .pos-hero-title) {
+	line-height: 1.35;
+	letter-spacing: 0;
+}
+/* Arabic never uses letter-spacing or forced upper-case labels */
+html[dir="rtl"] :is(.pos-kicker, .pos-kpi-label, .section-head, .sidebar-label, th) {
+	letter-spacing: 0 !important;
+	text-transform: none !important;
+}
+
+/* Free-text inputs: each value takes the direction of its own first strong character, so an
+   English medicine name typed into an Arabic form reads correctly, while the field keeps the
+   RTL alignment of the page. */
+html[dir="rtl"] :is(input[type="text"], input[type="search"], input:not([type]), textarea).form-control,
+html[dir="rtl"] .pos-input,
+html[dir="rtl"] .search-bar input,
+html[dir="rtl"] .awesomplete input {
+	unicode-bidi: plaintext;
+	text-align: var(--pos-tech-align);
+}
+
+/* Technical values: always LTR, isolated, aligned to the field's start edge. */
+html[dir="rtl"] :is(input[type="email"], input[type="tel"], input[type="url"], input[type="number"]),
+html[dir="rtl"] .frappe-control:is(
+		[data-fieldtype="Barcode"],
+		[data-fieldtype="Phone"],
+		[data-fieldtype="Int"],
+		[data-fieldtype="Float"],
+		[data-fieldtype="Currency"],
+		[data-fieldtype="Percent"],
+		[data-fieldname="item_code"],
+		[data-fieldname="barcode"],
+		[data-fieldname="batch_no"],
+		[data-fieldname="batch_id"],
+		[data-fieldname="serial_no"],
+		[data-fieldname="serial_and_batch_bundle"],
+		[data-fieldname="email"],
+		[data-fieldname="email_id"],
+		[data-fieldname="phone"],
+		[data-fieldname="mobile_no"],
+		[data-fieldname="phone_no"],
+		[data-fieldname="website"],
+		[data-fieldname="pharma_strength"],
+		[data-fieldname="pharmacyos_storefront_code"],
+		[data-fieldname="pharmacyos_phone"],
+		[data-fieldname="supplier_delivery_note"],
+		[data-fieldname="naming_series"],
+		[data-fieldname="tax_id"]
+	)
+	:is(input, select, .control-value, .like-disabled-input, .static-area) {
+	direction: var(--pos-tech-dir);
+	unicode-bidi: isolate;
+	text-align: var(--pos-tech-align);
+}
+/* Same identifiers in child tables (static cells and editors) */
+html[dir="rtl"] .grid-static-col:is(
+		[data-fieldname="item_code"],
+		[data-fieldname="barcode"],
+		[data-fieldname="batch_no"],
+		[data-fieldname="serial_no"],
+		[data-fieldname="serial_and_batch_bundle"]
+	)
+	:is(.static-area, input) {
+	direction: var(--pos-tech-dir);
+	unicode-bidi: isolate;
+	text-align: var(--pos-tech-align);
+}
+
+/* Mixed-script text in lists, titles, breadcrumbs and links: isolate each value so neutral
+   characters (·, -, parentheses, numbers) attach to the right run. */
+html[dir="rtl"] :is(
+		.list-subject a,
+		.list-row-col .ellipsis,
+		.page-title .title-text,
+		.breadcrumb-container a,
+		.navbar-breadcrumbs a,
+		.control-value a,
+		.link-btn,
+		.awesomplete li,
+		.indicator-pill,
+		.frappe-timestamp,
+		.pos-cell-title,
+		.pos-cell-sub,
+		.pos-attention-title
+	) {
+	unicode-bidi: isolate;
+}
+html[dir="rtl"] :is(.pos-cell-title, .pos-cell-sub) {
+	unicode-bidi: plaintext;
+}
+/* values marked dir="auto" by pharmacyos/bidi.js keep the column's RTL alignment */
+html[dir="rtl"] [dir="auto"]:is(
+		.list-row-col .ellipsis,
+		.list-subject a,
+		.list-row-col .filterable,
+		.grid-static-col .static-area,
+		.control-value a,
+		.like-disabled-input,
+		.page-title .title-text,
+		.awesomplete li a,
+		.point-of-sale-app .item-name
+	) {
+	text-align: var(--pos-tech-align);
+}
+
+/* List cells: let the value shrink inside its column so overflow is cut at the value's own end
+   (with an ellipsis) instead of clipping its first characters at the column's left edge. */
+html[dir="rtl"] .list-subject > .level-item.ellipsis {
+	min-width: 0;
+	flex: 1 1 auto;
+}
+html[dir="rtl"] .list-row-col > span.ellipsis[dir="auto"]:not(.es-badge) {
+	display: inline-block;
+	max-width: 100%;
+	vertical-align: top;
+}
+
+/* Directional icons mirror in RTL; semantic icons (search, check, clock, warning…) do not. */
+html[dir="rtl"] .pos-page svg.icon:has(> use:is(
+		[href="#icon-chevron-right"],
+		[href="#icon-chevron-left"],
+		[href="#icon-arrow-right"],
+		[href="#icon-arrow-left"],
+		[href="#icon-move-right"],
+		[href="#icon-move-left"]
+	)) {
+	transform: scaleX(-1);
 }

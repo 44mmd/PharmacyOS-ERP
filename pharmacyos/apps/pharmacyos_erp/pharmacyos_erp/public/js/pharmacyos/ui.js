@@ -6,6 +6,9 @@ pharmacyos.ui.esc = esc;
 
 pharmacyos.ui.icon = (name, size = "sm") => frappe.utils.icon(name, size);
 
+// Technical or numeric value that must read left-to-right inside Arabic text (SKU, batch, 39.9%).
+pharmacyos.ui.ltr = (v) => `<bdi dir="ltr">${esc(v)}</bdi>`;
+
 // Expiry status — label + icon + colour (never colour alone).
 pharmacyos.ui.EXPIRY_STATUS = {
 	expired: { label: () => __("Expired"), icon: "circle-x" },
@@ -86,14 +89,45 @@ pharmacyos.ui.list_url = (doctype, filters = {}) => {
 pharmacyos.ui.form_url = (doctype, name) =>
 	`/desk/${frappe.router.slug(doctype)}/${encodeURIComponent(name)}`;
 
-pharmacyos.ui.date = (d) => (d ? frappe.datetime.str_to_user(d) : "—");
+// Unambiguous display dates: "27 Oct 2026" / "27 تشرين الأول 2026" (Iraqi month names, Latin
+// digits). Storage and API values stay ISO (YYYY-MM-DD); only presentation changes.
+const MONTHS = [
+	"January",
+	"February",
+	"March",
+	"April",
+	"May",
+	"June",
+	"July",
+	"August",
+	"September",
+	"October",
+	"November",
+	"December",
+];
+pharmacyos.ui.month_name = (index) => {
+	const en = MONTHS[index];
+	const local = __(en, null, "Month");
+	return local === en ? en.slice(0, 3) : local;
+};
+pharmacyos.ui.date = (d) => {
+	if (!d) return "—";
+	const m = String(d).match(/^(\d{4})-(\d{2})-(\d{2})/);
+	if (!m) return frappe.datetime.str_to_user(d);
+	return `${Number(m[3])} ${pharmacyos.ui.month_name(Number(m[2]) - 1)} ${m[1]}`;
+};
 
+// Day counts with Arabic plural forms (1, 2, 3–10, 11+) chosen by translation context; English
+// uses the same source strings, so it reads naturally either way.
+const plural_ctx = (n) => (n === 1 ? "one" : n === 2 ? "two" : n >= 3 && n <= 10 ? "few" : "many");
+pharmacyos.ui.days_count = (n) => __("{0} days", [n], plural_ctx(n));
 pharmacyos.ui.days_text = (days) => {
 	if (days === null || days === undefined) return "";
-	if (days < 0) return __("{0} days ago", [Math.abs(days)]);
 	if (days === 0) return __("today");
-	return __("in {0} days", [days]);
+	const n = Math.abs(days);
+	return days < 0 ? __("{0} days ago", [n], plural_ctx(n)) : __("in {0} days", [n], plural_ctx(n));
 };
+
 
 // Medicine display name: Arabic name for Arabic users when available, with the commercial name.
 pharmacyos.ui.medicine_title = (row) => {

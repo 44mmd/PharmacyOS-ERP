@@ -30,7 +30,7 @@ MEDICINES = [
 	(
 		"DEMO-PARA-500",
 		"Demo Paracetamol 500 mg Tablets",
-		"باراسيتامول تجريبي ٥٠٠ ملغ أقراص",
+		"باراسيتامول تجريبي 500 ملغ أقراص",
 		"Paracetamol",
 		"500 mg",
 		"Tablet",
@@ -43,7 +43,7 @@ MEDICINES = [
 	(
 		"DEMO-AMOX-500",
 		"Demo Amoxicillin 500 mg Capsules",
-		"أموكسيسيلين تجريبي ٥٠٠ ملغ كبسول",
+		"أموكسيسيلين تجريبي 500 ملغ كبسول",
 		"Amoxicillin",
 		"500 mg",
 		"Capsule",
@@ -56,7 +56,7 @@ MEDICINES = [
 	(
 		"DEMO-IBU-400",
 		"Demo Ibuprofen 400 mg Tablets",
-		"إيبوبروفين تجريبي ٤٠٠ ملغ أقراص",
+		"إيبوبروفين تجريبي 400 ملغ أقراص",
 		"Ibuprofen",
 		"400 mg",
 		"Tablet",
@@ -69,7 +69,7 @@ MEDICINES = [
 	(
 		"DEMO-OME-20",
 		"Demo Omeprazole 20 mg Capsules",
-		"أوميبرازول تجريبي ٢٠ ملغ كبسول",
+		"أوميبرازول تجريبي 20 ملغ كبسول",
 		"Omeprazole",
 		"20 mg",
 		"Capsule",
@@ -82,7 +82,7 @@ MEDICINES = [
 	(
 		"DEMO-MET-850",
 		"Demo Metformin 850 mg Tablets",
-		"ميتفورمين تجريبي ٨٥٠ ملغ أقراص",
+		"ميتفورمين تجريبي 850 ملغ أقراص",
 		"Metformin",
 		"850 mg",
 		"Tablet",
@@ -121,7 +121,7 @@ MEDICINES = [
 	(
 		"DEMO-AZI-250",
 		"Demo Azithromycin 250 mg Tablets",
-		"أزيثرومايسين تجريبي ٢٥٠ ملغ أقراص",
+		"أزيثرومايسين تجريبي 250 ملغ أقراص",
 		"Azithromycin",
 		"250 mg",
 		"Tablet",

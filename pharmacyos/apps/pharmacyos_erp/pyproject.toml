@@ -30,7 +30,7 @@ ignore = [
     "B017", "B018", "B023", "B904", "E101", "E402", "E501", "E741",
     "F401", "F403", "F405", "F722", "W191",
     "UP030", "UP031", "UP032", "UP037", "UP040",
-    "RUF001", # ambiguous unicode: Arabic strings are intentional
+    "RUF001", "RUF002", "RUF003", # ambiguous unicode: Arabic text is intentional
 ]
 typing-modules = ["frappe.types.DF"]
 

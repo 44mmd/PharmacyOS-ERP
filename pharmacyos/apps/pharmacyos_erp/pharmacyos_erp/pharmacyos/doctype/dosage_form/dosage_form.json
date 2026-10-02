@@ -40,7 +40,7 @@
   }
  ],
  "links": [],
- "modified": "2026-10-02 00:00:00.000000",
+ "modified": "2026-10-02 16:36:21.982972",
  "modified_by": "Administrator",
  "module": "PharmacyOS",
  "name": "Dosage Form",
@@ -156,5 +156,6 @@
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
- "track_changes": 1
+ "track_changes": 1,
+ "translated_doctype": 1
 }

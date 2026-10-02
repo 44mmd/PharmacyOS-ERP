@@ -14,7 +14,7 @@
 	<div class="r-rule"></div>
 	<table class="r-info">
 		<tr><td>{{ _("Invoice") }}</td><td class="r-end" dir="ltr">{{ doc.name|e }}</td></tr>
-		<tr><td>{{ _("Date") }}</td><td class="r-end" dir="ltr">{{ frappe.utils.format_date(doc.posting_date) }} {{ (doc.posting_time or "")|string|truncate(5, True, "")|e }}</td></tr>
+		<tr><td>{{ _("Date") }}</td><td class="r-end"><bdi>{{ format_display_date(doc.posting_date) }}</bdi> <span dir="ltr">{{ (doc.posting_time or "")|string|truncate(5, True, "")|e }}</span></td></tr>
 		{%- if doc.customer_name %}<tr><td>{{ _("Customer") }}</td><td class="r-end">{{ doc.customer_name|e }}</td></tr>{% endif %}
 		{%- if doc.is_return %}<tr><td colspan="2" class="r-flag">{{ _("Return") }}</td></tr>{% endif %}
 	</table>

@@ -23,6 +23,19 @@ lives in the `pharmacyos_erp` app; no ERPNext file is modified (`pharmacyos/FORK
 * **States**: every PharmacyOS page has loading (skeleton), empty, no-results, error and
   permission-denied states (`pharmacyos.ui.state`).
 
+## Arabic-first
+
+Iraqi sites default to Arabic (RTL) and Baghdad time. Terminology follows Iraqi pharmacy usage:
+**الوجبة** for a batch (never الدفعة), المخزن, الزبائن, الشكل الدوائي and لوحة التحكم.
+
+Other parts:
+* Arabic-tolerant search (أ/إ/آ/ا, ى/ي, ة/ه);
+* mixed-direction handling;
+* IQD as `25,000 د.ع`;
+* Iraqi month names.
+
+Details: `LOCALIZATION.md`.
+
 ## Information architecture (Desk shell)
 
 App-shipped Dock (icon rail) + Sidebars, generated from `setup/navigation.py`:
@@ -83,13 +96,16 @@ field). Revisit if pharmacies need cashier-owned shifts (would need a narrow Cus
   themed by tokens and wrapped in PharmacyOS navigation — not redesigned.
 * The ERPNext **POS page** is themed only; a PharmacyOS POS (Vue/frappe-ui page in this app) is the
   planned replacement (see ARCHITECTURE.md).
-* The `/desk` apps screen still lists the ERPNext and Framework apps (advanced access).
+* The `/desk` apps screen and app switcher show only PharmacyOS ERP to pharmacy staff. This is
+  presentation only, in `boot.py:focus_apps_screen`; System Managers still see ERPNext and Framework.
 * Website error pages (404/500), setup wizard, system emails' body templates and most reports keep
   Frappe/ERPNext layouts (they use the PharmacyOS logo/name where Frappe reads Website Settings).
 * Some upstream help texts/messages mention ERPNext; the most visible one on the Item form is
   overridden; others remain.
-* Arabic: PharmacyOS strings and key terms are translated; ~26% of upstream ERPNext strings are still
-  untranslated upstream.
+* Arabic: see `LOCALIZATION.md` for the full list. In short:
+  * PharmacyOS strings, Iraqi pharmacy terminology and misleading upstream labels on daily screens are
+    covered;
+  * about 26% of upstream ERPNext strings have no Arabic upstream and show in English.
 
 ## Known pharmacy gaps (next phases)
 
