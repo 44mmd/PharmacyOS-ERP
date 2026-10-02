@@ -1,0 +1,25 @@
+/* PharmacyOS ERP — website/login surfaces (login layout is in login.css, loaded by the login page). */
+@font-face {
+	font-family: "Tajawal";
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	size-adjust: 108%;
+	src: url("/assets/pharmacyos_erp/fonts/tajawal-arabic-400.woff2") format("woff2");
+	unicode-range: U+0600-06FF, U+0750-077F, U+0870-089F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200E;
+}
+@font-face {
+	font-family: "Tajawal";
+	font-style: normal;
+	font-weight: 500 900;
+	font-display: swap;
+	size-adjust: 108%;
+	src: url("/assets/pharmacyos_erp/fonts/tajawal-arabic-700.woff2") format("woff2");
+	unicode-range: U+0600-06FF, U+0750-077F, U+0870-089F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200E;
+}
+:root {
+	--font-stack: "InterVariable", "Inter", "Tajawal", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+html[lang="ar"] {
+	--font-stack: "Tajawal", "InterVariable", "Inter", -apple-system, "Segoe UI", sans-serif;
+}

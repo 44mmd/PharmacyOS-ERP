@@ -1,0 +1,249 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-10-02 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "identity_tab",
+  "identity_help",
+  "pharmacy_name",
+  "pharmacy_name_ar",
+  "license_number",
+  "identity_cb",
+  "pharmacy_logo",
+  "phone",
+  "email",
+  "address",
+  "documents_section",
+  "show_powered_by",
+  "receipt_footer",
+  "expiry_tab",
+  "critical_days",
+  "expiring_soon_days",
+  "fefo_mode",
+  "expiry_cb",
+  "require_expiry_on_receipt",
+  "block_expired_receipt",
+  "min_shelf_life_on_receipt",
+  "short_shelf_life_action",
+  "integration_tab",
+  "integration_help",
+  "enable_outbound_events",
+  "outbound_endpoint",
+  "outbound_secret",
+  "outbound_timeout"
+ ],
+ "fields": [
+  {
+   "fieldname": "identity_tab",
+   "fieldtype": "Tab Break",
+   "label": "Pharmacy Identity"
+  },
+  {
+   "fieldname": "identity_help",
+   "fieldtype": "HTML",
+   "options": "<p class=\"text-muted small\">This is the pharmacy's own business identity, used on invoices and receipts. The platform itself remains PharmacyOS.</p>"
+  },
+  {
+   "fieldname": "pharmacy_name",
+   "fieldtype": "Data",
+   "label": "Pharmacy Name"
+  },
+  {
+   "fieldname": "pharmacy_name_ar",
+   "fieldtype": "Data",
+   "label": "Pharmacy Name (Arabic)"
+  },
+  {
+   "fieldname": "license_number",
+   "fieldtype": "Data",
+   "label": "Pharmacy License No."
+  },
+  {
+   "fieldname": "identity_cb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "pharmacy_logo",
+   "fieldtype": "Attach Image",
+   "label": "Pharmacy Logo"
+  },
+  {
+   "fieldname": "phone",
+   "fieldtype": "Data",
+   "label": "Phone",
+   "options": "Phone"
+  },
+  {
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "label": "Email",
+   "options": "Email"
+  },
+  {
+   "fieldname": "address",
+   "fieldtype": "Small Text",
+   "label": "Address"
+  },
+  {
+   "fieldname": "documents_section",
+   "fieldtype": "Section Break",
+   "label": "Documents"
+  },
+  {
+   "default": "1",
+   "fieldname": "show_powered_by",
+   "fieldtype": "Check",
+   "label": "Show \"Powered by PharmacyOS\" on printed documents"
+  },
+  {
+   "description": "Printed at the bottom of invoices and receipts, e.g. return policy.",
+   "fieldname": "receipt_footer",
+   "fieldtype": "Small Text",
+   "label": "Receipt Footer"
+  },
+  {
+   "fieldname": "expiry_tab",
+   "fieldtype": "Tab Break",
+   "label": "Batches & Expiry"
+  },
+  {
+   "default": "30",
+   "description": "Batches expiring within this many days are marked Critical.",
+   "fieldname": "critical_days",
+   "fieldtype": "Int",
+   "label": "Critical Window (Days)",
+   "non_negative": 1
+  },
+  {
+   "default": "90",
+   "description": "Batches expiring within this many days are marked Expiring Soon.",
+   "fieldname": "expiring_soon_days",
+   "fieldtype": "Int",
+   "label": "Expiring Soon Window (Days)",
+   "non_negative": 1
+  },
+  {
+   "default": "Warn",
+   "description": "When a sale uses a batch that expires later than another available batch in the same warehouse: Warn shows a message, Block stops the save. Expired batches are always rejected by ERPNext.",
+   "fieldname": "fefo_mode",
+   "fieldtype": "Select",
+   "label": "FEFO Guidance",
+   "options": "Off\nWarn\nBlock"
+  },
+  {
+   "fieldname": "expiry_cb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "require_expiry_on_receipt",
+   "fieldtype": "Check",
+   "label": "Require Expiry Date When Receiving Medicines"
+  },
+  {
+   "default": "1",
+   "fieldname": "block_expired_receipt",
+   "fieldtype": "Check",
+   "label": "Block Receiving Expired Batches"
+  },
+  {
+   "default": "90",
+   "fieldname": "min_shelf_life_on_receipt",
+   "fieldtype": "Int",
+   "label": "Minimum Remaining Shelf Life on Receipt (Days)",
+   "non_negative": 1
+  },
+  {
+   "default": "Warn",
+   "fieldname": "short_shelf_life_action",
+   "fieldtype": "Select",
+   "label": "When Shelf Life Is Below Minimum",
+   "options": "Warn\nBlock"
+  },
+  {
+   "fieldname": "integration_tab",
+   "fieldtype": "Tab Break",
+   "label": "Integration"
+  },
+  {
+   "fieldname": "integration_help",
+   "fieldtype": "HTML",
+   "options": "<p class=\"text-muted small\">Outbound events are disabled by default. No external PharmacyOS system is connected until an endpoint is configured here by an administrator.</p>"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_outbound_events",
+   "fieldtype": "Check",
+   "label": "Send Events to PharmacyOS Backend"
+  },
+  {
+   "depends_on": "enable_outbound_events",
+   "fieldname": "outbound_endpoint",
+   "fieldtype": "Data",
+   "label": "Endpoint URL",
+   "mandatory_depends_on": "enable_outbound_events",
+   "options": "URL"
+  },
+  {
+   "depends_on": "enable_outbound_events",
+   "description": "Used to sign each request body with HMAC-SHA256 (header X-PharmacyOS-Signature).",
+   "fieldname": "outbound_secret",
+   "fieldtype": "Password",
+   "label": "Signing Secret",
+   "mandatory_depends_on": "enable_outbound_events"
+  },
+  {
+   "default": "10",
+   "depends_on": "enable_outbound_events",
+   "fieldname": "outbound_timeout",
+   "fieldtype": "Int",
+   "label": "Request Timeout (Seconds)"
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-10-02 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "PharmacyOS",
+ "name": "PharmacyOS Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Pharmacy Owner",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Pharmacy Manager"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
