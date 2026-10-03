@@ -19,17 +19,38 @@ class PharmacyOSSettings(Document):
 				title=_("Expiry Windows"),
 			)
 
-		if self.enable_outbound_events and self.outbound_endpoint:
-			parsed = urlparse(self.outbound_endpoint)
-			local = parsed.hostname in ("localhost", "127.0.0.1") or (parsed.hostname or "").endswith(
-				".localhost"
-			)
-			if parsed.scheme != "https" and not (local and frappe.conf.developer_mode):
-				frappe.throw(_("The PharmacyOS endpoint must use HTTPS."), title=_("Insecure Endpoint"))
+		for fieldname in ("outbound_endpoint", "cloud_base_url"):
+			if self.get(fieldname):
+				validate_secure_url(self.get(fieldname), self.meta.get_label(fieldname))
 
 	def on_update(self):
 		# Expiry windows and identity are part of the boot payload.
 		frappe.clear_cache()
+
+
+LOCAL_HOSTS = ("localhost", "127.0.0.1", "::1")
+
+
+def is_insecure_url(url: str) -> bool:
+	"""True when `url` may not be used for PharmacyOS Cloud traffic.
+
+	HTTPS is required. Plain HTTP is tolerated only for a loopback development server on a site in
+	developer mode, never in production.
+	"""
+	parsed = urlparse((url or "").strip())
+	if parsed.scheme == "https" and parsed.hostname:
+		return False
+	host = parsed.hostname or ""
+	local = host in LOCAL_HOSTS or host.endswith(".localhost")
+	return not (parsed.scheme == "http" and local and frappe.conf.developer_mode)
+
+
+def validate_secure_url(url: str, label: str) -> None:
+	if is_insecure_url(url):
+		frappe.throw(
+			_("{0} must be an HTTPS address (for example https://api.example.com).").format(label),
+			title=_("Insecure Address"),
+		)
 
 
 def get_settings():

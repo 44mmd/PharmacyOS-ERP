@@ -7,6 +7,11 @@ Idempotency: `Sales Order.pharmacyos_order_id` is DB-unique. The canonical reque
 Prices come from ERPNext price lists (rates in the request are ignored); the response returns
 ERPNext's totals so the backend can reconcile. The order is submitted, which reserves stock
 (Bin.reserved_qty) and reduces the sellable quantity reported by `availability`.
+
+Reservations are decided under the item/warehouse Bin lock (see `pharmacy/stock_guard.py`): the
+availability check and the reservation happen in one serialised step, so two website orders, or a
+website order and a counter sale, can never both claim the last unit. A confirmed order is a real
+reservation.
 """
 
 import hashlib
@@ -17,9 +22,9 @@ from frappe import _
 from frappe.utils import add_days, cint, flt, nowdate
 
 from pharmacyos_erp.api.v1 import get_branch_by_code, require_integration
-from pharmacyos_erp.api.v1.availability import sellable_qty
 from pharmacyos_erp.api.v1.customers import ensure_customer
 from pharmacyos_erp.pharmacy.branches import get_branch_warehouses
+from pharmacyos_erp.pharmacy.stock_guard import current_free_qty, lock_bins
 
 
 class OrderConflictError(frappe.DuplicateEntryError):
@@ -73,6 +78,30 @@ def _response(so_name: str, created: bool) -> dict:
 	}
 
 
+def _existing_order(order_id: str, digest: str, current: bool = False) -> dict | None:
+	"""The idempotent response for an order already received, or None. Conflicting payload → 409.
+
+	`current=True` uses a locking read, which sees orders committed after this transaction's snapshot.
+	"""
+	existing = frappe.db.get_value(
+		"Sales Order",
+		{"pharmacyos_order_id": order_id},
+		["name", "pharmacyos_payload_hash"],
+		as_dict=True,
+		for_update=current,
+	)
+	if not existing:
+		return None
+	if current:
+		# The order was committed by a concurrent request after this transaction's snapshot: plain
+		# reads here would not see it. Nothing has been written yet, so end the transaction (releasing
+		# the stock locks) and answer from the committed order.
+		frappe.db.rollback()
+	if existing.pharmacyos_payload_hash != digest:
+		raise OrderConflictError(_("Order {0} was already received with different contents.").format(order_id))
+	return _response(existing.name, created=False)
+
+
 @frappe.whitelist(methods=["POST"])
 def create_order(
 	order_id: str,
@@ -86,18 +115,9 @@ def create_order(
 	payload = _normalise(order_id, branch_code, items, customer, delivery_date, notes)
 	digest = payload_hash(payload)
 
-	existing = frappe.db.get_value(
-		"Sales Order",
-		{"pharmacyos_order_id": payload["order_id"]},
-		["name", "pharmacyos_payload_hash"],
-		as_dict=True,
-	)
+	existing = _existing_order(payload["order_id"], digest)
 	if existing:
-		if existing.pharmacyos_payload_hash != digest:
-			raise OrderConflictError(
-				_("Order {0} was already received with different contents.").format(payload["order_id"])
-			)
-		return _response(existing.name, created=False)
+		return existing
 
 	branch = get_branch_by_code(branch_code)
 	warehouses = get_branch_warehouses(branch.name)
@@ -112,6 +132,17 @@ def create_order(
 			fields=["name", "pharmacyos_publish", "disabled", "has_batch_no", "is_stock_item"],
 		)
 	}
+	# serialise with counter sales and other orders before reading availability
+	lock_bins(
+		(row["item_code"], warehouse)
+		for row in payload["items"]
+		if items_meta.get(row["item_code"]) and items_meta[row["item_code"]].is_stock_item
+		for warehouse in warehouses
+	)
+	# a concurrent request with the same order ID may have committed while we waited for the lock
+	existing = _existing_order(payload["order_id"], digest, current=True)
+	if existing:
+		return existing
 	shortages = []
 	for row in payload["items"]:
 		meta = items_meta.get(row["item_code"])
@@ -121,7 +152,8 @@ def create_order(
 				frappe.DoesNotExistError,
 			)
 		if meta.is_stock_item:
-			available, _nearest = sellable_qty(row["item_code"], warehouses, cint(meta.has_batch_no))
+			# current (locking) reads: sees reservations and sales committed while we waited
+			available, _reserved = current_free_qty(row["item_code"], warehouses, cint(meta.has_batch_no))
 			if available < row["qty"]:
 				shortages.append(
 					{"item_code": row["item_code"], "requested": row["qty"], "available": available}
@@ -173,9 +205,12 @@ def create_order(
 	try:
 		so.insert()
 		so.submit()
-	except frappe.DuplicateEntryError:
-		# a concurrent request with the same order ID won the race
+	except (frappe.DuplicateEntryError, frappe.UniqueValidationError):
+		# a concurrent request with the same order ID won the race (Frappe reports the unique
+		# pharmacyos_order_id violation as UniqueValidationError)
 		frappe.db.rollback()
+		if not frappe.db.exists("Sales Order", {"pharmacyos_order_id": payload["order_id"]}):
+			raise
 		existing = frappe.db.get_value(
 			"Sales Order",
 			{"pharmacyos_order_id": payload["order_id"]},

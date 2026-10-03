@@ -33,6 +33,7 @@
   "cloud_base_url",
   "online_order_branch",
   "online_payment_mode",
+  "protect_online_reservations",
   "cloud_cb",
   "cloud_last_pull",
   "cloud_last_error",
@@ -283,7 +284,7 @@
    "fieldtype": "Data",
    "label": "PharmacyOS Cloud Address",
    "options": "URL",
-   "description": "e.g. https://api.halfpharmacy.com — must be HTTPS in production."
+   "description": "HTTPS address of PharmacyOS Cloud. Plain HTTP is accepted only for a local development server (localhost) in developer mode."
   },
   {
    "fieldname": "online_order_branch",
@@ -298,6 +299,13 @@
    "options": "Mode of Payment",
    "label": "Website Payment Method",
    "description": "Recorded when a delivered website order is invoiced (cash on delivery). Empty = Cash."
+  },
+  {
+   "default": "1",
+   "description": "Counter sales cannot take units reserved by submitted website orders. Fulfil or cancel the website order to release them.",
+   "fieldname": "protect_online_reservations",
+   "fieldtype": "Check",
+   "label": "Protect Website Reservations"
   },
   {
    "fieldname": "cloud_cb",
@@ -318,7 +326,7 @@
  ],
  "issingle": 1,
  "links": [],
- "modified": "2026-10-02 21:35:14.258217",
+ "modified": "2026-10-03 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "PharmacyOS",
  "name": "PharmacyOS Settings",
