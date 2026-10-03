@@ -191,8 +191,8 @@ def ensure_roles():
 
 # ERPNext v17 lets only Sales/Purchase Master Manager read Item Price, but the POS barcode/serial
 # search reads it with the caller's permissions, so a cashier's scan fails with "Insufficient
-# Permission for Item Price". The only exception to the "no Custom DocPerm on core DocTypes" rule:
-# read-only access for the roles that sell. Frappe copies the standard rules first, so existing
+# Permission for Item Price". Read-only access for the roles that sell (the counter permissions below
+# are the other Custom DocPerm on core DocTypes). Frappe copies the standard rules first, so existing
 # access is unchanged; the rows are removed on uninstall.
 PRICE_READ_ROLES = ("Pharmacy Owner", "Pharmacy Manager", "Branch Manager", "Pharmacist", "Cashier")
 

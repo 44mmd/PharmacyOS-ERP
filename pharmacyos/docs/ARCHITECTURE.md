@@ -155,6 +155,23 @@ Principles:
   a Sync Log DocType.
 * Map identifiers explicitly: `item_code`, `batch_id` (not `Batch.name`), warehouse to branch.
 
+### Authority and consistency rules (as implemented, release candidate)
+
+* **ERP authority:** stock, batches, expiry, prices, fulfilment, invoices and accounting live only in
+  the ERP. The Cloud keeps no second inventory while connected: it refuses local counter sales and
+  local stock/price edits of ERP products.
+* **Completion authority:** an online order is delivered or cancelled only when the ERP confirms it
+  (acknowledgement with `fulfilled`/`cancelled`, or its own status event). Delivered and cancelled are
+  terminal on both sides.
+* **Idempotency:** storefront checkout (`Idempotency-Key`), ERP order import (order id + payload hash,
+  unique), events (`event_id`), and fulfilment (one invoice per order) are all safe to repeat.
+* **Ordering:** event payloads are immutable per id and versioned by `computed_at`; receivers keep the
+  newest state and buffer availability that arrives before its product.
+* **Concurrency:** one lock order (item/warehouse Bin rows first) for every sale, delivery and online
+  order; decisions use locking reads; returns against one sale are serialised.
+
+Details: `INTEGRATION_API.md`, and `docs/ERP_INTEGRATION.md` in the Cloud repository.
+
 ## 5. Arabic / IQD readiness
 
 | Need | Status |

@@ -28,7 +28,10 @@ Pharmacy server (Linux or the PharmacyOS WSL2 environment on Windows)    ← one
 Production runs on **stable Frappe/ERPNext `version-16`** (upstream), plus the PharmacyOS ERP app.
 
 * The app has no ERPNext core changes, so it installs on upstream stable as is.
-* Tested: the full PharmacyOS suite passes on version-16 (98/98) and on develop (98/98).
+* **Commercial target: Frappe 16.36.1 / ERPNext 16.37.0, Python 3.14, MariaDB 10.11.**
+* Tested: the full PharmacyOS suite passes on that version-16 bench (133/133 after the
+  release-candidate remediation). The develop tree was last verified before the remediation and is
+  not a release target.
 * The app ships both desk shells:
   * develop: Dock/Sidebar;
   * version-16: Workspace Sidebar + Desktop Icon.
@@ -45,11 +48,25 @@ This replaces ERPNext's setup wizard and configures:
 * the company: IQD, Iraq, Asia/Baghdad, Arabic;
 * the chart of accounts and fiscal year;
 * the first branch with its warehouse and storefront code;
-* PharmacyOS settings (FEFO, batches, backups);
-* the owner account (Pharmacy Owner roles, Arabic).
+* the Branch accounting dimension **with all its columns, created synchronously** — a Purchase
+  Receipt and a counter sale work the moment the call returns, with no background worker running;
+* PharmacyOS settings (FEFO, batches, backups, website-reservation protection, 12-hour sessions);
+* the owner account (Pharmacy Owner roles + System Manager, Arabic).
 
-`install-server.sh` runs it from `PHARMACY_NAME`, `OWNER_EMAIL` and related variables. It was verified on
-a brand-new site: the owner logs in and the setup wizard never appears.
+Guarantees:
+
+* Inputs (name, email, password ≥ 8 characters, branch) are validated before anything is created.
+* Re-running after an interruption completes whatever is missing.
+* Once the pharmacy is initialised, a further call changes nothing — no password reset, no new
+  identity, no role change — and returns `{"status": "already_initialized"}`.
+* The health check (`backup.service.health_check`, System Status) fails when a Branch dimension
+  column is missing; `bench migrate` repairs missing columns.
+
+`install-server.sh` runs it from `PHARMACY_NAME`, `OWNER_EMAIL` and related variables.
+
+Fresh-install acceptance check (new site, no worker, first run, immediate receipt and sale, second
+first run): `DB_ROOT_PASSWORD=… pharmacyos/dev/fresh-site-check.sh <disposable-site>` from the bench
+directory. It drops and recreates the site, so never point it at real data.
 
 ## Server installation
 
@@ -111,9 +128,17 @@ address). You can also pick a receipt printer and choose to print receipts witho
 * an unreachable server shows the offline screen;
 * config unit tests: `npm test`.
 
-**Windows installer — built.** `PharmacyOS-ERP-Setup-0.1.0.exe` is built by the **PharmacyOS Desktop
-(Windows)** workflow on `windows-latest`. Run 37067473124 produced the artifact `PharmacyOS-ERP-Setup`
-(81.7 MB). The installer is **unsigned**; a code-signing certificate is needed before distribution.
+**Runtime:** Electron 44 (a supported release line) and electron-builder 26, pinned exactly. Verified
+on Linux: unit tests, a packaged build, and a headless launch that reaches the ERP sign-in page.
+
+**Windows installer — built by CI, not yet validated on Windows.** The **PharmacyOS Desktop
+(Windows)** workflow builds `PharmacyOS-ERP-Setup-<version>.exe` on `windows-latest`. An earlier run
+(37067473124, Electron 33) produced the artifact; the Electron 44 build is produced by the workflow on
+the next push. The installer is **unsigned**; a code-signing certificate is needed before distribution.
+
+**Still required on real hardware (not done):** installation on Windows 10 and 11, the WSL2 single-PC
+server, reboot/auto-start, barcode scanners, receipt printers, and SmartScreen behaviour with a signed
+installer. Nothing in this repository has been validated on a physical Windows machine.
 
 **Earlier notes:**
 * The installer is defined: NSIS, per-machine, desktop and Start-menu shortcuts.

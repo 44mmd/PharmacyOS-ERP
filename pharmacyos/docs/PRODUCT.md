@@ -57,22 +57,36 @@ PharmacyOS sidebars *own* their entities (`is_default_module`), so direct links 
 Receipt open inside PharmacyOS navigation. Links the user has no permission for are hidden by Frappe.
 Login lands on the PharmacyOS dashboard (`System Settings → default app`).
 
-## Roles (role profiles; ERPNext standard roles do the document permissions)
+## Roles (role profiles; ERPNext standard roles plus narrow counter permissions)
 
 | Profile | Includes |
 |---|---|
-| Pharmacy Owner | all PharmacyOS roles + Accounts/Stock/Sales/Purchase Manager, Item Manager, Report Manager (no System Manager) |
+| Pharmacy Owner | all PharmacyOS roles + Accounts/Stock/Sales/Purchase Manager, Item Manager, Report Manager. The owner created by first-run setup also gets **System Manager** (needed to add staff accounts and change settings); the setup wizard's other roles (HR, Projects, …) are removed. |
 | Pharmacy Manager | Stock Manager, Sales Manager, Purchase User, Accounts User, Item Manager |
-| Pharmacist | Sales User, Accounts User (required by v17 to invoice), Stock User |
-| Cashier | Sales User, Accounts User |
+| Pharmacist | Sales User + counter permissions (POS/Sales Invoice create & submit, own POS shift, batch bundles, POS profile, payment modes) + read of Batch and Stock Ledger |
+| Cashier | Sales User + counter permissions |
 | Inventory Manager | Stock Manager, Stock User, Item Manager, Purchase User |
 | Purchasing Officer | Purchase User/Manager, Stock User |
 | Pharmacy Accountant | Accounts User/Manager |
-| PharmacyOS Integration | API only: Sales User, Stock User |
+| PharmacyOS Integration | API only: Sales User. Sees only its own User record. |
 
-Decision: ERPNext v17 requires **Sales Manager** for POS Opening/Closing Entries. Cashiers are *not*
-given Sales Manager; a manager opens and closes the cashier's shift (POS Opening Entry has a user
-field). Revisit if pharmacies need cashier-owned shifts (would need a narrow Custom DocPerm).
+Cashier, Pharmacist and the integration user do **not** hold Accounts User or Stock User: those
+standard roles would let them post Journal Entries and Payment Entries, read the General Ledger and
+create arbitrary Stock Entries. Upgrading removes them from existing users of these profiles.
+
+Verified over HTTP with real logins (`tests/test_remediation.py`):
+
+| | Counter sale | Own shift | Journal Entry | Payment Entry | Stock Entry | GL read | Read batches / stock ledger | Website order API | Staff user list |
+|---|---|---|---|---|---|---|---|---|---|
+| Cashier | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | – | ✗ | names only (link fields) |
+| Pharmacist | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✓ | ✗ | names only (link fields) |
+| PharmacyOS Integration | ✗ | – | ✗ | ✗ | ✗ | ✗ | – | ✓ | ✗ (own record only) |
+
+(✓ allowed, ✗ refused with 403/PermissionError, – not applicable / not granted. The Payment Entry and
+GL rows for the integration user come from the role-matrix probe; all others from the HTTP tests.)
+
+Cashiers open and close **their own** POS shift (narrow Custom DocPerm, `if_owner`); they cannot
+cancel invoices or see other cashiers' shifts. Counter sessions expire after 12 idle hours.
 
 ## Pharmacy workflows
 
@@ -83,6 +97,16 @@ field). Revisit if pharmacies need cashier-owned shifts (would need a narrow Cus
   icon + text; real `batch_id` (never the hash); supplier and source receipt.
 * **FEFO**: ERPNext auto-selection by expiry; PharmacyOS warns (default) or blocks when a
   later-expiring batch is chosen while an earlier one is available; expired sales rejected by ERPNext.
+  Expiry policy: a batch is sellable **through** its expiry date and expired from the next day
+  (ERPNext's `expiry_date >= today` rule, also used for website availability). A pharmacy that must
+  stop selling earlier (e.g. at the start of the expiry month) needs a business decision and a
+  setting; it is not configurable today.
+* **Returns**: a return can never exceed what was sold — per item and per batch, cumulatively across
+  all returns, at no more than the rate charged — and a medicine return must reference the original
+  sale. Applies to returns built in the POS, the desk or the REST API.
+* **Last unit**: every sale, delivery and website order locks the item's stock rows in one order, so
+  competing cashiers get a clear stock error instead of a database deadlock; counter sales cannot
+  take units reserved by submitted website orders (*Protect Website Reservations*, on by default).
 * **Receiving**: "Batch & Expiry" checklist on Purchase Receipt/Invoice; expired batches rejected;
   short shelf life warns/blocks; missing expiry rejected.
 * **Inventory Health / Reorder Suggestions / Expiry Intelligence / Dashboard** — real data only.
