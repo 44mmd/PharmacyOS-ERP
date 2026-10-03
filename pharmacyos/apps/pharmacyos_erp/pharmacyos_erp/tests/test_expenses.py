@@ -6,7 +6,7 @@ import frappe
 from frappe.tests import IntegrationTestCase
 
 from pharmacyos_erp.pharmacy.expenses import record_expense
-from pharmacyos_erp.tests.utils import COMPANY, make_user
+from pharmacyos_erp.tests.utils import COMPANY, make_user, profile_roles
 
 
 class TestExpenses(IntegrationTestCase):
@@ -44,8 +44,7 @@ class TestExpenses(IntegrationTestCase):
 		self.assertRaises(frappe.ValidationError, record_expense, income, 100, "Cash")
 
 	def test_cashier_cannot_post_expenses(self):
-		# the real cashier profile includes ERPNext's Accounts User (needed to invoice)
-		frappe.set_user(make_user("pos-cashier-exp@example.com", ["Cashier", "Sales User", "Accounts User"]))
+		frappe.set_user(make_user("pos-cashier-exp@example.com", profile_roles("Cashier")))
 		try:
 			self.assertRaises(frappe.PermissionError, record_expense, self.expense, 100, "Cash")
 		finally:

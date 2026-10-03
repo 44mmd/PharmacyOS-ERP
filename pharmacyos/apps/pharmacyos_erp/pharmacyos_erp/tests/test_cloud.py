@@ -49,6 +49,8 @@ class TestCloudOrders(IntegrationTestCase):
 	def setUpClass(cls):
 		super().setUpClass()
 		ensure_api_branch()
+		# pull_orders commits, so order ids must be unique per run (earlier runs' orders persist)
+		cls.run_id = frappe.generate_hash(length=6).upper()
 		cls.item = published_medicine("POS-CLOUD-MED")
 		cls.expired = make_batch(cls.item.name, "CL-EXP", -3)
 		cls.good = make_batch(cls.item.name, "CL-GOOD", 400)
@@ -81,21 +83,21 @@ class TestCloudOrders(IntegrationTestCase):
 		return frappe.get_doc("Sales Order", {"pharmacyos_order_id": order_id})
 
 	def test_order_is_imported_once_and_reserves_stock(self):
-		fake = FakeCloud([entry("HPH-T1", self.item.name, 2)])
+		fake = FakeCloud([entry(f"HPH-T1-{self.run_id}", self.item.name, 2)])
 		self.assertEqual(self.pull(fake)["applied"], 1)
 		self.pull(fake)  # same version again (e.g. lost ack): no second Sales Order
-		self.assertEqual(frappe.db.count("Sales Order", {"pharmacyos_order_id": "HPH-T1"}), 1)
-		so = self.so("HPH-T1")
+		self.assertEqual(frappe.db.count("Sales Order", {"pharmacyos_order_id": f"HPH-T1-{self.run_id}"}), 1)
+		so = self.so(f"HPH-T1-{self.run_id}")
 		self.assertEqual(so.docstatus, 1)
 		self.assertEqual(fake.acks[0], {"version": 1, "erp_ref": so.name, "erp_status": so.status})
 
 	def test_completed_order_is_invoiced_from_non_expired_batches_only(self):
-		fake = FakeCloud([entry("HPH-T2", self.item.name, 6)])
+		fake = FakeCloud([entry(f"HPH-T2-{self.run_id}", self.item.name, 6)])
 		self.pull(fake)
-		fake.orders = [entry("HPH-T2", self.item.name, 6, status="completed", version=3)]
+		fake.orders = [entry(f"HPH-T2-{self.run_id}", self.item.name, 6, status="completed", version=3)]
 		self.pull(fake)
 		self.pull(fake)  # replay: no second invoice
-		so = self.so("HPH-T2")
+		so = self.so(f"HPH-T2-{self.run_id}")
 		self.assertEqual(flt(so.per_delivered), 100, fake.acks)
 		invoices = frappe.get_all(
 			"Sales Invoice Item",
@@ -120,19 +122,19 @@ class TestCloudOrders(IntegrationTestCase):
 		self.assertAlmostEqual(sum(g.debit for g in gl), sum(g.credit for g in gl))
 
 	def test_cancel_releases_the_reservation(self):
-		fake = FakeCloud([entry("HPH-T3", self.item.name, 1)])
+		fake = FakeCloud([entry(f"HPH-T3-{self.run_id}", self.item.name, 1)])
 		self.pull(fake)
-		fake.orders = [entry("HPH-T3", self.item.name, 1, status="cancelled", version=2)]
+		fake.orders = [entry(f"HPH-T3-{self.run_id}", self.item.name, 1, status="cancelled", version=2)]
 		self.pull(fake)
-		self.assertEqual(self.so("HPH-T3").docstatus, 2)
+		self.assertEqual(self.so(f"HPH-T3-{self.run_id}").docstatus, 2)
 		self.assertEqual(fake.acks[-1]["erp_status"], "Cancelled")
 
 	def test_unsellable_order_is_acknowledged_with_an_error(self):
-		fake = FakeCloud([entry("HPH-T4", self.item.name, 500)])  # far more than sellable stock
+		fake = FakeCloud([entry(f"HPH-T4-{self.run_id}", self.item.name, 500)])  # far more than sellable stock
 		result = self.pull(fake)
 		self.assertEqual(result["rejected"], 1)
 		self.assertIn("error", fake.acks[0])
-		self.assertFalse(frappe.db.exists("Sales Order", {"pharmacyos_order_id": "HPH-T4"}))
+		self.assertFalse(frappe.db.exists("Sales Order", {"pharmacyos_order_id": f"HPH-T4-{self.run_id}"}))
 
 	def test_offline_pull_is_retried_and_recorded(self):
 		result = self.pull(FakeCloud([], down=True))

@@ -22,6 +22,7 @@ from pharmacyos_erp.tests.utils import (
 	make_medicine,
 	make_sales_invoice,
 	make_user,
+	profile_roles,
 	receive,
 	set_settings,
 )
@@ -150,7 +151,7 @@ class TestBranches(IntegrationTestCase):
 		self.assertEqual(si.branch, self.branch_a)
 
 	def test_branch_isolation_via_user_permissions(self):
-		user = make_user("pos-branch-a@example.test", ["Pharmacist", "Sales User", "Stock User"])
+		user = make_user("pos-branch-a@example.test", profile_roles("Pharmacist"))
 		assign_user_to_branch(user, self.branch_a)
 		frappe.set_user(user)
 		try:
@@ -186,7 +187,7 @@ class TestDashboard(IntegrationTestCase):
 		self.assertIn("counts", data["stock"])
 
 	def test_cashier_sees_no_purchasing_or_stock_ledger(self):
-		user = make_user("pos-dash-cashier@example.test", ["Cashier", "Sales User", "Accounts User"])
+		user = make_user("pos-dash-cashier@example.test", profile_roles("Cashier"))
 		frappe.set_user(user)
 		try:
 			data = get_dashboard()

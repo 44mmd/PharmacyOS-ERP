@@ -13,10 +13,11 @@ from pharmacyos_erp.tests.utils import (
 	make_batch,
 	make_medicine,
 	make_user,
+	profile_roles,
 	receive,
 )
 
-CASHIER_ROLES = ["Cashier", "Sales User", "Accounts User"]  # the Cashier role profile
+CASHIER_ROLES = profile_roles("Cashier")
 
 
 def ensure_pos_profile(name, users):

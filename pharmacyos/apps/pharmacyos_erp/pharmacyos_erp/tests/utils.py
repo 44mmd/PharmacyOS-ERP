@@ -105,6 +105,13 @@ def set_settings(**values):
 	frappe.clear_document_cache("PharmacyOS Settings", "PharmacyOS Settings")
 
 
+def profile_roles(profile: str) -> list[str]:
+	"""Roles of a shipped PharmacyOS role profile (tests use the real profiles, never hand-made lists)."""
+	from pharmacyos_erp.setup.install import ROLE_PROFILES
+
+	return list(ROLE_PROFILES[profile])
+
+
 def make_user(email, roles):
 	if not frappe.db.exists("User", email):
 		frappe.get_doc(

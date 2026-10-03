@@ -14,7 +14,15 @@ from frappe.utils.password import set_encrypted_password
 
 from pharmacyos_erp.api.v1 import availability, catalog, orders
 from pharmacyos_erp.integration import outbox
-from pharmacyos_erp.tests.utils import WAREHOUSE, make_batch, make_medicine, make_user, receive, set_settings
+from pharmacyos_erp.tests.utils import (
+	WAREHOUSE,
+	make_batch,
+	make_medicine,
+	make_user,
+	profile_roles,
+	receive,
+	set_settings,
+)
 
 BRANCH = "POS API Branch"
 CODE = "API-TEST-01"
@@ -49,9 +57,7 @@ class TestIntegrationAPI(IntegrationTestCase):
 		receive(cls.item.name, cls.b_expired, 4, posting_date=add_days(nowdate(), -30))
 		receive(cls.item.name, cls.b_good, 10)
 		cls.unpublished = make_medicine("POS-API-HIDDEN")
-		cls.api_user = make_user(
-			"pos-integration@example.test", ["PharmacyOS Integration", "Sales User", "Stock User"]
-		)
+		cls.api_user = make_user("pos-integration@example.test", profile_roles("PharmacyOS Integration"))
 
 	def as_api(self):
 		frappe.set_user(self.api_user)
