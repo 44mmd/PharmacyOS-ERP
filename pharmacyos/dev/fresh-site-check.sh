@@ -8,7 +8,7 @@
 set -euo pipefail
 SITE=${1:-fresh-check.localhost}
 : "${DB_ROOT_PASSWORD:?set DB_ROOT_PASSWORD to the MariaDB root password}"
-if pgrep -f "frappe.utils.bench_helper frappe worker|rq:worker" >/dev/null; then
+if pgrep -f "[f]rappe.utils.bench_helper frappe worker|[r]q:worker" >/dev/null; then
 	echo "A background worker is running: stop it, this check must prove setup works without one." >&2
 	exit 1
 fi
