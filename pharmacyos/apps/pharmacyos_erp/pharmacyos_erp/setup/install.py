@@ -38,6 +38,12 @@ ROLES = [
 PHARMACY_ROLES = [r for r in ROLES if r != "PharmacyOS Integration"]
 
 # Role profile -> roles. Intentionally no "System Manager": owners manage the pharmacy, not the server.
+#
+# Least privilege for counter and integration staff. ERPNext's "Accounts User" grants Journal Entry,
+# Payment Entry and GL access, and "Stock User" grants Stock Entry (stock out of thin air), so
+# neither is part of the Cashier, Pharmacist or Integration profiles. What those people need to sell
+# (Sales/POS Invoice, POS Profile, Mode of Payment, batch bundles, own shift) is granted to their own
+# PharmacyOS role by the Custom DocPerms in COUNTER_PERMISSIONS below.
 ROLE_PROFILES = {
 	"Pharmacy Owner": [
 		"Pharmacy Owner",
@@ -67,9 +73,8 @@ ROLE_PROFILES = {
 		"Purchase User",
 		"Accounts User",
 	],
-	# ERPNext v17 requires Accounts User to create Sales/POS Invoices.
-	"Pharmacist": ["Pharmacist", "Sales User", "Accounts User", "Stock User"],
-	"Cashier": ["Cashier", "Sales User", "Accounts User"],
+	"Pharmacist": ["Pharmacist", "Sales User"],
+	"Cashier": ["Cashier", "Sales User"],
 	"Inventory Manager": [
 		"Inventory Manager",
 		"Stock Manager",
@@ -88,7 +93,15 @@ ROLE_PROFILES = {
 		"Stock User",
 		"Purchase User",
 	],
-	"PharmacyOS Integration": ["PharmacyOS Integration", "Sales User", "Stock User"],
+	# integration API: online orders (Sales Order, Customer) only
+	"PharmacyOS Integration": ["PharmacyOS Integration", "Sales User"],
+}
+
+# Roles that earlier releases put in these profiles and that must be taken away on upgrade.
+REVOKED_PROFILE_ROLES = {
+	"Cashier": ("Accounts User", "Stock User"),
+	"Pharmacist": ("Accounts User", "Stock User"),
+	"PharmacyOS Integration": ("Accounts User", "Stock User"),
 }
 
 DOSAGE_FORMS = [
@@ -153,6 +166,14 @@ def ensure_structure():
 	ensure_dosage_forms()
 	ensure_price_read_access()
 	ensure_cashier_shift_access()
+	ensure_branch_dimension_fields()
+
+
+def ensure_branch_dimension_fields():
+	"""Repair the Branch accounting dimension's columns if a site was left without them."""
+	from pharmacyos_erp.pharmacy.branches import ensure_branch_dimension_fields as repair
+
+	repair()
 
 
 def ensure_roles():
@@ -187,54 +208,81 @@ def ensure_price_read_access():
 		update_permission_property("Item Price", role, 0, "select", 1, validate=False)
 
 
-# Counter selling with the minimum ERPNext permissions, applied as Custom DocPerms:
-# * POS shifts: ERPNext v17 lets only Sales Manager open/close them. A cashier must run their own
-#   shift: read/create/submit POS Opening and Closing Entries they own (if_owner) — no cancel, no
-#   delete, no access to other cashiers' shifts.
+# Counter selling with the minimum ERPNext permissions, applied as Custom DocPerms on the PharmacyOS
+# roles (Frappe copies the standard rules first, so other roles keep their access; removed on
+# uninstall):
+# * POS shifts: ERPNext lets only Sales Manager open/close them. A cashier runs their own shift:
+#   read/create/submit POS Opening and Closing Entries they own (if_owner); no cancel, no delete, no
+#   access to other cashiers' shifts.
+# * Selling: Sales Invoice / POS Invoice create + submit (no cancel, no delete), POS Profile and Mode
+#   of Payment read. ERPNext only grants these through "Accounts User", which would also allow
+#   Journal Entries, Payment Entries and GL access.
 # * Batch medicines: selling a batch creates a Serial and Batch Bundle, which ERPNext reserves for
 #   stock roles; without it a cashier cannot sell any batch-tracked medicine.
-# Frappe copies the standard rules first, so existing access is unchanged. Removed on uninstall.
-SHIFT_ROLES = ("Cashier", "Pharmacist")
-COUNTER_PERMISSIONS = {
+# * Pharmacists additionally read batches and the stock ledger (stock and expiry questions) without
+#   any stock-creating permission.
+_SELL = ("read", "create", "write", "submit", "print", "email")
+_COUNTER = {
 	"POS Opening Entry": ("read", "create", "write", "submit", "print", "if_owner"),
 	"POS Closing Entry": ("read", "create", "write", "submit", "print", "if_owner"),
 	"Serial and Batch Bundle": ("read", "create", "write", "submit"),
+	"Sales Invoice": _SELL,
+	"POS Invoice": _SELL,
+	"POS Profile": ("read",),
+	"Mode of Payment": ("read",),
 }
-SHIFT_DOCTYPES = tuple(COUNTER_PERMISSIONS)
+COUNTER_PERMISSIONS = {
+	"Cashier": _COUNTER,
+	"Pharmacist": {**_COUNTER, "Batch": ("read",), "Stock Ledger Entry": ("read", "report")},
+}
+SHIFT_ROLES = tuple(COUNTER_PERMISSIONS)
+SHIFT_DOCTYPES = tuple(sorted({dt for perms in COUNTER_PERMISSIONS.values() for dt in perms}))
 
 
 def ensure_cashier_shift_access():
 	from frappe.permissions import add_permission, update_permission_property
 
-	for doctype, ptypes in COUNTER_PERMISSIONS.items():
-		if not frappe.db.exists("DocType", doctype):
+	for role, doctypes in COUNTER_PERMISSIONS.items():
+		if not frappe.db.exists("Role", role):
 			continue
-		for role in SHIFT_ROLES:
-			if not frappe.db.exists("Role", role):
+		for doctype, ptypes in doctypes.items():
+			if not frappe.db.exists("DocType", doctype):
 				continue
 			if not frappe.db.exists("Custom DocPerm", {"parent": doctype, "role": role, "permlevel": 0}):
 				add_permission(doctype, role, 0, ptype="read")
 			for ptype in ptypes:
 				update_permission_property(doctype, role, 0, ptype, 1, validate=False)
-		frappe.clear_cache(doctype=doctype)
+			frappe.clear_cache(doctype=doctype)
 
 
 def ensure_role_profiles():
+	"""Create missing profiles, add missing roles and revoke roles listed in REVOKED_PROFILE_ROLES.
+
+	Roles an administrator added to a profile are otherwise left alone. When a profile changes, its
+	users are re-synced immediately. Frappe also queues that re-sync for a background worker and
+	locks the profile until the job runs; since the work is already done, the lock is released so the
+	profile stays editable (and migrate stays re-runnable) on sites without a running worker.
+	"""
 	for profile, roles in ROLE_PROFILES.items():
 		roles = [r for r in roles if frappe.db.exists("Role", r)]
-		if frappe.db.exists("Role Profile", profile):
-			doc = frappe.get_doc("Role Profile", profile)
-			existing = {r.role for r in doc.roles}
-			missing = [r for r in roles if r not in existing]
-			if not missing:
-				continue
-			for role in missing:
-				doc.append("roles", {"role": role})
-			doc.save(ignore_permissions=True)
-		else:
+		if not frappe.db.exists("Role Profile", profile):
 			frappe.get_doc(
 				{"doctype": "Role Profile", "role_profile": profile, "roles": [{"role": r} for r in roles]}
 			).insert(ignore_permissions=True)
+			continue
+		doc = frappe.get_doc("Role Profile", profile)
+		revoked = set(REVOKED_PROFILE_ROLES.get(profile, ()))
+		existing = {r.role for r in doc.roles}
+		missing = [r for r in roles if r not in existing]
+		remove = existing & revoked
+		if not missing and not remove:
+			continue
+		doc.set("roles", [r for r in doc.roles if r.role not in revoked])
+		for role in missing:
+			doc.append("roles", {"role": role})
+		doc.save(ignore_permissions=True)
+		doc.update_all_users()
+		doc.unlock()  # the queued duplicate of update_all_users is harmless when it runs
 
 
 def ensure_property_setters():
@@ -299,7 +347,17 @@ def apply_recommended_configuration():
 	configure_pos_search()
 	configure_branch_dimension()
 	configure_print_formats()
+	configure_sessions()
 	compile_translations()
+
+
+def configure_sessions():
+	"""Counter terminals are shared: sign out after 12 hours without activity (one long shift).
+
+	Frappe's default keeps an idle desk session for 170 hours. The desktop app keeps the session across
+	restarts, so a 12-hour idle limit costs at most one sign-in per shift.
+	"""
+	frappe.db.set_single_value("System Settings", "session_expiry", "12:00")
 
 
 def configure_print_formats():
@@ -380,6 +438,7 @@ def configure_stock():
 		"Stock Settings",
 		{"enable_serial_and_batch_no_for_item": 1, "pick_serial_and_batch_based_on": "Expiry"},
 	)
+	frappe.db.set_single_value("PharmacyOS Settings", "protect_online_reservations", 1)
 
 
 def configure_pos_search():

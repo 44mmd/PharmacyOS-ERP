@@ -8,18 +8,73 @@ One call configures a ready-to-sell Iraqi pharmacy:
   country Iraq, IQD, Asia/Baghdad, Arabic interface;
 * the pharmacy's identity in PharmacyOS Settings (name in Arabic/English, phone, address);
 * the first branch with its own stock warehouse (and storefront code for website orders);
-* the owner account with the Pharmacy Owner role profile;
+* the Branch accounting dimension with all its columns, created synchronously, so receiving and
+  selling work the moment this call returns (no background worker needed);
+* the owner account;
 * PharmacyOS recommended configuration (FEFO, batch tracking, IQD display, backups on).
-Idempotent: safe to run again (existing records are kept).
+
+Guarantees:
+
+* Inputs are validated before anything is created.
+* Safe to re-run after an interruption: whatever is missing is completed, existing records are kept.
+* Once the pharmacy is initialised, a further call changes nothing — it does not reset the owner's
+  password, replace the pharmacy's identity or touch roles — and returns
+  ``{"status": "already_initialized"}``. Identity is edited in PharmacyOS Settings; passwords are
+  reset through the standard user screens.
+* The owner gets the Pharmacy Owner roles plus System Manager (needed to add staff accounts), not
+  every role the generic wizard hands out.
 """
 
 import frappe
-from frappe.utils import getdate, nowdate
+from frappe import _
+from frappe.utils import getdate, nowdate, validate_email_address
 
 
 def _abbr(name: str) -> str:
 	letters = "".join(w[0] for w in name.split() if w and w[0].isascii() and w[0].isalnum()).upper()
 	return (letters or "PH")[:5]
+
+
+def is_initialized() -> bool:
+	"""Setup finished: company created, pharmacy identity recorded and a branch with a warehouse."""
+	return bool(
+		frappe.is_setup_complete()
+		and frappe.db.get_single_value("PharmacyOS Settings", "pharmacy_name")
+		and frappe.db.exists("Branch", {"pharmacyos_warehouse": ["is", "set"]})
+	)
+
+
+def owner_roles() -> list[str]:
+	from pharmacyos_erp.setup.install import ROLE_PROFILES
+
+	roles = [*ROLE_PROFILES["Pharmacy Owner"], "System Manager"]
+	return [r for r in roles if frappe.db.exists("Role", r)]
+
+
+def _validate_inputs(pharmacy_name, owner_email, owner_password, branch_name, branch_code):
+	errors = []
+	if not (pharmacy_name or "").strip():
+		errors.append(_("Pharmacy name is required."))
+	if not validate_email_address((owner_email or "").strip()):
+		errors.append(_("Owner email {0} is not a valid email address.").format(owner_email or ""))
+	if len(owner_password or "") < 8:
+		errors.append(_("Owner password must have at least 8 characters."))
+	if not (branch_name or "").strip() or not (branch_code or "").strip():
+		errors.append(_("Branch name and branch code are required."))
+	if errors:
+		frappe.throw("<br>".join(errors), title=_("Cannot set up the pharmacy"))
+
+
+def _restrict_owner_roles(email: str) -> None:
+	user = frappe.get_doc("User", email)
+	wanted = set(owner_roles())
+	extra = [r.role for r in user.roles if r.role not in wanted]
+	if extra:
+		user.remove_roles(*extra)
+	user = frappe.get_doc("User", email)
+	missing = wanted - {r.role for r in user.roles}
+	if missing:
+		user.add_roles(*sorted(missing))
 
 
 @frappe.whitelist(methods=["POST"])
@@ -36,11 +91,30 @@ def setup_pharmacy(
 	company_abbr: str | None = None,
 ) -> dict:
 	frappe.only_for("System Manager")
+	from pharmacyos_erp.setup.install import apply_recommended_configuration, ensure_structure
+
+	if is_initialized():
+		ensure_structure()  # idempotent repair only (e.g. missing dimension columns)
+		frappe.db.commit()
+		return {
+			"status": "already_initialized",
+			"company": frappe.db.get_single_value("Global Defaults", "default_company"),
+			"pharmacy_name": frappe.db.get_single_value("PharmacyOS Settings", "pharmacy_name"),
+			"message": _(
+				"This pharmacy is already set up. Nothing was changed: edit the pharmacy's identity in PharmacyOS Settings and reset passwords from the user screens."
+			),
+		}
+
+	pharmacy_name = (pharmacy_name or "").strip()
+	owner_email = (owner_email or "").strip().lower()
+	_validate_inputs(pharmacy_name, owner_email, owner_password, branch_name, branch_code)
 	from frappe.desk.page.setup_wizard.setup_wizard import setup_complete
 
 	abbr = company_abbr or _abbr(pharmacy_name)
 	year = getdate(nowdate()).year
+	owner_created_here = False
 	if not frappe.is_setup_complete():
+		owner_created_here = not frappe.db.exists("User", owner_email)
 		result = setup_complete(
 			{
 				"language": "English",
@@ -93,10 +167,8 @@ def setup_pharmacy(
 			}
 		).insert(ignore_permissions=True)
 
-	from pharmacyos_erp.setup.install import apply_recommended_configuration, ensure_structure
-
 	ensure_structure()
-	apply_recommended_configuration()  # FEFO, batches, IQD display, Arabic for Iraq, branding
+	apply_recommended_configuration()  # FEFO, batches, IQD display, Arabic for Iraq, branding, dimension
 
 	frappe.db.set_single_value(
 		"PharmacyOS Settings",
@@ -112,8 +184,6 @@ def setup_pharmacy(
 	)
 	frappe.db.set_single_value("Stock Settings", "default_warehouse", warehouse)
 
-	from frappe.utils.password import update_password
-
 	if not frappe.db.exists("User", owner_email):
 		first, _sep, last = owner_full_name.partition(" ")
 		frappe.get_doc(
@@ -126,14 +196,22 @@ def setup_pharmacy(
 				"user_type": "System User",
 			}
 		).insert(ignore_permissions=True)
-	update_password(owner_email, owner_password)
-	if frappe.db.exists("User", owner_email):
-		user = frappe.get_doc("User", owner_email)
-		if frappe.db.exists("Role Profile", "Pharmacy Owner"):
-			user.add_roles(*[r.role for r in frappe.get_doc("Role Profile", "Pharmacy Owner").roles])
-		user.language = "ar"
-		user.save(ignore_permissions=True)
-		frappe.defaults.set_user_default("Company", company, owner_email)
+		owner_created_here = True
+	if owner_created_here:
+		from frappe.utils.password import update_password
+
+		update_password(owner_email, owner_password)
+	_restrict_owner_roles(owner_email)
+	user = frappe.get_doc("User", owner_email)
+	user.language = "ar"
+	user.save(ignore_permissions=True)
+	frappe.defaults.set_user_default("Company", company, owner_email)
 	frappe.db.commit()
 	frappe.clear_cache()
-	return {"company": company, "abbr": abbr, "branch": branch_name, "warehouse": warehouse}
+	return {
+		"status": "initialized",
+		"company": company,
+		"abbr": abbr,
+		"branch": branch_name,
+		"warehouse": warehouse,
+	}

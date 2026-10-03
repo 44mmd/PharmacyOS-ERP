@@ -118,14 +118,57 @@ def get_permitted_warehouses() -> list[str]:
 def ensure_branch_dimension():
 	"""Create ERPNext's Accounting Dimension for Branch (adds `branch` to accounting documents).
 
-	This is ERPNext's supported mechanism for branch-level P&L and GL reporting. Field creation runs
-	in ERPNext's background job (queue "long").
+	This is ERPNext's supported mechanism for branch-level P&L and GL reporting. ERPNext creates the
+	dimension's fields in a background job, so outside tests a site without a running worker would be
+	left with a dimension whose columns do not exist and every GL posting would fail with
+	"Unknown column 'branch'". PharmacyOS therefore creates the fields synchronously, in the same
+	call, using ERPNext's own (idempotent) field-creation routine. The queued job still runs later and
+	finds nothing left to do.
 	"""
-	if frappe.db.exists("Accounting Dimension", {"document_type": "Branch"}):
-		return
-	frappe.get_doc({"doctype": "Accounting Dimension", "document_type": "Branch", "label": "Branch"}).insert(
-		ignore_permissions=True
+	if not frappe.db.exists("Accounting Dimension", {"document_type": "Branch"}):
+		frappe.get_doc(
+			{"doctype": "Accounting Dimension", "document_type": "Branch", "label": "Branch"}
+		).insert(ignore_permissions=True)
+	ensure_branch_dimension_fields()
+
+
+def _branch_dimension():
+	name = frappe.db.get_value("Accounting Dimension", {"document_type": "Branch"})
+	return frappe.get_doc("Accounting Dimension", name) if name else None
+
+
+def missing_branch_fields() -> list[str]:
+	"""Accounting doctypes (ERPNext's dimension list) whose table has no column for the Branch dimension.
+
+	Empty when the dimension is not configured or every column exists.
+	"""
+	dimension = _branch_dimension()
+	if not dimension:
+		return []
+	from erpnext.accounts.doctype.accounting_dimension.accounting_dimension import (
+		get_doctypes_with_dimensions,
 	)
+
+	return [
+		doctype
+		for doctype in get_doctypes_with_dimensions()
+		if frappe.db.table_exists(doctype) and not frappe.db.has_column(doctype, dimension.fieldname)
+	]
+
+
+def ensure_branch_dimension_fields() -> list[str]:
+	"""Create the Branch dimension's fields that are missing (repairs sites left half-initialised).
+
+	Runs on install, first-run and every migrate. Returns the doctypes that were repaired.
+	"""
+	missing = missing_branch_fields()
+	if missing:
+		from erpnext.accounts.doctype.accounting_dimension.accounting_dimension import (
+			make_dimension_in_accounting_doctypes,
+		)
+
+		make_dimension_in_accounting_doctypes(doc=_branch_dimension(), doclist=missing)
+	return missing
 
 
 def get_warehouse_branch_map() -> list[tuple[str, int, int]]:

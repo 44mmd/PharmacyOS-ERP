@@ -343,16 +343,48 @@ def backup_now() -> str:
 	return "queued"
 
 
+# Documents a pharmacy cannot work without: if the Branch dimension column is missing on any of them,
+# receiving, selling or posting to the ledger fails with "Unknown column 'branch'".
+CRITICAL_DIMENSION_DOCTYPES = (
+	"Sales Invoice",
+	"Sales Invoice Item",
+	"POS Invoice",
+	"Purchase Receipt",
+	"Purchase Receipt Item",
+	"Stock Entry",
+	"Journal Entry Account",
+	"Payment Entry",
+	"GL Entry",
+	"Budget",
+)
+
+
 def health_check() -> dict:
-	"""Post-restore / post-update smoke check (run with `bench execute`)."""
+	"""Post-install / post-restore / post-update smoke check (run with `bench execute`)."""
+	from pharmacyos_erp.pharmacy.branches import missing_branch_fields
+
+	dimension = frappe.db.get_value("Accounting Dimension", {"document_type": "Branch"}, "fieldname")
+	missing = missing_branch_fields()
 	checks = {
 		"database": bool(frappe.db.sql("select 1")),
 		"items": frappe.db.count("Item"),
 		"settings": bool(frappe.db.exists("DocType", "PharmacyOS Settings")),
 		"scheduler_enabled": bool(cint(frappe.db.get_single_value("System Settings", "enable_scheduler"))),
+		"branch_dimension": bool(dimension),
+		"missing_branch_fields": missing,
+		"critical_branch_fields": bool(dimension)
+		and all(frappe.db.has_column(dt, dimension) for dt in CRITICAL_DIMENSION_DOCTYPES),
 	}
-	# backups and website sync stop silently without the scheduler
-	checks["ok"] = checks["database"] and checks["settings"] and checks["scheduler_enabled"]
+	# backups and website sync stop silently without the scheduler; documents cannot be posted
+	# while the Branch dimension columns are missing
+	checks["ok"] = bool(
+		checks["database"]
+		and checks["settings"]
+		and checks["scheduler_enabled"]
+		and checks["branch_dimension"]
+		and checks["critical_branch_fields"]
+		and not missing
+	)
 	print(json.dumps(checks))
 	return checks
 
