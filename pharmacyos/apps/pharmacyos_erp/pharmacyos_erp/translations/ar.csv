@@ -1,3 +1,4 @@
+"\n			The Batch {0} of an item {1} has negative stock in the warehouse {2}{3}.\n			Please add a stock quantity of {4} to proceed with this entry.\n			If it is not possible to make an adjustment entry, please enable 'Allow Negative Stock for Batch' in the batch {0} or in the Stock Settings to proceed.\n			However, enabling this setting may lead to negative stock in the system.\n			So please ensure the stock levels are adjusted as soon as possible to maintain the correct valuation rate.","\n			تحتوي الوجبة {0} من الصنف {1} على مخزون سالب في المخزن {2}{3}.\n			يرجى إضافة كمية مخزون قدرها {4} للمتابعة.\n			إذا تعذر إجراء تعديل، يرجى تفعيل خيار ""السماح بالمخزون السالب للوجبة"" في الوجبة {0} أو في إعدادات المخزون للمتابعة.\n			مع ذلك، قد يؤدي تفعيل هذا الخيار إلى وجود مخزون سالب في النظام.\n			لذا يرجى التأكد من تعديل مستويات المخزون في أسرع وقت ممكن للحفاظ على معدل التقييم الصحيح."
  Default Work In Progress Warehouse , افتراضي العمل في مخزن التقدم 
 """Customer Provided Item"" cannot be Purchase Item also","""الأصناف المقدمة من الزبائن"" لا يمكن شرائها"
 """Customer Provided Item"" cannot have Valuation Rate","""الأصناف المقدمة من الزبائن"" لا يمكن ان تحتوي على تكلفة"
@@ -19,8 +20,12 @@ All Customer Groups,جميع مجموعات الزبائن
 "As there are sufficient raw materials, Material Request is not required for Warehouse {0}.",نظرًا لوجود مواد خام كافية ، فإن طلب المواد ليس مطلوبًا للمخزن {0}.
 At Row #{0}: The picked quantity {1} for the item {2} is greater than available stock {3} for the batch {4} in the warehouse {5}. Please restock the item.,في الصف #{0}: الكمية المختارة {1} للصنف {2} أكبر من المخزون المتاح {3} للوجبة {4} في المخزن {5}. يرجى إعادة تخزين الصنف.
 At Row #{0}: The picked quantity {1} for the item {2} is greater than available stock {3} in the warehouse {4}.,في الصف #{0}: الكمية المختارة {1} للصنف {2} أكبر من المخزون المتاح {3} في المخزن {4}.
+At least one warehouse is mandatory,يُشترط وجود مخزن واحد على الأقل
+"At row #{0}: the Difference Account must not be a Stock type account, please change the Account Type for the account {1} or select a different account",في السطر #{0}: يجب ألا يكون حساب الفروقات حسابًا من نوع المخزون، يُرجى تغيير نوع الحساب {1} أو تحديد حساب مختلف.
 At row {0}: Batch No is mandatory for Item {1},في الصف {0}: رقم الوجبة إلزامي للعنصر {1}
 At row {0}: Qty is mandatory for the batch {1},في الصف {0}: الكمية إلزامية للوجبة {1}
+At row {0}: Serial and Batch Bundle {1} has already created. Please remove the values from the serial no or batch no fields.,في الصف {0}: تم إنشاء حزمة الرقم التسلسلي وحزمة الوجبة {1} مسبقًا. يُرجى حذف القيم من حقلي الرقم التسلسلي أو رقم الوجبة.
+Atleast one raw material for Finished Good Item {0} should be customer provided.,يجب أن يوفر الزبون مادة خام واحدة على الأقل للمنتج النهائي {0} .
 Auto Opt In (For all customers),الاشتراك التلقائي (لجميع الزبائن)
 Automatically Create New Batch,إنشاء وجبة جديدة تلقائيا
 Available Batch Qty at From Warehouse,متوفر (كمية وجبة) عند (من المخزن)
@@ -41,6 +46,7 @@ Batch ID,هوية الوجبة
 Batch Item Expiry Status,حالة انتهاء صلاحية الوجبة الصنف
 Batch No,رقم وجبة
 Batch No is mandatory,رقم الوجبة إلزامي
+Batch No {0} does not exists,رقم الوجبة {0} غير موجود
 Batch No {0} is linked with Item {1} which has serial no. Please scan serial no instead.,رقم الوجبة {0} مرتبط بالعنصر {1} الذي يحمل رقمًا تسلسليًا. يرجى مسح الرقم التسلسلي بدلاً من ذلك.
 "Batch No {0} is not present in the original {1} {2}, hence you can't return it against the {1} {2}",رقم الوجبة {0} غير موجود في الوجبة الأصلية {1} {2}، لذا لا يمكنك إرجاعه مقابل الوجبة {1} {2}
 Batch Nos,أرقام الوجبات
@@ -54,6 +60,7 @@ Batch Quantity,كمية الوجبة
 Batch Size,حجم الوجبة
 Batch UOM,وجبة UOM
 Batch and Serial No,رقم الوجبة والرقم التسلسلي
+Batch not created for item {} since it does not have a batch series.,لم يتم إنشاء وجبة للعنصر {} لأنه لا يحتوي على سلسلة وجبات.
 Batch {0} and Warehouse,الوجبة {0} والمخزن
 Batch {0} is not available in warehouse {1},الوجبة {0} غير متوفرة في المخزن {1}
 Batch {0} of Item {1} has expired.,الوجبة {0} للعنصر {1} انتهت صلاحيتها\n<br>\nBatch {0} of Item {1} has expired.
@@ -64,6 +71,7 @@ Cannot change Attributes after stock transaction. Make a new Item and transfer s
 "Cannot enable Item-wise Inventory Account, as there are existing Stock Ledger Entries for the company {0} with Warehouse-wise Inventory Account. Please cancel the stock transactions first and try again.",لا يمكن تفعيل حساب المخزون حسب الصنف، لوجود قيود دفترية للمخزون للشركة {0} مع حساب مخزون حسب المخزن. يرجى إلغاء معاملات المخزون أولاً ثم المحاولة مرة أخرى.
 Cannot find Item or Warehouse with this Barcode,لا يمكن العثور على المنتج أو المخزن باستخدام هذا الرمز الشريطي
 Change in Stock Value,التغير في قيمة المخزون
+Changed customer name to '{}' as '{}' already exists.,تم تغيير اسم الزبون إلى '{}' لأن '{}' موجود بالفعل.
 Changing Customer Group for the selected Customer is not allowed.,لا يسمح بتغيير مجموعة الزبائن للزبون المحدد.
 Check Availability in Warehouse,تحقق من التوفر في المخزن
 Child warehouse exists for this warehouse. You can not delete this warehouse.,مخزن فرعي موجود لهذا المخزن. لا يمكنك حذف هذا المخزن.\n<br>\nChild warehouse exists for this warehouse. You can not delete this warehouse.
@@ -221,6 +229,7 @@ Make Stock Entry,جعل دخول المخزون
 Material from Customer,مواد من الزبون
 Maximum Samples - {0} can be retained for Batch {1} and Item {2}.,الحد الأقصى للعينات - {0} يمكن الاحتفاظ بالوجبة {1} والبند {2}.
 Maximum Samples - {0} have already been retained for Batch {1} and Item {2} in Batch {3}.,الحد الأقصى للعينات - {0} تم الاحتفاظ به مسبقا للوجبة {1} و العنصر {2} في الوجبة {3}.
+Multiple Loyalty Programs found for Customer {}. Please select manually.,تم العثور على عدة برامج ولاء للزبون {}. يرجى الاختيار يدويًا.
 Name of the Document Type (DocType) you want this field to be linked to. e.g. Customer,اسم نوع الوثيقة (DOCTYPE) تريد هذا الحقل لتكون مرتبطة. على سبيل المثال الزبائن
 New Batch ID (Optional),معرف الوجبة الجديد (اختياري)
 New Batch Qty,جديد وجبة الكمية
@@ -252,11 +261,13 @@ Pick Serial / Batch,اختر الرقم التسلسلي / الوجبة
 Pick Serial / Batch Based On,اختر الرقم التسلسلي / الوجبة بناءً على
 Pick Serial / Batch No,اختر الرقم التسلسلي / رقم الوجبة
 Please Select a Customer,الرجاء تحديد زبون
+Please add atleast one Serial No / Batch No,يرجى إضافة رقم تسلسلي واحد على الأقل / رقم وجبة واحد على الأقل
 Please create Customer from Lead {0}.,الرجاء إنشاء زبون من الزبون المحتمل {0}.
 Please enter Item Code to get Batch Number,الرجاء إدخال رمز العنصر للحصول على رقم الوجبة\n<br>\nPlease enter Item Code to get Batch Number
 Please enter Item Code to get batch no,الرجاء إدخال كود البند للحصول على رقم الوجبة
 Please enter Warehouse and Date,الرجاء إدخال المخزن والتاريخ
 Please select Customer first,يرجى اختيار الزبون أولا
+Please select Sample Retention Warehouse in Stock Settings first,يرجى تحديد نموذج الاحتفاظ مخزن في إعدادات المخزون أولا
 Please select Serial/Batch Nos to reserve or change Reservation Based On to Qty.,يرجى تحديد الأرقام التسلسلية/أرقام الوجبات للحجز أو تغيير الحجز بناءً على الكمية.
 Please select Stock Asset Account,الرجاء تحديد حساب أصول المخزون
 Please select a Customer,يرجى تحديد الزبون
@@ -294,8 +305,11 @@ Reconcile All Serial Nos / Batches,مطابقة جميع الأرقام التس
 "Reference: {0}, Item Code: {1} and Customer: {2}",المرجع: {0}، رمز العنصر: {1} والزبون: {2}
 Rejected Serial and Batch Bundle,تم رفض الرقم التسلسلي وحزمة الوجبات
 Rejected Warehouse,رفض مخزن
+Rejected Warehouse and Accepted Warehouse cannot be same.,لا يمكن أن يكون المخزن المرفوض هو نفسه المخزن المقبول.
 Reorder level based on Warehouse,مستوى إعادة الطلب بناء على مخزن
 Reserve Warehouse,احتياطي مخزن
+Reserved Stock for Batch,المخزون المحجوز للوجبة
+Reserved Warehouse is mandatory for the Item {item_code} in Raw Materials supplied.,يُعد المخزن المحجوز إلزاميًا للصنف {item_code} في المواد الخام الموردة.
 Return Qty from Rejected Warehouse,كمية الإرجاع من المخزن المرفوض
 Return Raw Material to Customer,إعادة المواد الخام إلى الزبون
 Rounding gain/loss Entry for Stock Transfer,قيد تقريب الربح/الخسارة لنقل المخزون
@@ -410,6 +424,7 @@ Stock Movement,حركة المخزون
 Stock Partially Reserved,المخزون محجوزة جزئياً
 Stock Qty,المخزون الكمية
 Stock Qty vs Batch Qty,كمية المخزون مقابل كمية الوجبة
+Stock Reports,تقارير المخزون
 Stock Reservation,حجز المخزون
 Stock Reservation Warehouse Mismatch,عدم تطابق مخزن حجز المخزون
 Stock Reserved,المخزون محجوزة
@@ -420,6 +435,7 @@ Stock and Account Value Comparison,المخزون وقيمة الحساب مقا
 Stock cannot be reserved in group warehouse {0}.,لا يمكن حجز المخزون في مخزن المجموعة {0}.
 Stock cannot be reserved in the group warehouse {0}.,لا يمكن حجز المخزون في مخزن المجموعة {0}.
 Stock not available for Item {0} in Warehouse {1}.,المخزون غير متوفر للصنف {0} في المخزن {1}.
+Stock quantity not enough for Item Code: {0} under warehouse {1}. Available quantity {2} {3}.,الكمية المتوفرة من المنتج ذي الرمز {0} غير كافية في المخزن {1}. الكمية المتاحة {2} {3}.
 Stock transactions that are older than the mentioned days cannot be modified.,لا يمكن تعديل معاملات المخزون التي مضى عليها أكثر من الأيام المذكورة.
 Sub Assembly Warehouse,مخزن التجميع الفرعي
 Successfully linked to Customer,تم ربط الزبون بنجاح
@@ -440,6 +456,7 @@ The last scanned warehouse has been cleared and won't be set in the subsequently
 The lowest tier must have a minimum spent amount of 0. Customers need to be part of a tier as soon as they are enrolled in the program.,يجب أن يكون الحد الأدنى للإنفاق في أدنى مستوى هو 0. يجب أن يكون الزبائن جزءًا من مستوى بمجرد تسجيلهم في البرنامج.
 The selected item cannot have Batch,العنصر المحدد لا يمكن أن يكون وجبة
 "The stock for the item {0} in the {1} warehouse was negative on the {2}. You should create a positive entry {3} before the date {4} and time {5} to post the correct valuation rate. For more details, please read the <a href='https://docs.erpnext.com/docs/user/manual/en/stock-adjustment-cogs-with-negative-stock'>documentation</a>.",كان رصيد الصنف {0} في المخزن {1} سالبًا في {2}. يجب عليك إنشاء قيد موجب {3} قبل التاريخ {4} والوقت {5} لتسجيل معدل التقييم الصحيح. لمزيد من التفاصيل، يُرجى قراءة الوثائق <a href='https://docs.erpnext.com/docs/user/manual/en/stock-adjustment-cogs-with-negative-stock'></a>.
+"The stock for the item {0} in the {1} warehouse was negative on the {2}. You should create a positive entry {3} before the date {4} and time {5} to post the correct valuation rate. For more details, please read the <a href='https://docs.erpnext.com/docs/user/manual/en/stock-adjustment-cogs-with-negative-stock'>documentation<a>.",كان رصيد الصنف {0} في المخزن {1} سالبًا في {2}. يجب عليك إنشاء قيد موجب {3} قبل التاريخ {4} والوقت {5} لتسجيل معدل التقييم الصحيح. لمزيد من التفاصيل، يُرجى قراءة الوثائق <a href='https://docs.erpnext.com/docs/user/manual/en/stock-adjustment-cogs-with-negative-stock'><a>.
 "The stock has been reserved for the following Items and Warehouses, un-reserve the same to {0} the Stock Reconciliation: <br /><br /> {1}",تم حجز المخزون للأصناف والمخازن التالية، قم بإلغاء حجزها في {0} تسوية المخزون: <br /><br /> {1}
 The user cannot submit the Serial and Batch Bundle manually,لا يمكن للمستخدم إرسال حزمة الرقم التسلسلي والوجبة يدويًا
 The user will be able to transfer additional materials from the store to the Work in Progress (WIP) warehouse.,سيتمكن المستخدم من نقل مواد إضافية من المتجر إلى مخزن العمل قيد التقدم (WIP).

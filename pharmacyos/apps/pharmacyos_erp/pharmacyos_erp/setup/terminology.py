@@ -9,7 +9,9 @@ instead this module derives *overrides* from them:
 
 It rewrites term families inside every upstream Arabic string whose English source contains the
 term, and writes the result to `pharmacyos_erp/translations/ar.csv` (loaded by Frappe after
-upstream catalogs). Hand-curated wording in `pharmacyos_erp/locale/ar.po` loads after the CSV and
+upstream catalogs). The file is cumulative: rows generated against another upstream version
+(version-16 for production, develop for forward compatibility) are kept, so one committed file covers
+every supported ERPNext/Frappe version. Run it on each supported version after upgrading. Hand-curated wording in `pharmacyos_erp/locale/ar.po` loads after the CSV and
 always wins. Re-run after upgrading ERPNext/Frappe so new upstream strings are covered.
 """
 
@@ -89,8 +91,14 @@ def build_overrides(catalog: dict[str, str]) -> dict[str, str]:
 def write_overrides() -> int:
 	import frappe
 
-	overrides = build_overrides(load_upstream())
 	path = os.path.join(frappe.get_app_path("pharmacyos_erp"), "translations", "ar.csv")
+	overrides = {}
+	if os.path.exists(path):  # keep rows generated against other upstream versions
+		with open(path, newline="", encoding="utf-8") as f:
+			for row in csv.reader(f):
+				if len(row) >= 2:
+					overrides[row[0].replace("\\n", "\n")] = row[1].replace("\\n", "\n")
+	overrides.update(build_overrides(load_upstream()))
 	os.makedirs(os.path.dirname(path), exist_ok=True)
 	with open(path, "w", newline="", encoding="utf-8") as f:
 		writer = csv.writer(f)
