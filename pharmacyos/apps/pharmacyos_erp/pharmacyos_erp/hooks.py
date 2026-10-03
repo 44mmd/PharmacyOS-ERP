@@ -83,6 +83,14 @@ _outbox = "pharmacyos_erp.integration.outbox"
 _fulfilment = f"{_outbox}.on_fulfilment_document"
 _order_event = f"{_outbox}.on_sales_order"
 
+# Stock lock order for sales documents: Bin rows before Frappe's own row locks (see the module)
+override_doctype_class = {
+	"Sales Invoice": "pharmacyos_erp.pharmacy.document_classes.PharmacySalesInvoice",
+	"POS Invoice": "pharmacyos_erp.pharmacy.document_classes.PharmacyPOSInvoice",
+	"Delivery Note": "pharmacyos_erp.pharmacy.document_classes.PharmacyDeliveryNote",
+	"Sales Order": "pharmacyos_erp.pharmacy.document_classes.PharmacySalesOrder",
+}
+
 # The integration account cannot list or open staff User records (least privilege for Cloud credentials)
 permission_query_conditions = {"User": "pharmacyos_erp.permissions.user_query_conditions"}
 has_permission = {"User": "pharmacyos_erp.permissions.user_has_permission"}

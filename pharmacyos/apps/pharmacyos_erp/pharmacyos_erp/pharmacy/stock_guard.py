@@ -10,8 +10,10 @@ without coordination:
   stays correct, but the customer holds a confirmation that can never be fulfilled.
 
 The fix is to take the item/warehouse `Bin` rows `FOR UPDATE`, in a fixed (sorted) order, at the
-very start of submitting any document that moves or reserves stock. Competing transactions then wait
-for each other instead of deadlocking.
+very start of saving or submitting any document that moves or reserves stock. Saving a draft counts:
+ERPNext already creates the draft's batch bundle entries (and locks those rows) when the draft is
+saved, so a draft save racing a submit can otherwise deadlock on batch rows. With every save taking
+the Bin locks first, competing transactions wait for each other instead of deadlocking.
 
 MariaDB runs at REPEATABLE READ, so plain reads after the lock may still see the snapshot taken
 before the competitor committed. Decisions therefore use *current* (locking) reads of the Bin's
@@ -101,12 +103,13 @@ def _stock_rows(doc):
 
 
 def lock_document_stock(doc, method=None):
-	"""doc_event (before_validate): when the document is being submitted, lock its Bin rows first.
+	"""doc_event (before_validate): lock the document's Bin rows before anything else.
 
-	`before_validate` is the earliest point of the submit transaction, before ERPNext creates batch
-	bundles or ledger entries, so concurrent submissions queue here instead of deadlocking later.
+	Runs on every save and on submit. `before_validate` is the earliest point of the transaction,
+	before ERPNext creates batch bundles (drafts included) or ledger entries, so concurrent saves and
+	submissions of the same items queue here instead of deadlocking later.
 	"""
-	if doc.docstatus != 1 or not _moves_stock(doc):
+	if doc.docstatus == 2 or not _moves_stock(doc):
 		return
 	lock_bins((row.item_code, row.warehouse) for row in _stock_rows(doc))
 

@@ -615,6 +615,55 @@ class TestReservationProtection(IntegrationTestCase):
 		self.assertEqual(si.docstatus, 1)
 
 
+# --------------------------------------------------------------------------- F-20 over HTTP
+
+
+class TestConcurrentCounterSales(IntegrationTestCase):
+	"""Two cashiers save and submit the last unit at the same moment: one sale, never a deadlock."""
+
+	def admin_client(self):
+		from frappe.tests.test_api import make_request
+
+		client = get_test_client()
+		response = make_request(client.post, ("/api/method/login",), {"json": {"usr": "Administrator", "pwd": "admin"}})
+		self.assertEqual(response.status_code, 200)
+		return client
+
+	def test_last_unit_counter_race_never_deadlocks(self):
+		from frappe.tests.test_api import ThreadWithReturnValue
+
+		ensure_cash_mode()
+		clients = [self.admin_client(), self.admin_client()]
+		for attempt in range(4):
+			tag = frappe.generate_hash(length=6).upper()
+			item = make_medicine(f"REMED-RACE-{tag}")
+			batch = make_batch(item.name, f"RACE-{tag}", 300)
+			receive(item.name, batch, 1)
+			frappe.db.commit()
+
+			def sell(client, item_code=item.name, batch_no=batch):
+				draft = client.post("/api/method/frappe.client.insert", json={"doc": sale_doc(item_code, 1, batch_no)})
+				if draft.status_code != 200:
+					return draft.status_code, draft.get_data(as_text=True)[:300]
+				done = client.post("/api/method/frappe.client.submit", json={"doc": draft.json["message"]})
+				return done.status_code, done.get_data(as_text=True)[:300]
+
+			threads = [ThreadWithReturnValue(target=sell, args=(client,)) for client in clients]
+			for thread in threads:
+				thread.start()
+			for thread in threads:
+				thread.join()
+			results = [thread._return for thread in threads]
+			statuses = sorted(r[0] for r in results)
+			self.assertNotIn(500, statuses, f"round {attempt}: {results}")
+			self.assertEqual(statuses.count(200), 1, f"round {attempt}: {results}")
+			frappe.db.rollback()  # fresh snapshot
+			sold = frappe.get_all(
+				"Sales Invoice Item", filters={"item_code": item.name, "docstatus": 1}, pluck="parent"
+			)
+			self.assertEqual(len(sold), 1)
+
+
 # --------------------------------------------------------------------------- F-13
 
 
