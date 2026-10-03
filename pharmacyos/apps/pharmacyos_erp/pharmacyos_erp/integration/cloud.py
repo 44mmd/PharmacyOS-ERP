@@ -51,10 +51,14 @@ def sign_request(secret: str, ts: str, method: str, path: str, body: bytes) -> s
 def cloud_request(method: str, path: str, payload: dict | None = None):
 	import requests
 
+	from pharmacyos_erp.pharmacyos.doctype.pharmacyos_settings.pharmacyos_settings import is_insecure_url
+
 	s = _settings()
 	secret = s.get_password("outbound_secret", raise_exception=False) or ""
 	if not secret:
 		frappe.throw(_("Set the shared secret in PharmacyOS Settings → Integration."))
+	if is_insecure_url(s.cloud_base_url):
+		frappe.throw(_("The PharmacyOS Cloud address must use HTTPS."))
 	body = json.dumps(payload, separators=(",", ":"), default=str).encode() if payload is not None else b""
 	ts = str(int(time.time()))
 	headers = {
@@ -160,21 +164,40 @@ def apply_entry(entry: dict) -> dict:
 					_("Order {0} was already delivered; record a return instead.").format(entry["order_id"])
 				)
 			so.cancel()
-		return {"erp_ref": so.name if so else None, "erp_status": "Cancelled"}
+		return {"erp_ref": so.name if so else None, "erp_status": "Cancelled", "cancelled": True}
 	if so is None:
 		so = _create(entry)
 	elif so.docstatus == 2:
 		frappe.throw(_("Order {0} is cancelled in the pharmacy system.").format(entry["order_id"]))
+	result = {"erp_ref": so.name, "erp_status": so.status}
 	if status == "completed":
 		_fulfil(so)
 		so.reload()
-	return {"erp_ref": so.name, "erp_status": so.status}
+		if flt(so.per_delivered) < 100:
+			frappe.throw(_("Order {0} could not be fully delivered.").format(entry["order_id"]))
+		# the Cloud marks the order delivered only on this explicit confirmation
+		result = {"erp_ref": so.name, "erp_status": so.status, "fulfilled": True}
+	return result
 
 
 def pull_orders() -> dict:
-	"""Scheduler entry point (every minute). Never raises: failures are recorded and retried."""
+	"""Scheduler entry point (every minute). Never raises: failures are recorded and retried.
+
+	Runs are serialised by a lock: a slow feed (many orders, slow network) must not overlap the next
+	minute's run and import the same order version twice.
+	"""
 	if not cloud_enabled():
 		return {"skipped": True}
+	from frappe.utils.synchronization import LockTimeoutError, filelock
+
+	try:
+		with filelock("pharmacyos_pull_orders", timeout=1):
+			return _pull_orders()
+	except LockTimeoutError:
+		return {"skipped": True, "reason": "previous run still in progress"}
+
+
+def _pull_orders() -> dict:
 	try:
 		feed = cloud_request("GET", "/integrations/erp/orders/feed?limit=50")
 	except Exception as e:

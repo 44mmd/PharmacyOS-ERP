@@ -4,13 +4,21 @@
   change that caused them, so a rolled-back document never emits an event.
 * Nothing is recorded or sent unless *PharmacyOS Settings → Integration → Send Events* is enabled
   with an HTTPS endpoint. Out of the box no external system is contacted.
-* Pending events are deduplicated by key (e.g. one `availability.changed` per item + warehouse), and
-  the payload is computed **at send time**, so the receiver always gets current state — never a
-  stale snapshot.
-* Delivery: scheduler job every 5 minutes (`process_outbox`), JSON POST signed with HMAC-SHA256 over
+* Event identity is immutable: an event's payload (current state of the item / order, stamped with
+  `computed_at`) is computed on its first delivery attempt and stored; every retry re-sends exactly
+  the same bytes under the same `event_id`. A change that happens after an event's first attempt is
+  queued as a new event with a later `computed_at`, so the receiver applies a state only when it is
+  newer than the one it holds (a lost response followed by a retry can never carry a different state
+  under an already-applied id).
+* Events not yet attempted are deduplicated by key (one `availability.changed` per item + warehouse):
+  their payload is computed when they are first sent, so they always carry the newest state.
+* Delivery: scheduler job every minute (`process_outbox`), JSON POST signed with HMAC-SHA256 over
   the raw body (`X-PharmacyOS-Signature: sha256=<hex>`), with `X-PharmacyOS-Event` / `-Event-Id`
   headers. Up to MAX_ATTEMPTS tries with exponential back-off (2, 4, 8 … minutes, capped at an
-  hour), then the event stays `Failed` until an authorized user presses Retry.
+  hour), then the event stays `Failed`. Events that failed only because the Cloud was unreachable
+  get a fresh set of attempts as soon as a later delivery proves the connection is back (a long
+  internet outage must not leave the website stale); events the Cloud rejected wait for an
+  authorized user's Retry.
 * Offline behaviour: local sales, stock and accounting commit locally first; events simply wait in
   the queue while the internet is down and are delivered, in order, once it returns. The receiver
   de-duplicates by `X-PharmacyOS-Event-Id`, so a retried delivery never creates a second record.
@@ -47,10 +55,9 @@ def queue_event(event_type: str, reference_doctype: str, reference_name: str, de
 	if not outbound_enabled():
 		return
 	if frappe.db.exists(
-		"PharmacyOS Sync Event",
-		{"dedupe_key": dedupe_key, "status": ["in", ["Pending", "Failed"]], "attempts": ["<", MAX_ATTEMPTS]},
+		"PharmacyOS Sync Event", {"dedupe_key": dedupe_key, "status": "Pending", "attempts": 0}
 	):
-		return  # the queued event is sent with current state, so one per key is enough
+		return  # not sent yet: its payload is computed at first send, so it will carry this change too
 	frappe.get_doc(
 		{
 			"doctype": "PharmacyOS Sync Event",
@@ -123,7 +130,8 @@ def build_payload(event) -> dict:
 		"event": event.event_type,
 		"event_id": event.name,
 		"occurred_at": str(event.creation),
-		"sent_at": str(now_datetime()),
+		# version of the state below: receivers apply it only if newer than what they hold
+		"computed_at": now_datetime().isoformat(),
 	}
 	if event.event_type == "availability.changed":
 		_kind, item_code, warehouse = event.dedupe_key.split(":", 2)
@@ -168,6 +176,44 @@ def is_due(row, now=None) -> bool:
 	return get_datetime(row.modified) + retry_delay(row.attempts) <= get_datetime(now or now_datetime())
 
 
+TRANSIENT_PREFIX = "[unreachable] "
+
+
+def _describe_failure(error: Exception) -> str:
+	"""Error text, marked transient when the Cloud could not be reached or answered 5xx/429."""
+	import requests
+
+	response = getattr(error, "response", None)
+	status = getattr(response, "status_code", None)
+	transient = isinstance(error, (requests.ConnectionError, requests.Timeout, ConnectionError)) or (
+		status is not None and (status >= 500 or status == 429)
+	)
+	return (TRANSIENT_PREFIX if transient else "") + str(error)[:480]
+
+
+def revive_unreachable_events() -> int:
+	"""Give exhausted events that failed only for connectivity a fresh set of attempts."""
+	names = frappe.get_all(
+		"PharmacyOS Sync Event",
+		filters={
+			"status": "Failed",
+			"attempts": [">=", MAX_ATTEMPTS],
+			"last_error": ["like", TRANSIENT_PREFIX + "%"],
+		},
+		pluck="name",
+	)
+	for name in names:
+		frappe.db.set_value("PharmacyOS Sync Event", name, {"attempts": 0, "status": "Pending"})
+	return len(names)
+
+
+def event_body(event) -> bytes:
+	"""The exact bytes of an event. Computed once, then frozen: retries re-send the same state."""
+	if not event.payload:
+		event.payload = json.dumps(build_payload(event), separators=(",", ":"), default=str)
+	return event.payload.encode()
+
+
 def process_outbox() -> None:
 	"""Scheduler entry point. Sends pending events; no-op unless outbound is enabled."""
 	if not outbound_enabled():
@@ -175,6 +221,11 @@ def process_outbox() -> None:
 	import requests
 
 	settings = frappe.get_cached_doc("PharmacyOS Settings")
+	from pharmacyos_erp.pharmacyos.doctype.pharmacyos_settings.pharmacyos_settings import is_insecure_url
+
+	endpoint = outbound_endpoint(settings)
+	if is_insecure_url(endpoint):
+		return
 	secret = settings.get_password("outbound_secret", raise_exception=False) or ""
 	timeout = cint(settings.outbound_timeout) or 10
 	now = now_datetime()
@@ -185,12 +236,12 @@ def process_outbox() -> None:
 		order_by="creation asc",
 		limit_page_length=BATCH_SIZE,
 	)
+	delivered = False
 	for row in events:
 		if not is_due(row, now):
 			continue
 		event = frappe.get_doc("PharmacyOS Sync Event", row.name)
-		payload = build_payload(event)
-		body = json.dumps(payload, separators=(",", ":"), default=str).encode()
+		body = event_body(event)
 		headers = {
 			"Content-Type": "application/json",
 			"X-PharmacyOS-Event": event.event_type,
@@ -198,16 +249,18 @@ def process_outbox() -> None:
 			"X-PharmacyOS-Signature": sign(body, secret),
 		}
 		event.attempts = cint(event.attempts) + 1
-		event.payload = json.dumps(payload, indent=1, default=str)
 		try:
-			response = requests.post(outbound_endpoint(settings), data=body, headers=headers, timeout=timeout)
+			response = requests.post(endpoint, data=body, headers=headers, timeout=timeout)
 			response.raise_for_status()
 			event.status, event.sent_on, event.last_error = "Sent", now_datetime(), None
+			delivered = True
 		except Exception as e:
 			event.status = "Failed"
-			event.last_error = str(e)[:500]
+			event.last_error = _describe_failure(e)
 		event.save(ignore_permissions=True)
 		frappe.db.commit()  # each delivery is independent
+	if delivered and revive_unreachable_events():
+		frappe.db.commit()
 
 
 # ------------------------------------------------------------------ status & actions
