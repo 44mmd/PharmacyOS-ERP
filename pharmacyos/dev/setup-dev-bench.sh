@@ -81,7 +81,7 @@ fi
 # PharmacyOS ERP custom app (lives in this repository until it moves to its own).
 if [ ! -e apps/pharmacyos_erp ]; then
 	ln -sfn "$APP_SRC" apps/pharmacyos_erp
-	uv pip install -e apps/pharmacyos_erp --python env/bin/python
+	uv pip install -e "apps/pharmacyos_erp[test]" --python env/bin/python  # [test]: freezegun for the suite
 	grep -qx pharmacyos_erp sites/apps.txt || { [ -n "$(tail -c1 sites/apps.txt)" ] && echo >> sites/apps.txt; echo pharmacyos_erp >> sites/apps.txt; }
 fi
 SITES=("$DEV_SITE"); [ "${SKIP_TEST_SITE:-0}" = 1 ] || SITES+=("$TEST_SITE")

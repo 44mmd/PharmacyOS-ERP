@@ -12,6 +12,12 @@ dependencies = [
     # frappe and erpnext are installed and managed by bench.
 ]
 
+[project.optional-dependencies]
+# the automated tests only: `uv pip install -e "apps/pharmacyos_erp[test]"` (dev/setup-dev-bench.sh does)
+test = [
+    "freezegun~=1.5",  # Frappe's freeze_time test helper (Frappe lists it as a dev dependency only)
+]
+
 [build-system]
 requires = ["flit_core >=3.4,<4"]
 build-backend = "flit_core.buildapi"

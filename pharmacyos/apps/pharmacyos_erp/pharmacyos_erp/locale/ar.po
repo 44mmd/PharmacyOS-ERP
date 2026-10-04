@@ -2504,3 +2504,197 @@ msgstr "التحليلات"
 
 msgid "PharmacyOS System"
 msgstr "النظام"
+
+# --- round 4: returns, refunds, cost privacy, consolidation, setup and API messages ----------
+
+msgid "This endpoint is reserved for the PharmacyOS integration user."
+msgstr "هذه الواجهة مخصصة لمستخدم تكامل PharmacyOS فقط."
+
+msgid "Unknown branch code {0}."
+msgstr "رمز الفرع {0} غير معروف."
+
+msgid "An order needs at least one item."
+msgstr "يجب أن يحتوي الطلب على صنف واحد على الأقل."
+
+msgid "Order {0} was already received with different contents."
+msgstr "تم استلام الطلب {0} مسبقاً بمحتويات مختلفة."
+
+msgid "Item {0} is not available for online orders."
+msgstr "الصنف {0} غير متاح للطلب عبر الموقع."
+
+msgid "No valid selling price for: {0}"
+msgstr "لا يوجد سعر بيع صالح للأصناف: {0}"
+
+msgid "No selling price"
+msgstr "لا يوجد سعر بيع"
+
+msgid "Insufficient stock for: {0}"
+msgstr "المخزون غير كافٍ للأصناف: {0}"
+
+msgid "Insufficient stock"
+msgstr "المخزون غير كافٍ"
+
+msgid "Unknown order {0}."
+msgstr "الطلب {0} غير معروف."
+
+msgid "Backup verification failed: {0}"
+msgstr "فشل التحقق من النسخة الاحتياطية: {0}"
+
+msgid "PharmacyOS backup failed"
+msgstr "فشل النسخ الاحتياطي في PharmacyOS"
+
+msgid "metadata.json is missing"
+msgstr "ملف metadata.json مفقود"
+
+msgid "database dump is missing"
+msgstr "نسخة قاعدة البيانات مفقودة"
+
+msgid "{0} is missing"
+msgstr "{0} مفقود"
+
+msgid "{0} is damaged (checksum mismatch)"
+msgstr "{0} تالف (عدم تطابق المجموع التحققي)"
+
+msgid "database dump looks incomplete"
+msgstr "نسخة قاعدة البيانات تبدو غير مكتملة"
+
+msgid "database dump cannot be read: {0}"
+msgstr "تعذر قراءة نسخة قاعدة البيانات: {0}"
+
+msgid "PharmacyOS sales snapshot failed"
+msgstr "فشل إنشاء ملخص المبيعات في PharmacyOS"
+
+msgid "PharmacyOS daily snapshot failed"
+msgstr "فشل إنشاء الملخص اليومي في PharmacyOS"
+
+msgid "The PharmacyOS Cloud address must use HTTPS."
+msgstr "يجب أن يستخدم عنوان PharmacyOS Cloud بروتوكول HTTPS."
+
+msgid "Order {0} could not be fully delivered."
+msgstr "تعذر تسليم الطلب {0} بالكامل."
+
+msgid "'Is Consolidated' is set by POS closing when it merges the shift's invoices; it cannot be set on an invoice entered directly."
+msgstr "خيار \"فاتورة مجمّعة\" يُضبط عند إغلاق نقطة البيع حين تُدمج فواتير الوردية، ولا يمكن ضبطه في فاتورة مُدخلة مباشرة."
+
+msgid "Not a consolidated invoice"
+msgstr "ليست فاتورة مجمّعة"
+
+msgid "Purchase prices, valuation and stock values are not available to your role."
+msgstr "أسعار الشراء والتقييم وقيم المخزون غير متاحة لدورك."
+
+msgid "Unknown expiry bucket."
+msgstr "فئة انتهاء الصلاحية غير معروفة."
+
+msgid "Not permitted"
+msgstr "غير مسموح"
+
+msgid "Unknown stock state."
+msgstr "حالة المخزون غير معروفة."
+
+msgid "A credit note that does not reference the original sale needs a pharmacy manager or the accountant. Use the Return button on the original invoice."
+msgstr "إشعار الدائن الذي لا يشير إلى البيع الأصلي يحتاج إلى مدير الصيدلية أو المحاسب. استخدم زر الإرجاع في الفاتورة الأصلية."
+
+msgid "Return not linked to a sale"
+msgstr "الإرجاع غير مرتبط ببيع"
+
+msgid "You cannot open {0}, so you cannot return against it."
+msgstr "لا يمكنك فتح {0}، لذا لا يمكنك الإرجاع مقابله."
+
+msgid "{0} took the goods from stock: a counter return brings them back (Update Stock). A refund without the goods needs a pharmacy manager or the accountant."
+msgstr "{0} أخرج البضاعة من المخزون: إرجاع الكاونتر يعيدها إلى المخزون (تحديث المخزون). استرداد المبلغ دون إعادة البضاعة يحتاج إلى مدير الصيدلية أو المحاسب."
+
+msgid "Money-only credit note"
+msgstr "إشعار دائن نقدي فقط"
+
+msgid "{0} is cancelled, so nothing can be returned against it."
+msgstr "{0} ملغاة، لذا لا يمكن إرجاع أي شيء مقابلها."
+
+msgid "{0} is not a submitted sale, so nothing can be returned against it."
+msgstr "{0} ليست فاتورة بيع معتمدة، لذا لا يمكن إرجاع أي شيء مقابلها."
+
+msgid "Original sale not submitted"
+msgstr "البيع الأصلي غير معتمد"
+
+msgid "{0} cannot be cancelled while returns against it are submitted: {1}. Cancel the returns first."
+msgstr "لا يمكن إلغاء {0} ما دامت هناك مرتجعات معتمدة مقابلها: {1}. ألغِ المرتجعات أولاً."
+
+msgid "Sale has returns"
+msgstr "البيع له مرتجعات"
+
+msgid "{0} does not exist, so nothing can be returned against it."
+msgstr "{0} غير موجود، لذا لا يمكن إرجاع أي شيء مقابله."
+
+msgid "Original sale not found"
+msgstr "البيع الأصلي غير موجود"
+
+msgid "{0} is itself a return. A return must reference the original sale ({1}), never another return."
+msgstr "{0} هو نفسه مرتجع. يجب أن يشير الإرجاع إلى البيع الأصلي ({1})، وليس إلى مرتجع آخر أبداً."
+
+msgid "Return against a return"
+msgstr "إرجاع مقابل مرتجع"
+
+msgid "A medicine return must reference the original sale (Return Against). Use the Return button on the original invoice."
+msgstr "إرجاع الدواء يجب أن يشير إلى البيع الأصلي (إرجاع مقابل). استخدم زر الإرجاع في الفاتورة الأصلية."
+
+msgid "Item {0} was not sold on {1}, so it cannot be returned against it."
+msgstr "الصنف {0} لم يُبع في {1}، لذا لا يمكن إرجاعه مقابلها."
+
+msgid "Return exceeds sale"
+msgstr "الإرجاع يتجاوز البيع"
+
+msgid "{0}: the returned quantity {1} is below the stock precision ({2} decimals)."
+msgstr "{0}: الكمية المرتجعة {1} أقل من دقة المخزون ({2} منازل عشرية)."
+
+msgid "{0}: {1} sold on {2}, {3} already returned; at most {4} can be returned."
+msgstr "{0}: بيع {1} في {2}، وأُرجع {3} سابقاً؛ يمكن إرجاع {4} على الأكثر."
+
+msgid "{0}: the refund rate {1} is higher than the rate charged on {2} ({3})."
+msgstr "{0}: سعر الاسترداد {1} أعلى من السعر المحتسب في {2} ({3})."
+
+msgid "{0}: {1} charged on {2}, {3} already refunded; at most {4} can be refunded."
+msgstr "{0}: احتُسب {1} في {2}، واستُرد {3} سابقاً؛ يمكن استرداد {4} على الأكثر."
+
+msgid "Refund exceeds sale"
+msgstr "الاسترداد يتجاوز البيع"
+
+msgid "{0}: batch {1} was not sold on {2}. Return the batch that was sold."
+msgstr "{0}: الوجبة {1} لم تُبع في {2}. أرجع الوجبة التي بيعت."
+
+msgid "{0}: at most {1} of batch {2} can still be returned against {3}."
+msgstr "{0}: يمكن إرجاع {1} على الأكثر من الوجبة {2} مقابل {3}."
+
+msgid "{0} charged {1} in total, {2} already refunded; this return would refund {3}."
+msgstr "{0} إجمالي المحتسب {1}، واستُرد {2} سابقاً؛ هذا الإرجاع سيسترد {3}."
+
+msgid "{0}: {1} requested, {2} available — {3} reserved for website orders in {4}."
+msgstr "{0}: المطلوب {1}، والمتاح {2} — {3} محجوز لطلبات الموقع في {4}."
+
+msgid "Fulfil or cancel the website order to release its reserved units."
+msgstr "نفّذ طلب الموقع أو ألغِه لتحرير الوحدات المحجوزة له."
+
+msgid "Reserved for website orders"
+msgstr "محجوز لطلبات الموقع"
+
+msgid "{0} must be an HTTPS address (for example https://api.example.com)."
+msgstr "يجب أن يكون {0} عنوان HTTPS (مثلاً https://api.example.com)."
+
+msgid "Insecure Address"
+msgstr "عنوان غير آمن"
+
+msgid "Pharmacy name is required."
+msgstr "اسم الصيدلية مطلوب."
+
+msgid "Owner email {0} is not a valid email address."
+msgstr "بريد المالك {0} ليس عنوان بريد إلكتروني صالحاً."
+
+msgid "Owner password must have at least 8 characters."
+msgstr "يجب ألا تقل كلمة مرور المالك عن 8 أحرف."
+
+msgid "Branch name and branch code are required."
+msgstr "اسم الفرع ورمز الفرع مطلوبان."
+
+msgid "Cannot set up the pharmacy"
+msgstr "تعذر إعداد الصيدلية"
+
+msgid "This pharmacy is already set up. Nothing was changed: edit the pharmacy's identity in PharmacyOS Settings and reset passwords from the user screens."
+msgstr "هذه الصيدلية مُعدّة مسبقاً. لم يتغير شيء: عدّل هوية الصيدلية من إعدادات PharmacyOS وأعد تعيين كلمات المرور من شاشات المستخدمين."

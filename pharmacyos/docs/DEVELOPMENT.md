@@ -67,7 +67,7 @@ links it into the bench and installs it on both sites. Manually:
 
 ```bash
 ln -sfn /path/to/PharmacyOS-ERP/pharmacyos/apps/pharmacyos_erp ~/frappe-bench/apps/pharmacyos_erp
-cd ~/frappe-bench && uv pip install -e apps/pharmacyos_erp --python env/bin/python
+cd ~/frappe-bench && uv pip install -e "apps/pharmacyos_erp[test]" --python env/bin/python   # [test]: freezegun
 echo pharmacyos_erp >> sites/apps.txt            # make sure the file ends with a newline first
 bench --site pharmacyos.localhost install-app pharmacyos_erp
 bench --site test.localhost install-app pharmacyos_erp
@@ -84,7 +84,7 @@ bench --site pharmacyos.localhost execute pharmacyos_erp.setup.demo_data.create_
 Tests (on the test site only):
 
 ```bash
-bench --site test.localhost run-tests --app pharmacyos_erp                     # PharmacyOS (196 tests)
+bench --site test.localhost run-tests --app pharmacyos_erp                     # PharmacyOS (224 tests)
 bench --site test.localhost run-tests --lightmode --module erpnext.stock.doctype.batch.test_batch   # upstream
 ```
 
@@ -104,6 +104,8 @@ python3 pharmacyos/dev/concurrency_check.py --site <site> --key K --secret S --s
 python3 pharmacyos/dev/permission_check.py --site <site> --actors actors.json
 # cost-data red-team: no purchase price / valuation / stock value for counter staff
 python3 pharmacyos/dev/permission_check.py --site <site> --actors actors.json --cost
+# the round-4 sentinel matrix: four distinct cost sentinels, 71 surfaces, every profile and Guest
+python3 pharmacyos/dev/cost_matrix_check.py --site <site> --actors actors.json
 # a real Cloud next to the ERP: catalog, public price validity, outage, orders, completion
 python3 pharmacyos/dev/live_cloud_check.py --site <site> --actors actors.json \
     --cloud-dir /path/to/PharmacyOS/backend --cloud-python /path/to/venv/bin/python
@@ -111,7 +113,8 @@ python3 pharmacyos/dev/live_cloud_check.py --site <site> --actors actors.json \
 
 `concurrency_check.py` also races returns against the cancellation of their original sale
 (`original_cancel`: simultaneous, staggered both ways, several returns, return cancellation, and a
-repeat of the losing operation). The test site should allow as many test users as upstream CI does
+repeat of the losing operation) and sales against the cancellation of unrelated documents
+(`unrelated_cancel`, round 4: no database deadlock, every request answered 200 or with a business error). The test site should allow as many test users as upstream CI does
 (`bench --site test.localhost set-config --parse throttle_user_limit 100`).
 
 Navigation (Dock + Sidebars) is generated from `pharmacyos_erp/setup/navigation.py`; after changing it,

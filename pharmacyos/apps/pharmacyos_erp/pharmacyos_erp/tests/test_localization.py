@@ -238,3 +238,52 @@ class TestAppsScreen(IntegrationTestCase):
 			boot = self._boot()
 			focus_apps_screen(boot, roles)
 			self.assertTrue(all(a["on_apps_screen"] for a in boot.app_data), roles)
+
+
+class TestRound4MessagesAreTranslated(IntegrationTestCase):
+	"""Every message counter staff can meet in the return, refund, reservation, cost-privacy and
+	consolidation rules (and the first-run setup) has an Arabic translation (round-4 finding D-8)."""
+
+	MODULES = (
+		"pharmacy/returns.py",
+		"pharmacy/stock_guard.py",
+		"pharmacy/cost_privacy.py",
+		"pharmacy/consolidation.py",
+		"pharmacy/expiry.py",
+		"pharmacy/inventory.py",
+		"pharmacy/fefo.py",
+		"setup/first_run.py",
+		"integration/cloud.py",
+		"pharmacyos/doctype/pharmacyos_settings/pharmacyos_settings.py",
+	)
+
+	def test_user_facing_strings_have_arabic_entries(self):
+		import os
+		import re
+
+		from babel.messages.pofile import read_po
+
+		app = frappe.get_app_path("pharmacyos_erp")
+		with open(os.path.join(app, "locale", "ar.po"), "rb") as f:
+			catalog = read_po(f, locale="ar")
+		translated = {m.id for m in catalog if m.id and m.string}
+		missing = []
+		for module in self.MODULES:
+			with open(os.path.join(app, module), encoding="utf-8") as f:
+				source = f.read()
+			for text in re.findall(r'\b_\(\s*"((?:[^"\\]|\\.)*)"', source):
+				if text not in translated:
+					missing.append((module, text))
+		self.assertEqual(missing, [], "user-facing messages without an Arabic translation")
+
+	def test_return_messages_render_in_arabic(self):
+		from frappe.translate import clear_cache
+
+		from pharmacyos_erp.setup.install import compile_translations
+
+		compile_translations()  # what every install and migrate does
+		clear_cache()
+		messages = get_all_translations("ar")
+		self.assertEqual(messages.get("Return against a return"), "إرجاع مقابل مرتجع")
+		self.assertEqual(messages.get("Refund exceeds sale"), "الاسترداد يتجاوز البيع")
+		self.assertEqual(messages.get("Not a consolidated invoice"), "ليست فاتورة مجمّعة")

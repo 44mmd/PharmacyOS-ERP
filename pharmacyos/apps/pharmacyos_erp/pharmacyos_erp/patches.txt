@@ -5,5 +5,7 @@ pharmacyos_erp.patches.v1.arabic_first_locale
 pharmacyos_erp.patches.v1.backup_defaults
 pharmacyos_erp.patches.v1.remediation_least_privilege
 pharmacyos_erp.patches.v1.return_ledger
+pharmacyos_erp.patches.v1.return_chain_integrity
+pharmacyos_erp.patches.v1.serial_batch_voucher_indexes
 
 [post_fixture_sync]

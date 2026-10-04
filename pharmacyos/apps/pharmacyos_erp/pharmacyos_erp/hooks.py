@@ -89,6 +89,8 @@ _order_event = f"{_outbox}.on_sales_order"
 # locks — on save, submit and cancel (see the module)
 override_doctype_class = {
 	"Sales Invoice": "pharmacyos_erp.pharmacy.document_classes.PharmacySalesInvoice",
+	# marks the only window in which `is_consolidated` may be set (pharmacy/consolidation.py)
+	"POS Invoice Merge Log": "pharmacyos_erp.pharmacy.document_classes.PharmacyPOSInvoiceMergeLog",
 	"POS Invoice": "pharmacyos_erp.pharmacy.document_classes.PharmacyPOSInvoice",
 	"Delivery Note": "pharmacyos_erp.pharmacy.document_classes.PharmacyDeliveryNote",
 	"Sales Order": "pharmacyos_erp.pharmacy.document_classes.PharmacySalesOrder",
@@ -111,13 +113,18 @@ from pharmacyos_erp.pharmacy.cost_privacy import OVERRIDES as _COST_OVERRIDES
 
 override_whitelisted_methods = dict(_COST_OVERRIDES)
 
+# The response boundary: every JSON answer to a user without cost access leaves without cost keys
+# (save/submit/insert echoes, helpers returning whole records, report rows, version history)
+after_request = [f"{_cost}.scrub_response"]
+
 doc_events = {
 	"Item": {
 		"validate": "pharmacyos_erp.pharmacy.medicine.validate_item",
 		"on_update": f"{_outbox}.on_item",
 	},
 	"Sales Invoice": {
-		"before_validate": _lock_stock,
+		# `is_consolidated` only from POS closing (controlled error instead of ERPNext's TypeError)
+		"before_validate": ["pharmacyos_erp.pharmacy.consolidation.guard_consolidated_flag", _lock_stock],
 		"validate": _sales_validate,
 		"on_submit": [_record_return, _fulfilment],
 		"on_cancel": [_record_return, _fulfilment],

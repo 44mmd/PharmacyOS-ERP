@@ -126,14 +126,26 @@ never receive what the pharmacy paid (`pharmacy/cost_privacy.py`):
 * **Rows** — buying Item Prices (purchase prices) are invisible to them.
 * **ERPNext helpers** that compute costs (`get_valuation_rate`, `get_incoming_rate`, quick stock balance,
   stock-entry/reconciliation/asset helpers, the stock-value chart) are refused; item details, stock
-  balance and the item dashboard answer without the cost keys; buying-side item details are refused.
+  balance, the item dashboard and the Item DocType's own `get_item_details` answer without the cost
+  keys; buying-side item details are refused; query reports whose columns carry costs are refused.
+* **The response boundary** (round 4) — field-level permissions are a *read* boundary: Frappe applies
+  them when a document is fetched, not to the copy a save, submit or insert sends back (REST v1/v2
+  included) nor to helpers that return whole records. Every JSON answer to a user without cost access
+  therefore leaves the server scrubbed (`cost_privacy.scrub_response`, the `after_request` hook):
+  cost keys are removed from documents, helper answers, list views, report rows and the version
+  history. Stored values are untouched; the server keeps computing and storing costs as before.
 * **PharmacyOS pages** (dashboard, batches & expiry, expiry intelligence, inventory health, reorder)
   send `null` for every value figure (shown as "—") and never rank by value; quantities, counts and
   expiry status are unchanged.
 
 Red-team proof: `tests/test_cost_exposure.py` / `dev/permission_check.py --cost` seed a medicine with
-distinctive costs and search every answer of ~60 routes per profile for those values (owner, manager,
-inventory and accountant must see them — the control).
+distinctive costs and search every answer of ~65 routes per profile for those values (owner, manager,
+inventory and accountant must see them — the control); `dev/cost_matrix_check.py` runs the wider
+round-4 sentinel matrix (71 surfaces × every profile and Guest) against a live server.
+
+Roles that see cost data by design: Pharmacy Owner, Pharmacy Manager, Inventory Manager, Purchasing
+Officer, Pharmacy Accountant, Branch Manager (and Administrator). Never: Cashier, Pharmacist, the
+PharmacyOS Integration account, Guest.
 
 ## Pharmacy workflows
 
@@ -148,15 +160,30 @@ inventory and accountant must see them — the control).
   (ERPNext's `expiry_date >= today` rule, also used for website availability). A pharmacy that must
   stop selling earlier (e.g. at the start of the expiry month) needs a business decision and a
   setting; it is not configurable today.
-* **Returns**: a return can never exceed what was sold — per item and per batch, cumulatively across
-  all returns, at no more than the rate charged — and a medicine return must reference the original
-  sale. Applies to returns built in the POS, the desk or the REST API, and to simultaneous returns:
-  returns against one sale are serialised on the sale's row and read what was already returned with a
-  locking read (a ledger on the sale), so the loser of a race gets "Return exceeds sale", never a
-  double refund (`tests/test_return_concurrency.py`, `dev/concurrency_check.py`).
+* **Returns**: every return resolves to its **root sale** — a submitted document that is not itself a
+  return; a return referencing another return is refused ("Return against a return", round 4). Against
+  that root sale, cumulatively across all its submitted returns, a return can never exceed what was
+  sold — per item and per batch, at no more than the rate charged per stock unit in any UOM — **nor
+  what was paid**: per item, the refunded net amount stays within the returned portion's share of the
+  item's net amount on the sale (row and document discounts included), and the refund total (taxes
+  included) within that share scaled by the sale's own gross/net ratio ("Refund exceeds sale"). A
+  partial return is worth its portion; a tax, rate or discount the sale never had is not refundable;
+  rounding of distributed discounts is tolerated up to one currency unit per unit returned. A
+  medicine return must reference the original sale. Applies to returns built in the POS, the desk or
+  the REST API, and to simultaneous returns: returns against one sale are serialised on the sale's
+  row and read what was already returned with a locking read (a ledger of quantities and amounts on
+  the sale), so the loser of a race gets "Return exceeds sale", never a double refund
+  (`tests/test_return_integrity_round4.py`, `tests/test_return_concurrency.py`,
+  `dev/concurrency_check.py`). ERPNext's consolidated credit notes (POS closing) reference the
+  consolidated invoice — an original — and are recorded in its ledger, never re-validated; a
+  client-set `is_consolidated` is refused ("Not a consolidated invoice").
 * **Last unit**: every sale, delivery and website order locks the item's stock rows in one order, so
   competing cashiers get a clear stock error instead of a database deadlock; counter sales cannot
   take units reserved by submitted website orders (*Protect Website Reservations*, on by default).
+  Cancelling any document locks only that document's batch-bundle rows (round 4: composite
+  `(voucher_type, voucher_no)` indexes on the bundle tables, `pharmacy/locking.py`), so a sale of an
+  unrelated medicine never deadlocks with it (`tests/test_concurrency_round4.py`,
+  `dev/concurrency_check.py --only unrelated_cancel`).
 * **Receiving**: "Batch & Expiry" checklist on Purchase Receipt/Invoice; expired batches rejected;
   short shelf life warns/blocks; missing expiry rejected.
 * **Inventory Health / Reorder Suggestions / Expiry Intelligence / Dashboard** — real data only.

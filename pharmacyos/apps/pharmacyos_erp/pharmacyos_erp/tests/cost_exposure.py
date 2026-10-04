@@ -20,9 +20,12 @@ there, otherwise it would prove nothing.
 import json
 import uuid
 
-# distinctive numbers: valuation (incoming cost per unit) and buying price; stock values derive from them
+# distinctive numbers: valuation (incoming cost per unit), the Item's own valuation rate, the last
+# purchase rate and the buying price; stock values derive from the first
 VALUATION = 7319.17
-BUYING = 6421.33
+ITEM_VALUATION = 8137.19
+LAST_PURCHASE = 6421.33
+BUYING = 5213.77
 RECEIVED = 10
 
 
@@ -32,7 +35,14 @@ def _uid():
 
 def secrets_for(qty_on_hand):
 	"""String forms of every cost figure the data set produces."""
-	values = {VALUATION, BUYING, round(VALUATION * RECEIVED, 2), round(VALUATION * qty_on_hand, 2)}
+	values = {
+		VALUATION,
+		ITEM_VALUATION,
+		LAST_PURCHASE,
+		BUYING,
+		round(VALUATION * RECEIVED, 2),
+		round(VALUATION * qty_on_hand, 2),
+	}
 	out = set()
 	for v in values:
 		out.add(f"{v:.2f}".rstrip("0").rstrip("."))
@@ -101,7 +111,10 @@ class CostProbe:
 			},
 		)["name"]
 		self.ok(
-			"frappe.client.set_value", doctype="Item", name=code, fieldname="last_purchase_rate", value=BUYING
+			"frappe.client.set_value",
+			doctype="Item",
+			name=code,
+			fieldname={"last_purchase_rate": LAST_PURCHASE, "valuation_rate": ITEM_VALUATION},
 		)
 		sale = self.ok(
 			"frappe.client.insert",
@@ -152,6 +165,29 @@ class CostProbe:
 		d, ctx = self.data, self.ctx
 		code, wh, company = d["code"], ctx["warehouse"], ctx["company"]
 		yield "item.get", "post", "frappe.client.get", {"doctype": "Item", "name": code}
+		# round 4: the Item DocType's own helper returns the whole record (`as_dict`), and the write
+		# endpoints echo the saved document without field-level permissions
+		yield (
+			"item.doctype_helper",
+			"post",
+			"erpnext.stock.doctype.item.item.get_item_details",
+			{"item_code": code, "company": company},
+		)
+		yield "sale.insert_echo", "insert_draft", None, self.sale_doc(code)
+		yield "sale.save_echo", "save_draft", None, {}
+		yield "sale.submit_echo", "submit_draft", None, {}
+		yield "sale.rest_v1_post_echo", "rest_post", "Sales Invoice", self.sale_doc(code)
+		yield "sale.rest_v2_create_echo", "rest_v2_post", "document/Sales Invoice", self.sale_doc(code)
+		yield (
+			"sale.versions",
+			"post",
+			"frappe.client.get_list",
+			{
+				"doctype": "Version",
+				"filters": {"ref_doctype": "Sales Invoice", "docname": d["sale"]},
+				"fields": ["name", "data"],
+			},
+		)
 		yield "item.form_load", "get", "frappe.desk.form.load.getdoc", {"doctype": "Item", "name": code}
 		yield (
 			"item.list_fields",
@@ -486,7 +522,7 @@ class CostProbe:
 					"fields": ["name"],
 				},
 			)
-		for side, threshold in (("below", BUYING - 0.5), ("above", BUYING + 0.5)):
+		for side, threshold in (("below", LAST_PURCHASE - 0.5), ("above", LAST_PURCHASE + 0.5)):
 			yield (
 				f"inference.item_purchase_rate_{side}",
 				"post",
@@ -518,18 +554,63 @@ class CostProbe:
 				{"report_name": report, "filters": filters},
 			)
 
+	def sale_doc(self, code):
+		"""A paid counter sale of the probe medicine, as the role under test would post it."""
+		ctx = self.ctx
+		return {
+			"doctype": "Sales Invoice",
+			"company": ctx["company"],
+			"customer": ctx["customer"],
+			"currency": ctx["currency"],
+			"is_pos": 1,
+			"update_stock": 1,
+			"items": [
+				{
+					"item_code": code,
+					"qty": 1,
+					"rate": 9900,
+					"warehouse": ctx["warehouse"],
+					"batch_no": self.data["batch"],
+					"use_serial_batch_fields": 1,
+					**ctx.get("row_extra", {}),
+				}
+			],
+			"payments": [{"mode_of_payment": "Cash", "account": ctx["cash_account"], "amount": 9900}],
+			**ctx.get("sale_extra", {}),
+		}
+
 	def run(self, profiles=None):
 		self.prepare()
 		answers = {}
 		for profile, client in self.clients.items():
 			if profiles and profile not in profiles:
 				continue
+			draft = None
 			for name, http, method, data in self.probes():
 				if http == "get":
 					status, body = client.get(
 						method,
 						{k: json.dumps(v) if isinstance(v, dict | list) else v for k, v in data.items()},
 					)
+				elif http == "insert_draft":
+					status, body = client.post("frappe.client.insert", {"doc": data})
+					draft = body.get("message") if status == 200 and isinstance(body, dict) else None
+				elif http in ("save_draft", "submit_draft"):
+					if not draft:
+						self.results.append((profile, name, "skip", []))
+						continue
+					status, body = client.post(
+						"frappe.client.save" if http == "save_draft" else "frappe.client.submit",
+						{"doc": draft},
+					)
+					if http == "save_draft" and status == 200 and isinstance(body, dict):
+						draft = body.get("message") or draft
+				elif http in ("rest_post", "rest_v2_post"):
+					resource = getattr(client, "resource", None)
+					if not resource:
+						self.results.append((profile, name, "skip", []))
+						continue
+					status, body = resource(method, data, v2=http == "rest_v2_post")
 				else:
 					status, body = client.post(method, data)
 				text = json.dumps(body, default=str) if status == 200 else ""

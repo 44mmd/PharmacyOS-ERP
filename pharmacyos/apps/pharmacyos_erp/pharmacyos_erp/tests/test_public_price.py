@@ -361,3 +361,26 @@ class TestOutboxNeverStarves(PriceCase):
 		self.assertFalse(
 			set(s["id"] for s in sender.sent) & set(backlog), "events in back-off are not retried early"
 		)
+
+
+class TestPublicPriceRound4(PriceCase):
+	"""Round 4 (D-7): the public price is the one ERPNext would charge for a single unit today."""
+
+	def test_packing_unit_row_is_not_a_public_per_unit_price(self):
+		self.public.db_set({"packing_unit": 12, "price_list_rate": 900})
+		frappe.clear_cache()
+		self.assertIsNone(erpnext_rate(self.item), "ERPNext prices a single unit at nothing")
+		self.assertNotIn(self.item, public_prices([self.item]))
+		self.assertIsNone(catalog_item(self.item)["price"])
+		self.public.db_set({"packing_unit": 0, "price_list_rate": 1000})
+		frappe.clear_cache()
+		self.assertEqual(public_prices([self.item])[self.item].rate, 1000)
+		self.assertEqual(erpnext_rate(self.item), 1000)
+
+	def test_disabled_item_has_no_public_price(self):
+		frappe.db.set_value("Item", self.item, "disabled", 1)
+		self.assertNotIn(self.item, public_prices([self.item]))
+		entry = catalog_item(self.item)
+		self.assertEqual((entry["price"], entry["disabled"]), (None, 1))
+		frappe.db.set_value("Item", self.item, "disabled", 0)
+		self.assertEqual(catalog_item(self.item)["price"], 1000)

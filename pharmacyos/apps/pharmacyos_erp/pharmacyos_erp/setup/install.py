@@ -171,6 +171,14 @@ def ensure_structure():
 	ensure_custom_permissions()
 	ensure_cost_privacy()
 	ensure_branch_dimension_fields()
+	ensure_voucher_indexes()
+
+
+def ensure_voucher_indexes():
+	"""Batch bundle tables indexed by voucher: cancellations lock only their own rows (pharmacy/locking.py)."""
+	from pharmacyos_erp.pharmacy.locking import ensure_voucher_indexes as apply
+
+	apply()
 
 
 def ensure_cost_privacy():

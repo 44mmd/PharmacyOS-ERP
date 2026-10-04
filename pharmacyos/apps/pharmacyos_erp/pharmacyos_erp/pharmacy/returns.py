@@ -8,12 +8,26 @@ return more than was sold — an over-refund that also puts phantom stock back o
 PharmacyOS enforces, for every return that references an original document, regardless of how it was
 built:
 
-* every returned item was on the original document;
+* **the reference is the original sale** — a submitted document that is not itself a return. A return
+  referencing another return (ReturnAgainstReturnError) is refused: it would open a fresh allowance
+  equal to the earlier return's quantity, so a chain of returns could restore more stock and refund more
+  money than the sale ever involved (round-4 finding). Every quantity and amount below is measured
+  against that one **root sale**, and every return related to it — directly, or through a chain written
+  before this rule existed — counts against the same allowance;
+* every returned item was on the root sale;
 * cumulative returned quantity per item (all submitted returns, plus this one) never exceeds the
-  quantity sold;
-* for batch-tracked medicines, the returned batches were sold on the original document and the
-  cumulative quantity per batch does not exceed what was sold from that batch;
-* the refund rate never exceeds the rate charged.
+  quantity sold, compared at the stock quantity precision of the document, on the cumulative sum (so
+  no sequence of small fractional returns can exceed the sale through rounding);
+* for batch-tracked medicines, the returned batches were sold on the root sale and the cumulative
+  quantity per batch does not exceed what was sold from that batch;
+* the refund rate per stock unit never exceeds the rate charged, in any UOM;
+* the economic value refunded never exceeds what the root sale charged for the goods returned: per
+  item, the cumulative refunded net amount stays within the returned quantity's share of the item's
+  net amount on the sale (row and document discounts included), and the cumulative refund total
+  (taxes included) stays within that share scaled by the sale's own gross/net ratio
+  (RefundExceedsSaleError). A partial return is worth its portion, never the whole sale; a tax or a
+  rate the sale never charged is not refundable. Rounding of distributed discounts is tolerated up
+  to one currency unit per unit of goods returned, never more.
 
 A medicine return must reference the original sale: a free-standing return would put stock back that
 was never sold from this pharmacy.
@@ -24,16 +38,22 @@ goods back when the sale took them from stock, within the quantities and rates a
 credit note (no original sale, any item) or a money-only credit note against a stock sale needs a
 manager's or the accountant's authority (CreditNoteAuthorityError, HTTP 403).
 
+ERPNext's own return relationships are preserved: the consolidated credit notes that POS closing
+creates (`is_consolidated`) reference the consolidated Sales Invoice — an original, never a return —
+and are written by ERPNext from already validated POS returns, so they are not re-validated here, but
+they are recorded in the consolidated invoice's ledger so that no further return against it can refund
+the same goods again.
+
 Concurrency — the invariant must hold for simultaneous requests on different server workers:
 
-* **One serialisation point.** Submitting or cancelling a return locks the original document's row
+* **One serialisation point.** Submitting or cancelling a return locks the root sale's row
   (`lock_original_sale`) at the start of the transaction, after the stock (Bin) locks and before
   anything else (`stock_guard.lock_document_stock`). Two returns against the same sale therefore run
   one after the other.
 * **A current read of what was already returned.** Waiting for the lock is not enough on its own:
   MariaDB runs at REPEATABLE READ, so ordinary reads in the second transaction still see the snapshot
   taken before the first one committed — its return would be invisible. The cumulative returned
-  quantities therefore live on the original document itself (`pharma_return_ledger`, one entry per
+  quantities and amounts therefore live on the root sale itself (`pharma_return_ledger`, one entry per
   submitted return) and are read with a locking read of that same, already locked, row. A locking
   read always returns the latest committed version, never the snapshot.
 * **Updated in the same transaction.** The return's entry is written to the ledger on submit and
@@ -42,7 +62,7 @@ Concurrency — the invariant must hold for simultaneous requests on different s
 The loser of a race therefore waits for the winner, sees its return, and gets the ordinary
 "Return exceeds sale" error (StockOverReturnError, HTTP 417) — never a double refund or a deadlock.
 Originals whose ledger was never written (returns submitted before this version) are computed from
-their submitted returns, and the upgrade patch fills the ledger for all of them.
+their submitted returns, and the upgrade patches fill the ledger for all of them.
 
 Cancelling the original sale takes part in the same serialisation. Invariant: an original sale is
 never cancelled while a submitted return against it exists, and a return is never submitted against
@@ -57,11 +77,12 @@ cancellation racing each other could both pass (cancelled sale + live refund + p
 * **Submitting a return** re-reads the original's docstatus with a locking read under the same lock;
   a sale cancelled meanwhile → ReturnAgainstCancelledSaleError (HTTP 417), nothing is posted.
 
-Lock order for every participant: Bin rows (sorted), the original sale's row, then the return's own
-row and everything else — so the two sides queue on the original's row instead of deadlocking.
+Lock order for every participant: Bin rows (sorted), the root sale's row, then the return's own
+row and everything else — so the two sides queue on the root's row instead of deadlocking.
 """
 
 import json
+import math
 from collections import defaultdict
 
 import frappe
@@ -75,7 +96,12 @@ LEDGER_FIELD = "pharma_return_ledger"
 
 
 class ReturnAgainstCancelledSaleError(frappe.ValidationError):
-	"""The original sale is no longer submitted (cancelled meanwhile): nothing can be returned against it."""
+	"""The referenced sale is not a submitted document (draft, or cancelled meanwhile): nothing can be
+	returned against it."""
+
+
+class ReturnAgainstReturnError(frappe.ValidationError):
+	"""The referenced document is itself a return: a return must reference the original sale."""
 
 
 class SaleHasActiveReturnsError(frappe.LinkExistsError):
@@ -84,6 +110,16 @@ class SaleHasActiveReturnsError(frappe.LinkExistsError):
 
 class CreditNoteAuthorityError(frappe.PermissionError):
 	"""A refund beyond the counter return (free-standing, or money only) by a user without authority."""
+
+
+def _over_return_error():
+	from erpnext.controllers.sales_and_purchase_return import StockOverReturnError
+
+	return StockOverReturnError
+
+
+class RefundExceedsSaleError(frappe.ValidationError):
+	"""The money refunded (per item, or in total with taxes) would exceed what the root sale charged."""
 
 
 # roles that may issue credit notes beyond the counter return
@@ -133,15 +169,48 @@ def check_credit_note_authority(doc) -> None:
 			)
 
 
-def _over_return_error():
-	from erpnext.controllers.sales_and_purchase_return import StockOverReturnError
+# ------------------------------------------------------------------ document measures
 
-	return StockOverReturnError
+
+def _conversion_factor(row) -> float:
+	return flt(row.get("conversion_factor")) or 1.0
 
 
 def _row_qty(row) -> float:
-	qty = flt(row.get("stock_qty")) or flt(row.get("qty")) * flt(row.get("conversion_factor") or 1)
+	"""Quantity in stock units (the UOM the ledger and the batches count in)."""
+	qty = flt(row.get("stock_qty")) or flt(row.get("qty")) * _conversion_factor(row)
 	return abs(qty)
+
+
+def _row_rate(row) -> float:
+	"""Rate per stock unit in company currency, so returns in another UOM compare with the sale."""
+	rate = row.get("base_rate")
+	if rate is None:
+		rate = row.get("rate")
+	return abs(flt(rate)) / _conversion_factor(row)
+
+
+def _row_amount(row) -> float:
+	"""Net amount of the row (after any discount) in company currency."""
+	for field in ("base_net_amount", "net_amount", "base_amount", "amount"):
+		if row.get(field) is not None:
+			return abs(flt(row.get(field)))
+	return 0.0
+
+
+def _doc_total(doc) -> float:
+	"""What the document charges or refunds, taxes included, before ERPNext's whole-unit rounding.
+
+	The unrounded total is compared on both sides: the rounding adjustment of each document (at most
+	half a currency unit, posted to the round-off account by ERPNext) is the only play left to rounding.
+	"""
+	for field in ("base_grand_total", "grand_total"):
+		if flt(doc.get(field)):
+			return abs(flt(doc.get(field)))
+	for field in ("base_rounded_total", "rounded_total"):
+		if flt(doc.get(field)):
+			return abs(flt(doc.get(field)))
+	return 0.0
 
 
 def _medicines(item_codes) -> dict:
@@ -156,38 +225,80 @@ def _medicines(item_codes) -> dict:
 
 
 def _totals(doc):
-	"""(qty per item, qty per (item, batch), max rate per item) of a document's rows."""
-	qty, batch_qty, rate = defaultdict(float), defaultdict(float), defaultdict(float)
+	"""Per item: quantity (stock units), quantity per (item, batch), highest rate per stock unit and
+	net amount; plus the document total."""
+	qty, batch_qty, rate, amount = (
+		defaultdict(float),
+		defaultdict(float),
+		defaultdict(float),
+		defaultdict(float),
+	)
 	for row in doc.get("items") or []:
 		if not row.item_code:
 			continue
 		qty[row.item_code] += _row_qty(row)
-		rate[row.item_code] = max(rate[row.item_code], flt(row.get("rate")))
+		rate[row.item_code] = max(rate[row.item_code], _row_rate(row))
+		amount[row.item_code] += _row_amount(row)
 		for batch, batch_qty_used in get_row_batches(doc, row).items():
 			batch_qty[(row.item_code, batch)] += abs(flt(batch_qty_used))
-	return qty, batch_qty, rate
+	return frappe._dict(qty=qty, batches=batch_qty, rate=rate, amount=amount, total=_doc_total(doc))
+
+
+def qty_precision(doctype: str) -> int:
+	"""Stock quantity precision of the document's item rows — the precision the stock ledger posts at."""
+	return cint(frappe.get_precision(f"{doctype} Item", "stock_qty")) or 3
+
+
+def amount_precision(doctype: str) -> int:
+	return cint(frappe.get_precision(doctype, "base_grand_total")) or 2
 
 
 def is_tracked_return(doc) -> bool:
-	return bool(
-		doc.doctype in RETURN_DOCTYPES
-		and doc.get("is_return")
-		and doc.get("return_against")
-		and not doc.get("is_consolidated")
-	)
+	"""A return that counts against a sale's allowance (ERPNext's consolidated credit notes included)."""
+	return bool(doc.doctype in RETURN_DOCTYPES and doc.get("is_return") and doc.get("return_against"))
+
+
+# ------------------------------------------------------------------ the root sale
+
+
+def root_sale(doctype: str, name: str) -> tuple[str, list[str]]:
+	"""(root sale, chain) — follow `return_against` until a document that is not a return.
+
+	For a return written under the current rule the root is its `return_against`; `chain` lists the
+	intermediate returns of a historical return-to-return relationship (oldest reference last).
+	"""
+	chain, seen, current = [], set(), name
+	while current and current not in seen:
+		seen.add(current)
+		row = frappe.db.get_value(doctype, current, ["is_return", "return_against"], as_dict=True)
+		if not row or not cint(row.is_return) or not row.return_against:
+			return current, chain
+		chain.append(current)
+		current = row.return_against
+	return current, chain  # a cycle (impossible for submitted documents): stop at the repeated name
+
+
+def _root_of(doc) -> str:
+	"""The root sale of a return document (cached on the document for the transaction)."""
+	cached = doc.flags.get("pharmacyos_root_sale")
+	if cached:
+		return cached
+	root, _chain = root_sale(doc.doctype, doc.return_against)
+	doc.flags.pharmacyos_root_sale = root
+	return root
 
 
 # ------------------------------------------------------------------ serialisation and the ledger
 
 
 def lock_original_sale(doc) -> None:
-	"""Lock the original sale's row while a return against it is submitted or cancelled.
+	"""Lock the root sale's row while a return against it is submitted or cancelled.
 
 	Called by `stock_guard.lock_document_stock`, i.e. at the very start of the save (Frappe's
 	`load_doc_before_save`) and again in `before_validate`; re-locking a row already held is a no-op.
 	"""
 	if doc.docstatus in (1, 2) and is_tracked_return(doc):
-		frappe.db.sql(f"select name from `tab{doc.doctype}` where name=%s for update", doc.return_against)
+		frappe.db.sql(f"select name from `tab{doc.doctype}` where name=%s for update", _root_of(doc))
 
 
 def ensure_original_submitted(doc) -> None:
@@ -196,13 +307,19 @@ def ensure_original_submitted(doc) -> None:
 		f"select docstatus from `tab{doc.doctype}` where name=%s for update", doc.return_against
 	)
 	if not row or cint(row[0][0]) != 1:
-		frappe.throw(
-			_("{0} is cancelled, so nothing can be returned against it.").format(
-				frappe.bold(doc.return_against)
-			),
-			ReturnAgainstCancelledSaleError,
-			title=_("Original sale cancelled"),
-		)
+		_throw_not_submitted(doc.return_against, cint(row[0][0]) if row else None)
+
+
+def _throw_not_submitted(name: str, docstatus: int | None) -> None:
+	if docstatus == 2:
+		message = _("{0} is cancelled, so nothing can be returned against it.")
+	else:
+		message = _("{0} is not a submitted sale, so nothing can be returned against it.")
+	frappe.throw(
+		message.format(frappe.bold(name)),
+		ReturnAgainstCancelledSaleError,
+		title=_("Original sale not submitted"),
+	)
 
 
 def active_returns(doctype: str, original: str) -> list[str]:
@@ -245,12 +362,17 @@ def guard_original_cancellation(doc) -> None:
 
 
 def _contribution(doc) -> dict:
-	"""What one return document returns: {"items": {item: qty}, "batches": {item: {batch: qty}}}."""
-	qty, batch_qty, _rate = _totals(doc)
+	"""What one return document returns: quantities per item and batch, net amounts, the total."""
+	totals = _totals(doc)
 	batches = defaultdict(dict)
-	for (item_code, batch), value in batch_qty.items():
+	for (item_code, batch), value in totals.batches.items():
 		batches[item_code][batch] = flt(value, 9)
-	return {"items": {k: flt(v, 9) for k, v in qty.items()}, "batches": dict(batches)}
+	return {
+		"items": {k: flt(v, 9) for k, v in totals.qty.items()},
+		"batches": dict(batches),
+		"amounts": {k: flt(v, 9) for k, v in totals.amount.items()},
+		"total": flt(totals.total, 9),
+	}
 
 
 def _read_ledger(doctype: str, original: str, current: bool) -> dict | None:
@@ -275,15 +397,29 @@ def _write_ledger(doctype: str, original: str, ledger: dict) -> None:
 	)
 
 
+def related_returns(doctype: str, original: str) -> list[str]:
+	"""Every submitted return whose root sale is `original`: direct returns and, for data written
+	before the no-chain rule, returns referencing those returns (any depth), oldest first."""
+	found, frontier, seen = [], [original], {original}
+	while frontier:
+		rows = frappe.get_all(
+			doctype,
+			filters={"return_against": ["in", frontier], "is_return": 1, "docstatus": 1},
+			fields=["name", "creation"],
+		)
+		frontier = [r.name for r in rows if r.name not in seen]
+		seen.update(frontier)
+		found += rows
+	return [r.name for r in sorted(found, key=lambda r: (r.creation, r.name))]
+
+
 def compute_ledger(doctype: str, original: str) -> dict:
 	"""Ledger rebuilt from the submitted return documents (upgrade patch, reconciliation, fallback)."""
-	names = frappe.get_all(
-		doctype,
-		filters={"return_against": original, "is_return": 1, "docstatus": 1},
-		pluck="name",
-		order_by="creation asc",
-	)
-	return {"returns": {name: _contribution(frappe.get_doc(doctype, name)) for name in names}}
+	return {
+		"returns": {
+			name: _contribution(frappe.get_doc(doctype, name)) for name in related_returns(doctype, original)
+		}
+	}
 
 
 def rebuild_ledger(doctype: str, original: str) -> dict:
@@ -299,13 +435,18 @@ def _ledger(doctype: str, original: str, current: bool) -> dict:
 		# such return writes it before committing, and the locking read above would see it), so the
 		# submitted documents are the complete history
 		ledger = compute_ledger(doctype, original)
+	elif any("amounts" not in entry for entry in ledger["returns"].values()):
+		# written by a version that tracked quantities only: complete it from the documents
+		ledger = rebuild_ledger(doctype, original) if current else compute_ledger(doctype, original)
 	return ledger
 
 
 def returned_so_far(doctype: str, original: str, exclude: str | None = None, current: bool = True):
-	"""(qty per item, qty per (item, batch)) returned by submitted returns, excluding `exclude`."""
+	"""Cumulative returns by submitted returns against the root sale, excluding `exclude`:
+	(qty per item, qty per (item, batch), net amount per item, refund total)."""
 	ledger = _ledger(doctype, original, current)
-	returned, returned_batches = defaultdict(float), defaultdict(float)
+	returned, returned_batches, refunded = defaultdict(float), defaultdict(float), defaultdict(float)
+	total = 0.0
 	for name, entry in ledger["returns"].items():
 		if name == exclude:
 			continue
@@ -314,23 +455,58 @@ def returned_so_far(doctype: str, original: str, exclude: str | None = None, cur
 		for item_code, batches in (entry.get("batches") or {}).items():
 			for batch, qty in batches.items():
 				returned_batches[(item_code, batch)] += flt(qty)
-	return returned, returned_batches
+		for item_code, amount in (entry.get("amounts") or {}).items():
+			refunded[item_code] += flt(amount)
+		total += flt(entry.get("total"))
+	return frappe._dict(qty=returned, batches=returned_batches, amount=refunded, total=total)
 
 
 def record_return(doc, method=None):
-	"""doc_event (on_submit / on_cancel): add or remove this return's entry in the original's ledger."""
+	"""doc_event (on_submit / on_cancel): add or remove this return's entry in the root sale's ledger."""
 	if not is_tracked_return(doc):
 		return
+	root = _root_of(doc)
 	lock_original_sale(doc)  # already held since the start of the transaction; kept for safety
-	ledger = _ledger(doc.doctype, doc.return_against, current=True)
+	ledger = _ledger(doc.doctype, root, current=True)
 	if doc.docstatus == 1:
 		ledger["returns"][doc.name] = _contribution(doc)
 	else:
 		ledger["returns"].pop(doc.name, None)
-	_write_ledger(doc.doctype, doc.return_against, ledger)
+	_write_ledger(doc.doctype, root, ledger)
 
 
 # ------------------------------------------------------------------ validation
+
+
+def _check_reference(doc) -> None:
+	"""The reference must be the original sale: a submitted document that is not a return."""
+	ref = frappe.db.get_value(
+		doc.doctype, doc.return_against, ["is_return", "docstatus", "return_against"], as_dict=True
+	)
+	if not ref:
+		frappe.throw(
+			_("{0} does not exist, so nothing can be returned against it.").format(
+				frappe.bold(doc.return_against)
+			),
+			ReturnAgainstCancelledSaleError,
+			title=_("Original sale not found"),
+		)
+	if cint(ref.is_return):
+		root, _chain = root_sale(doc.doctype, doc.return_against)
+		frappe.throw(
+			_(
+				"{0} is itself a return. A return must reference the original sale ({1}), never another return."
+			).format(frappe.bold(doc.return_against), frappe.bold(root)),
+			ReturnAgainstReturnError,
+			title=_("Return against a return"),
+		)
+	if cint(ref.docstatus) != 1:
+		_throw_not_submitted(doc.return_against, cint(ref.docstatus))
+
+
+def _rounding_tolerance(unit: float, qty: float) -> float:
+	"""One currency unit per unit of goods returned (distributed discounts round per row)."""
+	return unit * max(1, math.ceil(flt(qty) - 1e-9))
 
 
 def validate_return(doc, method=None):
@@ -351,6 +527,7 @@ def validate_return(doc, method=None):
 			)
 		return
 
+	_check_reference(doc)
 	submitting = doc.docstatus == 1
 	if submitting:
 		# normally already held since the start of the transaction (stock_guard.lock_document_stock)
@@ -360,19 +537,19 @@ def validate_return(doc, method=None):
 		ensure_original_submitted(doc)
 
 	original = frappe.get_doc(doc.doctype, doc.return_against)
-	sold, sold_batches, sold_rate = _totals(original)
+	sold = _totals(original)
 	# on submit: a locking read of the ledger on the locked original — includes every return
 	# committed by a concurrent request; drafts get the same check as early, advisory feedback
-	returned, returned_batches = returned_so_far(
-		doc.doctype, doc.return_against, exclude=doc.name, current=submitting
-	)
+	returned = returned_so_far(doc.doctype, doc.return_against, exclude=doc.name, current=submitting)
 
-	this_qty, this_batches, this_rate = _totals(doc)
+	this = _totals(doc)
 	error = _over_return_error()
-	precision = frappe.get_precision(f"{doc.doctype} Item", "stock_qty") or 3
+	precision = qty_precision(doc.doctype)
+	currency_precision = amount_precision(doc.doctype)
+	unit = 10**-currency_precision
 
-	for item_code, qty in this_qty.items():
-		if item_code not in sold:
+	for item_code, qty in this.qty.items():
+		if item_code not in sold.qty:
 			frappe.throw(
 				_("Item {0} was not sold on {1}, so it cannot be returned against it.").format(
 					frappe.bold(item_code), frappe.bold(doc.return_against)
@@ -380,36 +557,63 @@ def validate_return(doc, method=None):
 				error,
 				title=_("Return exceeds sale"),
 			)
-		remaining = flt(sold[item_code] - returned[item_code], precision)
-		if flt(qty, precision) > remaining:
+		if flt(qty, precision) <= 0:
+			frappe.throw(
+				_("{0}: the returned quantity {1} is below the stock precision ({2} decimals).").format(
+					frappe.bold(item_code), qty, precision
+				),
+				error,
+				title=_("Return exceeds sale"),
+			)
+		already = returned.qty[item_code]
+		remaining = flt(sold.qty[item_code] - already, precision)
+		if flt(already + qty, precision) > flt(sold.qty[item_code], precision):
 			frappe.throw(
 				_("{0}: {1} sold on {2}, {3} already returned; at most {4} can be returned.").format(
 					frappe.bold(item_code),
-					flt(sold[item_code], precision),
+					flt(sold.qty[item_code], precision),
 					frappe.bold(doc.return_against),
-					flt(returned[item_code], precision),
+					flt(already, precision),
 					max(remaining, 0),
 				),
 				error,
 				title=_("Return exceeds sale"),
 			)
-		if flt(this_rate[item_code], 2) > flt(sold_rate[item_code], 2):
+		if flt(this.rate[item_code], currency_precision) > flt(sold.rate[item_code], currency_precision):
 			frappe.throw(
 				_("{0}: the refund rate {1} is higher than the rate charged on {2} ({3}).").format(
 					frappe.bold(item_code),
-					this_rate[item_code],
+					flt(this.rate[item_code], currency_precision),
 					frappe.bold(doc.return_against),
-					sold_rate[item_code],
+					flt(sold.rate[item_code], currency_precision),
 				),
 				error,
 				title=_("Return exceeds sale"),
 			)
+		# money: the returned portion is worth its share of what the sale charged for the item (net
+		# of row and document discounts), never what the return document says it is worth
+		unit_value = sold.amount[item_code] / sold.qty[item_code] if sold.qty[item_code] else 0.0
+		refunded = returned.amount[item_code] + this.amount[item_code]
+		entitled = unit_value * (already + qty)
+		allowed = entitled + _rounding_tolerance(unit, already + qty)
+		if flt(refunded, currency_precision) > flt(allowed, currency_precision):
+			frappe.throw(
+				_("{0}: {1} charged on {2}, {3} already refunded; at most {4} can be refunded.").format(
+					frappe.bold(item_code),
+					flt(sold.amount[item_code], currency_precision),
+					frappe.bold(doc.return_against),
+					flt(returned.amount[item_code], currency_precision),
+					max(flt(entitled - returned.amount[item_code], currency_precision), 0),
+				),
+				RefundExceedsSaleError,
+				title=_("Refund exceeds sale"),
+			)
 
-	for (item_code, batch), qty in this_batches.items():
+	for (item_code, batch), qty in this.batches.items():
 		item = medicines.get(item_code)
 		if not item or not item.has_batch_no:
 			continue
-		sold_qty = sold_batches.get((item_code, batch), 0.0)
+		sold_qty = sold.batches.get((item_code, batch), 0.0)
 		batch_id = frappe.db.get_value("Batch", batch, "batch_id") or batch
 		if not sold_qty:
 			frappe.throw(
@@ -419,15 +623,40 @@ def validate_return(doc, method=None):
 				error,
 				title=_("Return exceeds sale"),
 			)
-		remaining = flt(sold_qty - returned_batches.get((item_code, batch), 0.0), precision)
-		if flt(qty, precision) > remaining:
+		already = returned.batches.get((item_code, batch), 0.0)
+		if flt(already + qty, precision) > flt(sold_qty, precision):
 			frappe.throw(
 				_("{0}: at most {1} of batch {2} can still be returned against {3}.").format(
 					frappe.bold(item_code),
-					max(remaining, 0),
+					max(flt(sold_qty - already, precision), 0),
 					frappe.bold(batch_id),
 					frappe.bold(doc.return_against),
 				),
 				error,
 				title=_("Return exceeds sale"),
 			)
+
+	# the total (taxes included): the returned portions' net value, scaled by the sale's own
+	# gross/net ratio — taxes follow the goods; a tax row the sale never charged is not refundable
+	refund_total = returned.total + this.total
+	net_sold = sum(sold.amount.values())
+	gross_ratio = sold.total / net_sold if net_sold else 1.0
+	entitled_net = sum(
+		(sold.amount[item] / sold.qty[item] if sold.qty[item] else 0.0)
+		* (returned.qty[item] + this.qty.get(item, 0.0))
+		for item in set(returned.qty) | set(this.qty)
+		if item in sold.qty
+	)
+	returned_units = sum(returned.qty.values()) + sum(this.qty.values())
+	allowed_total = entitled_net * gross_ratio + _rounding_tolerance(unit, returned_units)
+	if flt(refund_total, currency_precision) > flt(allowed_total, currency_precision):
+		frappe.throw(
+			_("{0} charged {1} in total, {2} already refunded; this return would refund {3}.").format(
+				frappe.bold(doc.return_against),
+				flt(sold.total, currency_precision),
+				flt(returned.total, currency_precision),
+				flt(this.total, currency_precision),
+			),
+			RefundExceedsSaleError,
+			title=_("Refund exceeds sale"),
+		)

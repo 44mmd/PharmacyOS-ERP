@@ -36,7 +36,15 @@ def selling_price_list() -> str:
 
 
 def public_prices(item_codes, on_date=None) -> dict[str, frappe._dict]:
-	"""{item_code: {rate, valid_until, currency}} — the currently valid public selling price only."""
+	"""{item_code: {rate, valid_until, currency}} — the currently valid public selling price only.
+
+	The price ERPNext itself would charge for one unit at the counter today (its own ranking of the
+	selling list's rows: dated rows first, latest start first), with nothing the website cannot honour:
+	no customer-, supplier- or batch-specific row, no row in another UOM, and no row with a packing
+	unit above one — ERPNext applies such a row only to quantities that are multiples of it, so a single
+	unit has no price at all while it ranks first. Disabled items have no public price either: ERPNext
+	refuses to sell them.
+	"""
 	codes = [c for c in item_codes if c]
 	if not codes:
 		return {}
@@ -47,9 +55,10 @@ def public_prices(item_codes, on_date=None) -> dict[str, frappe._dict]:
 	today = getdate(on_date or nowdate())
 	rows = frappe.db.sql(
 		"""
-		select ip.name, ip.item_code, ip.price_list_rate, ip.uom, ip.valid_from, ip.valid_upto
+		select ip.name, ip.item_code, ip.price_list_rate, ip.uom, ip.valid_from, ip.valid_upto,
+			ip.packing_unit
 		from `tabItem Price` ip
-		join `tabItem` i on i.name = ip.item_code
+		join `tabItem` i on i.name = ip.item_code and ifnull(i.disabled, 0) = 0
 		where ip.item_code in %(codes)s
 			and ip.price_list = %(price_list)s
 			and ip.selling = 1
@@ -71,6 +80,8 @@ def public_prices(item_codes, on_date=None) -> dict[str, frappe._dict]:
 	best = {}
 	for row in sorted(rows, key=rank, reverse=True):
 		best.setdefault(row.item_code, row)
+	# ERPNext's choice applies only to multiples of its packing unit: not a per-unit public price
+	best = {code: row for code, row in best.items() if cint(row.packing_unit) <= 1}
 	return {
 		code: frappe._dict(
 			rate=row.price_list_rate,

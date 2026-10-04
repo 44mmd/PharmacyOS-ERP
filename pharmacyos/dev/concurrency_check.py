@@ -8,7 +8,10 @@ are released at the same instant, then checks the invariants from the stock ledg
 * returns:   cumulative submitted return quantity per item never exceeds the quantity sold; the loser
              of a race gets a controlled 417 (StockOverReturnError), never a 5xx or a deadlock;
 * last unit: two counter sales of the last unit → exactly one succeeds, no 5xx;
-* checkout:  the same website order sent several times at once → one Sales Order, every caller gets it.
+* checkout:  the same website order sent several times at once → one Sales Order, every caller gets it;
+* unrelated_cancel (round 4): a sale (and a draft) racing the cancellation of another document — a
+             return or sale of a different medicine, or the medicine's own earlier return — never ends
+             in a database deadlock (HTTP 508): every request gets 200 or a controlled business error.
 
 After every round it verifies: batch quantity == received − sold + accepted returns (no phantom
 stock), every submitted voucher's GL is balanced, and no response was a 5xx.
@@ -362,6 +365,8 @@ def check_mixed(api, shop, rounds):
 # exception types a race loser may legitimately receive (HTTP 417 business errors, never 5xx)
 CONTROLLED = {
 	"StockOverReturnError",  # the sale's quantity is already returned
+	"RefundExceedsSaleError",  # the sale's money is already refunded (round 4)
+	"ReturnAgainstReturnError",  # the reference is a return, not the sale (round 4)
 	"ReturnAgainstCancelledSaleError",  # the sale was cancelled while the return waited
 	"CancelledLinkError",  # Frappe: the return links a sale it already sees cancelled
 	"SaleHasActiveReturnsError",  # the sale has submitted returns
@@ -558,6 +563,63 @@ def check_original_cancel(api, canceller, shop, rounds):
 	return failures
 
 
+def check_unrelated_cancel(api, canceller, shop, rounds):
+	"""Round 4 (D-5): a counter sale of medicine X — submitted, and a draft (the POS screen save) —
+	racing the cancellation of a return of medicine Y, and the same against the cancellation of a sale
+	of Y, and against a cancellation of X's own earlier return. Without an index on the batch bundle
+	tables the cancellation locked every item's batch entries and one side died with HTTP 508."""
+	failures = []
+	for rnd in range(rounds):
+		x, xb = shop.medicine(stock=10)
+		y, yb = shop.medicine(stock=10)
+		ysale = api.ok("frappe.client.insert", doc={**shop.sale_doc(y, yb, 2), "docstatus": 1})["name"]
+		yret = api.ok(
+			"frappe.client.insert", doc={**shop.sale_doc(y, yb, 2, return_against=ysale), "docstatus": 1}
+		)["name"]
+		xsale = api.ok("frappe.client.insert", doc={**shop.sale_doc(x, xb, 1), "docstatus": 1})["name"]
+		xret = api.ok(
+			"frappe.client.insert", doc={**shop.sale_doc(x, xb, 1, return_against=xsale), "docstatus": 1}
+		)["name"]
+		victim = [yret, ysale, xret][rnd % 3]
+		s1, s2, s3 = api.session(), canceller.session(), api.session()
+		outcome = [
+			classify(r)
+			for r in simultaneous(
+				[
+					lambda s=s1: api.call(
+						"frappe.client.insert", session=s, doc={**shop.sale_doc(x, xb, 1), "docstatus": 1}
+					),
+					lambda s=s2: canceller.call(
+						"frappe.client.cancel", session=s, doctype="Sales Invoice", name=victim
+					),
+					lambda s=s3: api.call("frappe.client.insert", session=s, doc=shop.sale_doc(x, xb, 1)),
+				]
+			)
+		]
+		problems = []
+		for kind, o in zip(("sale", "cancel", "draft"), outcome, strict=True):
+			if o[0] != 200 and not (o[0] == 417 and any(n in o[1] for n in CONTROLLED)):
+				problems.append(f"{kind} got {o[0]} {o[1]} (not a controlled business error)")
+		if victim == yret and outcome[1][0] == 200 and outcome[0][0] != 200:
+			problems.append("the sale of an unrelated medicine must succeed")
+		x_stock = shop.batch_qty(x, xb)
+		expected_x = 10 - 1 + 1 - (1 if outcome[0][0] == 200 else 0)
+		if victim == xret and outcome[1][0] == 200:
+			expected_x -= 1  # the cancelled return took its unit back out
+		if x_stock != expected_x:
+			problems.append(f"stock of X {x_stock} != expected {expected_x}")
+		for voucher in (xsale, ysale):
+			if not shop.gl_balanced(voucher):
+				problems.append(f"GL of {voucher} not balanced")
+		print(
+			f"unrelated_cancel round {rnd + 1} ({'Y return' if victim == yret else 'Y sale' if victim == ysale else 'X return'}): "
+			f"{'FAIL' if problems else 'ok'} {[o[0] for o in outcome]} {problems or ''}"
+		)
+		if problems:
+			failures.append(("unrelated_cancel", rnd, problems))
+	return failures
+
+
 def check_last_unit(api, shop, rounds):
 	failures = []
 	for rnd in range(rounds):
@@ -648,7 +710,7 @@ def main():
 	p.add_argument("--rounds", type=int, default=8)
 	p.add_argument("--canceller-key", help="user who cancels original sales (default: --key)")
 	p.add_argument("--canceller-secret")
-	p.add_argument("--only", default="returns,mixed,original_cancel,last_unit,checkout")
+	p.add_argument("--only", default="returns,mixed,original_cancel,unrelated_cancel,last_unit,checkout")
 	args = p.parse_args()
 	api = Api(args.url, args.site, args.key, args.secret)
 	setup = Api(args.url, args.site, args.setup_key, args.setup_secret) if args.setup_key else api
@@ -665,6 +727,11 @@ def main():
 			Api(args.url, args.site, args.canceller_key, args.canceller_secret) if args.canceller_key else api
 		)
 		failures += check_original_cancel(api, canceller, shop, args.rounds)
+	if "unrelated_cancel" in only:
+		canceller = (
+			Api(args.url, args.site, args.canceller_key, args.canceller_secret) if args.canceller_key else api
+		)
+		failures += check_unrelated_cancel(api, canceller, shop, args.rounds)
 	if "last_unit" in only:
 		failures += check_last_unit(api, shop, args.rounds)
 	if "checkout" in only and args.integration_key:

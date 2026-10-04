@@ -91,6 +91,11 @@ class Http:
 	def get(self, method, params):
 		return self._out(self.session.get(f"{self.url}/api/method/{method}", params=params, timeout=120))
 
+	def resource(self, path, data, v2=False):
+		"""POST a document to the REST API (v1 `/api/resource`, v2 `/api/v2`)."""
+		base = f"{self.url}/api/v2/{path}" if v2 else f"{self.url}/api/resource/{path}"
+		return self._out(self.session.post(base, json=data, timeout=120))
+
 
 def discover(admin):
 	def msg(method, **data):

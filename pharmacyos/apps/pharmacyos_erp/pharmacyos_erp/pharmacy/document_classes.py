@@ -12,10 +12,11 @@ not modified.
 """
 
 from erpnext.accounts.doctype.pos_invoice.pos_invoice import POSInvoice
+from erpnext.accounts.doctype.pos_invoice_merge_log.pos_invoice_merge_log import POSInvoiceMergeLog
 from erpnext.accounts.doctype.sales_invoice.sales_invoice import SalesInvoice
 from erpnext.selling.doctype.sales_order.sales_order import SalesOrder
 from erpnext.stock.doctype.delivery_note.delivery_note import DeliveryNote
-
+from pharmacyos_erp.pharmacy.consolidation import consolidating
 from pharmacyos_erp.pharmacy.stock_guard import lock_document_stock
 
 
@@ -39,3 +40,15 @@ class PharmacyDeliveryNote(StockLockFirst, DeliveryNote):
 
 class PharmacySalesOrder(StockLockFirst, SalesOrder):
 	pass
+
+
+class PharmacyPOSInvoiceMergeLog(POSInvoiceMergeLog):
+	"""POS consolidation: the only place `is_consolidated` may be set (pharmacy/consolidation.py)."""
+
+	def process_merging_into_sales_invoice(self, data):
+		with consolidating():
+			return super().process_merging_into_sales_invoice(data)
+
+	def process_merging_into_credit_notes(self, data):
+		with consolidating():
+			return super().process_merging_into_credit_notes(data)

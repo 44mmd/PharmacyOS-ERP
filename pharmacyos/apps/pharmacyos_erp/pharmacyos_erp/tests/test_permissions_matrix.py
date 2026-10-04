@@ -57,6 +57,11 @@ class Client:
 	def get(self, method, params):
 		return self._out(self._request(self.http.get, (f"/api/method/{method}",), {"query_string": params}))
 
+	def resource(self, path, data, v2=False):
+		"""POST a document to the REST API (v1 `/api/resource`, v2 `/api/v2`)."""
+		base = f"/api/v2/{path}" if v2 else f"/api/resource/{path}"
+		return self._out(self._request(self.http.post, (base,), {"json": data}))
+
 
 class TestPermissionMatrixOverHTTP(IntegrationTestCase):
 	@classmethod
