@@ -61,7 +61,7 @@ _RIGHTS = ("read", "write")
 def ensure_cost_privacy() -> None:
 	"""Idempotent: permission level on the cost fields + level rows for every cost-reading role."""
 	from frappe.custom.doctype.property_setter.property_setter import make_property_setter
-	from frappe.permissions import add_permission
+	from frappe.permissions import add_permission, setup_custom_perms
 
 	for doctype, fields in COST_FIELDS.items():
 		if not frappe.db.exists("DocType", doctype):
@@ -77,8 +77,7 @@ def ensure_cost_privacy() -> None:
 	for doctype in {PERMISSION_DOCTYPE.get(d, d) for d in COST_FIELDS}:
 		if not frappe.db.exists("DocType", doctype):
 			continue
-		if not frappe.db.exists("Custom DocPerm", {"parent": doctype}):
-			add_permission(doctype, "System Manager", 0, ptype="read")  # copies the standard rules
+		setup_custom_perms(doctype)  # copies the standard rules once, so every role keeps its access
 		rows = frappe.get_all(
 			"Custom DocPerm",
 			filters={"parent": doctype},

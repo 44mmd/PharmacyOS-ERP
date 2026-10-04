@@ -13,6 +13,11 @@ the exact code the scheduler runs every minute.
 * website order: checkout retried with the same Idempotency-Key (lost response) → one order; the
   ERP imports it once as a submitted Sales Order (reservation) and acknowledges it;
 * completion: the ERP delivers and invoices (FEFO batch), confirms, and the Cloud shows it completed.
+* public price only (round 3): customer-specific prices (cheaper, edited, deleted) never reach the
+  website; a price valid until today carries its validity; at midnight — with the Cloud down — the
+  date job sends the expiry, which arrives after recovery and takes the product off sale (checkout
+  refused); a duplicate delivery changes nothing; an order whose price expired before the ERP imported
+  it is refused and goes to review; a replacement price puts the product back on sale with its stock.
 
 	python3 live_cloud_check.py --site live.localhost --actors actors.json \
 		--cloud-dir /path/to/PharmacyOS/backend --cloud-python /path/to/venv/bin/python
@@ -65,8 +70,9 @@ class Erp:
 	def value(self, doctype, name, field):
 		return self.call("frappe.client.get_value", doctype=doctype, filters=name, fieldname=field).get(field)
 
-	def job(self, path):
+	def job(self, path, args=None):
 		"""Run a scheduler job exactly as the scheduler does (bench execute, its own process)."""
+		extra = f" --args '{json.dumps(args)}'" if args is not None else ""
 		out = subprocess.run(
 			[
 				"sudo",
@@ -75,7 +81,7 @@ class Erp:
 				"-H",
 				"bash",
 				"-c",
-				f"cd {self.bench} && {self.bench_cmd} --site {self.site} execute {path}",
+				f"cd {self.bench} && {self.bench_cmd} --site {self.site} execute {path}{extra}",
 			],
 			capture_output=True,
 			text=True,
@@ -151,14 +157,15 @@ class Cloud:
 
 	def product(self, item_code):
 		rows = self.sql(
-			"select m.price, w.website_price, l.erp_price, m.quantity, l.sellable_qty, l.published "
+			"select m.price, w.website_price, l.erp_price, m.quantity, l.sellable_qty, l.published, "
+			"l.erp_price_valid_until "
 			"from erp_product_links l join medicines m on m.id = l.medicine_id "
 			"left join medicine_web w on w.medicine_id = m.id where l.erp_item_code = ?",
 			item_code,
 		)
 		if not rows:
 			return None
-		keys = ("price", "website_price", "erp_price", "quantity", "sellable", "published")
+		keys = ("price", "website_price", "erp_price", "quantity", "sellable", "published", "valid_until")
 		return dict(zip(keys, rows[0], strict=True))
 
 
@@ -216,6 +223,7 @@ def main():
 	cloud.make_admin()
 	try:
 		run_flows(erp, cloud, check, branch, secret)
+		run_pricing_flows(erp, cloud, check, branch, secret)
 	finally:
 		cloud.stop()
 	failures = [r for r in check.results if not r[1]]
@@ -441,6 +449,216 @@ def run_flows(erp, cloud, check, branch, secret):
 	check(
 		"completion: website stock after delivery", cloud.product(code)["sellable"] == 3, cloud.product(code)
 	)
+
+
+def live_medicine(erp, company, warehouse, qty=5):
+	code = "LIVE-" + uuid.uuid4().hex[:6].upper()
+	erp.call(
+		"pharmacyos_erp.pharmacy.medicine.create_medicine",
+		item_code=code,
+		item_name=f"Live {code}",
+		pharma_name_ar=f"دواء {code}",
+		item_group="Products",
+		stock_uom="Nos",
+		standard_rate=1000,
+		barcode=uuid.uuid4().hex[:12],
+	)
+	batch = erp.call(
+		"pharmacyos_erp.pharmacy.receiving.create_receiving_batch",
+		item_code=code,
+		batch_id=f"LB-{code}",
+		expiry_date="2099-12-31",
+	)["name"]
+	erp.call(
+		"frappe.client.insert",
+		doc={
+			"doctype": "Stock Entry",
+			"stock_entry_type": "Material Receipt",
+			"company": company,
+			"docstatus": 1,
+			"items": [
+				{
+					"item_code": code,
+					"qty": qty,
+					"t_warehouse": warehouse,
+					"basic_rate": 400,
+					"batch_no": batch,
+					"use_serial_batch_fields": 1,
+				}
+			],
+		},
+	)
+	erp.call("frappe.client.set_value", doctype="Item", name=code, fieldname="pharmacyos_publish", value=1)
+	price = erp.call(
+		"frappe.client.get_value",
+		doctype="Item Price",
+		filters={"item_code": code, "price_list": "Standard Selling", "customer": ["is", "not set"]},
+		fieldname="name",
+	)["name"]
+	return code, price
+
+
+def run_pricing_flows(erp, cloud, check, branch, secret):
+	"""Round 3: only the public selling price valid today ever reaches the website."""
+	import datetime
+
+	outbox = "pharmacyos_erp.integration.outbox.process_outbox"
+	pull = "pharmacyos_erp.integration.cloud.pull_orders"
+	date_job = "pharmacyos_erp.integration.outbox.queue_price_validity_changes"
+	warehouse = branch["pharmacyos_warehouse"]
+	company = erp.value("Warehouse", warehouse, "company")
+	today = erp.job("frappe.utils.nowdate").splitlines()[-1].strip().strip('"')  # the ERP's own date
+	yesterday = str(datetime.date.fromisoformat(today) - datetime.timedelta(days=1))
+
+	code, public = live_medicine(erp, company, warehouse)
+	erp.job(outbox)
+	check(
+		"price: public price on the website",
+		cloud.product(code)["website_price"] == 1000,
+		cloud.product(code),
+	)
+
+	# customer-specific prices: cheaper, newer, edited, deleted — never public
+	customer = erp.call("frappe.client.get_list", doctype="Customer", limit_page_length=1)[0]["name"]
+	special = erp.call(
+		"frappe.client.insert",
+		doc={
+			"doctype": "Item Price",
+			"item_code": code,
+			"price_list": "Standard Selling",
+			"price_list_rate": 400,
+			"customer": customer,
+		},
+	)["name"]
+	erp.job(outbox)
+	check(
+		"price: a cheaper customer price is not published",
+		cloud.product(code)["website_price"] == 1000,
+		cloud.product(code),
+	)
+	erp.call(
+		"frappe.client.set_value", doctype="Item Price", name=special, fieldname="price_list_rate", value=300
+	)
+	erp.job(outbox)
+	check(
+		"price: an edited customer price is not published",
+		cloud.product(code)["website_price"] == 1000,
+		cloud.product(code),
+	)
+	erp.call("frappe.client.delete", doctype="Item Price", name=special)
+	erp.job(outbox)
+	check(
+		"price: deleting a customer price keeps the public one",
+		cloud.product(code)["website_price"] == 1000,
+		cloud.product(code),
+	)
+
+	# valid until today: the website knows the last valid day
+	erp.call(
+		"frappe.client.set_value", doctype="Item Price", name=public, fieldname="valid_upto", value=today
+	)
+	erp.job(outbox)
+	product = cloud.product(code)
+	check(
+		"expiry: the validity reaches the website",
+		product["valid_until"] == today and product["quantity"] == 5,
+		product,
+	)
+
+	# midnight passes while the Cloud is down: the price row expires without any save
+	cloud.stop()
+	erp.job("frappe.db.set_value", ["Item Price", public, "valid_upto", yesterday])
+	erp.job("frappe.db.set_default", ["pharmacyos_price_validity_date", yesterday])
+	queued = erp.job(date_job)
+	check("expiry: the date job queued the item", queued.splitlines()[-1].strip() not in ("0", ""), queued)
+	erp.job(outbox)  # Cloud unreachable: kept for retry
+	cloud.start()
+	time.sleep(125)  # back-off of a failed event
+	erp.job(outbox)
+	product = cloud.product(code)
+	check(
+		"expiry: after recovery the product is off sale",
+		product["quantity"] == 0 and not product["published"],
+		product,
+	)
+	product_id = cloud.sql("select medicine_id from erp_product_links where erp_item_code = ?", code)[0][0]
+	order = {
+		"customer_name": "زبون",
+		"customer_phone": "07701112233",
+		"delivery_address": "بغداد",
+		"items": [{"product_id": product_id, "quantity": 1}],
+	}
+	refused = requests.post(f"{cloud.base}/experience/public/orders", json=order, timeout=20)
+	check("expiry: checkout at the expired price is refused", refused.status_code == 409, refused.text[:200])
+	again = erp.job(date_job)
+	check("expiry: running the date job again queues nothing", again.splitlines()[-1].strip() == "0", again)
+
+	# duplicate delivery of the expiry event
+	sent = erp.call(
+		"frappe.client.get_list",
+		doctype="PharmacyOS Sync Event",
+		filters={"reference_name": code, "event_type": "catalog.changed", "status": "Sent"},
+		fields=["name", "payload"],
+		order_by="creation desc",
+		limit_page_length=1,
+	)[0]
+	body = sent["payload"].encode()
+	duplicate = requests.post(
+		f"{cloud.base}/integrations/erp/events",
+		data=body,
+		headers={
+			"Content-Type": "application/json",
+			"X-PharmacyOS-Signature": "sha256=" + hmac.new(secret.encode(), body, hashlib.sha256).hexdigest(),
+			"X-PharmacyOS-Event-Id": sent["name"],
+		},
+		timeout=10,
+	)
+	check(
+		"expiry: a duplicate delivery is not re-applied",
+		duplicate.json().get("applied") is False,
+		duplicate.text[:200],
+	)
+
+	# replacement public price from today
+	erp.call(
+		"frappe.client.insert",
+		doc={
+			"doctype": "Item Price",
+			"item_code": code,
+			"price_list": "Standard Selling",
+			"price_list_rate": 1800,
+			"valid_from": today,
+		},
+	)
+	erp.job(outbox)
+	product = cloud.product(code)
+	check(
+		"replacement: back on sale at the new price with its stock",
+		product["website_price"] == 1800 and product["quantity"] == 5 and product["published"],
+		product,
+	)
+	placed = requests.post(f"{cloud.base}/experience/public/orders", json=order, timeout=20)
+	check("replacement: checkout works again", placed.status_code == 201, placed.text[:200])
+
+	# an order placed at a valid price whose price expires before the ERP imports it
+	code2, public2 = live_medicine(erp, company, warehouse)
+	erp.job(outbox)
+	pid2 = cloud.sql("select medicine_id from erp_product_links where erp_item_code = ?", code2)[0][0]
+	late = requests.post(
+		f"{cloud.base}/experience/public/orders",
+		json={**order, "items": [{"product_id": pid2, "quantity": 1}]},
+		timeout=20,
+	)
+	tracking = late.json().get("tracking_code")
+	check("import: order placed while the price was valid", late.status_code == 201, late.text[:200])
+	erp.job("frappe.db.set_value", ["Item Price", public2, "valid_upto", yesterday])  # expired, no event yet
+	erp.job(pull)
+	imported = erp.call(
+		"frappe.client.get_list", doctype="Sales Order", filters={"pharmacyos_order_id": tracking}
+	)
+	stage = cloud.sql("select status from experience_orders where tracking_code = ?", tracking)[0][0]
+	check("import: the ERP refuses an item without a valid price", not imported, imported)
+	check("import: the order goes to the pharmacist for review", stage == "reviewing", stage)
 
 
 if __name__ == "__main__":
