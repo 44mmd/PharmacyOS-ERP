@@ -84,7 +84,7 @@ bench --site pharmacyos.localhost execute pharmacyos_erp.setup.demo_data.create_
 Tests (on the test site only):
 
 ```bash
-bench --site test.localhost run-tests --app pharmacyos_erp                     # PharmacyOS (157 tests)
+bench --site test.localhost run-tests --app pharmacyos_erp                     # PharmacyOS (196 tests)
 bench --site test.localhost run-tests --lightmode --module erpnext.stock.doctype.batch.test_batch   # upstream
 ```
 
@@ -102,7 +102,17 @@ python3 pharmacyos/dev/concurrency_check.py --site <site> --key K --secret S --s
     --integration-key IK --integration-secret IS --rounds 8
 # the staff / API permission matrix (one API key per role profile, see the script)
 python3 pharmacyos/dev/permission_check.py --site <site> --actors actors.json
+# cost-data red-team: no purchase price / valuation / stock value for counter staff
+python3 pharmacyos/dev/permission_check.py --site <site> --actors actors.json --cost
+# a real Cloud next to the ERP: catalog, public price validity, outage, orders, completion
+python3 pharmacyos/dev/live_cloud_check.py --site <site> --actors actors.json \
+    --cloud-dir /path/to/PharmacyOS/backend --cloud-python /path/to/venv/bin/python
 ```
+
+`concurrency_check.py` also races returns against the cancellation of their original sale
+(`original_cancel`: simultaneous, staggered both ways, several returns, return cancellation, and a
+repeat of the losing operation). The test site should allow as many test users as upstream CI does
+(`bench --site test.localhost set-config --parse throttle_user_limit 100`).
 
 Navigation (Dock + Sidebars) is generated from `pharmacyos_erp/setup/navigation.py`; after changing it,
 bump `MODIFIED` there and regenerate (`bench --site <site> execute pharmacyos_erp.setup.navigation.write_files`

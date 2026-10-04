@@ -73,6 +73,7 @@ if [ ! -d "sites/$TEST_SITE" ]; then
 	bench new-site "$TEST_SITE" --db-root-username "$DB_ROOT_USER" --db-root-password "$DB_ROOT_PASSWORD" \
 		--admin-password "$ADMIN_PASSWORD" --install-app erpnext --install-app payments
 	bench --site "$TEST_SITE" set-config allow_tests true
+	bench --site "$TEST_SITE" set-config --parse throttle_user_limit 100  # as upstream CI's test site
 	bench --site "$TEST_SITE" run-tests --lightmode --module erpnext.tests.bootstrap_test_data
 fi
 fi
