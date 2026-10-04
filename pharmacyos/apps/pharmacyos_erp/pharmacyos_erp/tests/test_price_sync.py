@@ -58,7 +58,11 @@ class TestItemPriceSync(IntegrationTestCase):
 
 		sender = Delivery(behaviour)
 		with patch("requests.post", side_effect=sender):
-			outbox.process_outbox()
+			for _ in range(20):  # the outbox sends 100 per run: drain whatever earlier tests left
+				before = len(sender.sent)
+				outbox.process_outbox()
+				if len(sender.sent) - before < outbox.BATCH_SIZE:
+					break
 		return sender.sent
 
 	def catalog(self, sent):
@@ -178,7 +182,10 @@ class TestItemPriceSync(IntegrationTestCase):
 		api_user = make_user("price-sync-api@example.test", profile_roles("PharmacyOS Integration"))
 		old = add_days(now_datetime(), -30)
 		frappe.db.set_value("Item", self.item, "modified", old, update_modified=False)
-		frappe.db.set_value("Item Price", self.price_doc().name, "modified", old, update_modified=False)
+		# an old price row: saved and valid since a month ago (a price becoming valid also moves the feed)
+		frappe.db.set_value(
+			"Item Price", self.price_doc().name, {"modified": old, "valid_from": old.date()}, update_modified=False
+		)
 		since = add_days(now_datetime(), -1)
 		frappe.set_user(api_user)
 		try:

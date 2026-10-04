@@ -124,6 +124,7 @@ doc_events = {
 	# ERP prices are authoritative for the website: a price change alone reaches the Cloud
 	"Item Price": {"on_update": f"{_outbox}.on_item_price", "on_trash": f"{_outbox}.on_item_price"},
 	"Selling Settings": {"on_update": f"{_outbox}.on_selling_settings"},
+	"Price List": {"on_update": f"{_outbox}.on_price_list"},
 	"Purchase Receipt": {"validate": _receipt_validate},
 	"Purchase Invoice": {"validate": _receipt_validate},
 	"Sales Order": {
@@ -144,6 +145,8 @@ scheduler_events = {
 		# outbound events and website orders (PharmacyOS Cloud), every minute; the pharmacy server
 		# always initiates — nothing listens for inbound connections
 		"* * * * *": [
+			# a price starting or ending at midnight changes the website price with no save
+			"pharmacyos_erp.integration.outbox.queue_price_validity_changes",
 			"pharmacyos_erp.integration.outbox.process_outbox",
 			"pharmacyos_erp.integration.cloud.pull_orders",
 		],

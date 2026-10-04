@@ -25,7 +25,7 @@ system is connected**; outbound events are disabled until an administrator confi
 | Method | Path (`pharmacyos_erp.api.v1.` …) | Purpose |
 |---|---|---|
 | GET | `branches.get_branches` | Branch ↔ storefront code ↔ warehouse mapping |
-| GET | `catalog.get_catalog?cursor=&modified_since=&limit=` | Published items (`Item.pharmacyos_publish = 1`), keyset-paginated by `(modified, name)`, where `modified` is the later of the Item's and its selling Item Price's — a price change alone moves the item forward |
+| GET | `catalog.get_catalog?cursor=&modified_since=&limit=` | Published items (`Item.pharmacyos_publish = 1`), keyset-paginated by `(modified, name)`, where `modified` is the later of the Item's and its selling Item Prices' — a price change alone moves the item forward, and so does a price row becoming valid (`valid_from`) or expiring (the day after `valid_upto`) once that moment has passed |
 | GET | `availability.get_availability?branch_code=&item_codes=` | Sellable quantity per branch and item |
 | POST | `orders.create_order` | Idempotent online order → submitted Sales Order |
 | GET | `orders.get_order_status?order_id=` | Order state, delivery/billing progress, documents |
@@ -35,7 +35,15 @@ system is connected**; outbound events are disabled until an administrator confi
 ### Catalog
 
 Each item: `item_code, name, name_ar, generic_name, strength, dosage_form, pack_size, dispensing,
-is_medicine, brand, category, uom, image, barcodes[], price, currency, disabled, modified`.
+is_medicine, brand, category, uom, image, barcodes[], price, price_valid_until, currency, disabled, modified`.
+
+`price` is the **public selling price valid today** and nothing else — ERPNext's own Item Price rules
+for a buyer without a customer or supplier: the catalog's selling price list (Selling Settings →
+Default Price List; it must be enabled and a selling list), no customer, no supplier, no batch, the
+stock UOM (or none), `valid_from ≤ today ≤ valid_upto` on the ERP's date (Asia/Baghdad). Customer-,
+supplier- and batch-specific rows, other UOMs, buying lists and future or expired rows are never
+published. `price: null` when no such row exists. `price_valid_until` is the chosen row's
+`valid_upto` (null = open-ended): the Cloud stops selling at that price after that date on its own.
 Continue with `next_cursor` while `has_more` is true. Disabled items are returned with `disabled: 1`
 so the storefront can unpublish them.
 
@@ -69,7 +77,9 @@ POST orders.create_order
   (or two website orders) can never both take the last unit.
 * Validation before anything is created: items must be published and enabled; quantity must not
   exceed sellable availability (otherwise HTTP 417 with the shortage list).
-* Prices: rates in the request are ignored; ERPNext price lists and pricing rules apply. The response
+* Prices: rates in the request are ignored; ERPNext price lists and pricing rules apply. An item
+  without a currently valid public selling price (expired since checkout, never priced) is refused
+  ("No valid selling price") — never ordered at a stale or zero price. The response
   returns `currency, grand_total, items[{item_code, qty, rate, amount}]` for reconciliation.
 * The Sales Order is **submitted**, which reserves stock (reflected immediately in availability).
   Fulfilment (Delivery Note / Sales Invoice) happens in the ERP.
@@ -90,7 +100,7 @@ only when it is newer than the one they hold, so a delayed retry never overwrite
 |---|---|---|
 | `availability.changed` | stock ledger entry for a published item | `item_code, branch_code, qty, nearest_expiry` (computed at the first delivery attempt) |
 | `order.status_changed` | PharmacyOS Sales Order submitted/updated/cancelled, or a Delivery Note / Sales Invoice against it | `sales_order, pharmacyos_order_id, status, docstatus, per_delivered, per_billed` |
-| `catalog.changed` | published item saved; its selling Item Price added, changed or deleted (no Item save needed); the catalog's selling price list switched | `item_code, published, item` (catalog entry incl. `price`; `price: null` when the ERP has no selling price — the Cloud then takes the item off sale) |
+| `catalog.changed` | published item saved; its selling Item Price added, changed or deleted (no Item save needed); the catalog's selling price list switched, enabled or disabled; at midnight (ERP date) for every item whose price row starts or ends — a server that was off catches up on its first run | `item_code, published, item` (catalog entry incl. `price`; `price: null` when the ERP has no selling price — the Cloud then takes the item off sale) |
 
 Request: `POST <endpoint>` with JSON `{event, event_id, occurred_at, computed_at, data}` and headers
 `X-PharmacyOS-Event`, `X-PharmacyOS-Event-Id`,

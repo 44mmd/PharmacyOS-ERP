@@ -180,6 +180,17 @@ def create_order(
 				shortages.append(
 					{"item_code": row["item_code"], "requested": row["qty"], "available": available}
 				)
+	# the website sells at the public price only: an item whose price expired (or was never public)
+	# since the customer checked out is refused, never ordered at a stale, zero or customer price
+	from pharmacyos_erp.api.v1.catalog import public_prices
+
+	priced = public_prices(codes)
+	unpriced = [code for code in codes if code not in priced]
+	if unpriced:
+		frappe.throw(
+			_("No valid selling price for: {0}").format(", ".join(unpriced)),
+			title=_("No selling price"),
+		)
 	if shortages:
 		frappe.throw(
 			_("Insufficient stock for: {0}").format(

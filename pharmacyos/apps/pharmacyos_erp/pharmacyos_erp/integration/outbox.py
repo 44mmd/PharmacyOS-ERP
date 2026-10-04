@@ -156,6 +156,62 @@ def on_item_price(doc, method=None):
 			queue_catalog(row.get("item_code"))
 
 
+def on_price_list(doc, method=None):
+	"""doc_event (on_update) for Price List: enabling/disabling the catalog's list changes every price."""
+	from pharmacyos_erp.api.v1.catalog import selling_price_list
+
+	if doc.name != selling_price_list() or not outbound_enabled():
+		return
+	before = doc.get_doc_before_save()
+	if (
+		before is not None
+		and all(cint(before.get(f)) == cint(doc.get(f)) for f in ("enabled", "selling"))
+		and before.get("currency") == doc.get("currency")
+	):
+		return
+	for code in frappe.get_all("Item", filters={"pharmacyos_publish": 1}, pluck="name"):
+		queue_catalog(code)
+
+
+PRICE_DATE_KEY = "pharmacyos_price_validity_date"
+
+
+def queue_price_validity_changes(today=None) -> int:
+	"""Scheduler (every minute): when the date changes, re-send items whose price starts or ends.
+
+	An Item Price becomes valid on its `valid_from` and stops being valid the day after its
+	`valid_upto` — at midnight (ERP time zone, Asia/Baghdad), with no document saved, so no doc_event
+	fires. The last date processed is stored (Default Value); every date boundary since then is covered,
+	so a server that was off over midnight (or several) catches up on its first run. Nothing to do
+	while the date is unchanged. Returns the number of items queued.
+	"""
+	from frappe.utils import add_days, getdate, nowdate
+
+	from pharmacyos_erp.api.v1.catalog import selling_price_list
+
+	today = getdate(today or nowdate())
+	stored = frappe.db.get_default(PRICE_DATE_KEY)
+	last = getdate(stored) if stored else None
+	if last == today:
+		return 0
+	since = last if last and last < today else add_days(today, -1)
+	codes = frappe.db.sql_list(
+		"""
+		select distinct ip.item_code
+		from `tabItem Price` ip
+		join `tabItem` i on i.name = ip.item_code and i.pharmacyos_publish = 1
+		where ip.price_list = %(price_list)s
+			and ((ip.valid_from > %(since)s and ip.valid_from <= %(today)s)
+				or (ip.valid_upto >= %(since)s and ip.valid_upto < %(today)s))
+		""",
+		{"price_list": selling_price_list(), "since": since, "today": today},
+	)
+	for code in codes:
+		queue_catalog(code)
+	frappe.db.set_default(PRICE_DATE_KEY, str(today))  # committed with the events (scheduler job)
+	return len(codes)
+
+
 def on_selling_settings(doc, method=None):
 	"""The catalog's selling price list changed: every published item now has a different price."""
 	before = doc.get_doc_before_save()
