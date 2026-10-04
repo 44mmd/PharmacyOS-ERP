@@ -5,6 +5,23 @@
 import frappe
 from frappe.utils import add_days, nowdate
 
+
+def ensure_test_masters() -> None:
+	"""ERPNext's standard test masters (_Test Company, its accounts and warehouses, _Test Customer,
+	item groups, UOMs, Mode of Payment Cash, price lists …), which these tests build on.
+
+	ERPNext v16 creates them when `erpnext.tests.utils` is imported (BootStrapTestData, idempotent);
+	upstream CI warms them with a separate run before any suite. The PharmacyOS tests must not depend on
+	that warm-up — nor on another test having run first — so every test module requests them itself.
+	Only ever in a test run, never on a real site.
+	"""
+	if not frappe.in_test:
+		return
+	import erpnext.tests.utils  # the import creates the masters
+
+
+ensure_test_masters()
+
 COMPANY = "_Test Company"
 WAREHOUSE = "_Test Warehouse - _TC"
 WAREHOUSE_2 = "_Test Warehouse 1 - _TC"

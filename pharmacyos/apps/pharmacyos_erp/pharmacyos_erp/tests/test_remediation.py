@@ -801,6 +801,11 @@ class TestFirstRunIdempotency(IntegrationTestCase):
 
 		ensure_api_branch()
 		set_settings(pharmacy_name="Remediation Pharmacy", pharmacy_name_ar="صيدلية")
+		# an initialised pharmacy has finished ERPNext's setup; arrange it here rather than rely on how
+		# the test site was prepared (CI-warmed sites have it, a freshly created site does not)
+		completed = patch.object(frappe, "is_setup_complete", return_value=True)
+		completed.start()
+		self.addCleanup(completed.stop)
 		self.assertTrue(is_initialized())
 		owner = make_user("remed-owner@example.com", ["Pharmacy Owner"])
 		update_password(owner, "Original-Pass-1")
