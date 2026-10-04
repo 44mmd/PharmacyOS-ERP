@@ -26,8 +26,9 @@ class TestFoundation(IntegrationTestCase):
 
 	def test_cashier_profile_is_minimal(self):
 		roles = {r.role for r in frappe.get_doc("Role Profile", "Cashier").roles}
-		# no Accounts User (journal/payment entries, GL) and no Stock User (stock entries)
-		self.assertEqual(roles, {"Cashier", "Sales User"})
+		# no Accounts User (journal/payment entries, GL), no Stock User (stock entries) and no Sales User
+		# (sales orders, delivery notes, stock reservations): the counter rights are on the Cashier role
+		self.assertEqual(roles, {"Cashier"})
 
 	def test_custom_fields_exist_and_are_prefixed(self):
 		for doctype, fields in CUSTOM_FIELDS.items():

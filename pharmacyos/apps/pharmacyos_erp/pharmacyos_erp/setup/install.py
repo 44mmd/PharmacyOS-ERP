@@ -20,9 +20,8 @@ from frappe.custom.doctype.property_setter.property_setter import make_property_
 from pharmacyos_erp.branding import PRODUCT
 from pharmacyos_erp.setup.custom_fields import CUSTOM_FIELDS
 
-# Our own roles. They grant access to PharmacyOS pages and DocTypes only; ERPNext document access
-# comes from ERPNext's standard roles bundled in the role profiles below (no Custom DocPerm on core
-# DocTypes, so upstream permission updates keep applying).
+# Our own roles. ERPNext document access comes from ERPNext's standard roles bundled in the role
+# profiles below, plus the narrow rights in CUSTOM_PERMISSIONS (Custom DocPerms on these roles).
 ROLES = [
 	"Pharmacy Owner",
 	"Pharmacy Manager",
@@ -39,11 +38,13 @@ PHARMACY_ROLES = [r for r in ROLES if r != "PharmacyOS Integration"]
 
 # Role profile -> roles. Intentionally no "System Manager": owners manage the pharmacy, not the server.
 #
-# Least privilege for counter and integration staff. ERPNext's "Accounts User" grants Journal Entry,
-# Payment Entry and GL access, and "Stock User" grants Stock Entry (stock out of thin air), so
-# neither is part of the Cashier, Pharmacist or Integration profiles. What those people need to sell
-# (Sales/POS Invoice, POS Profile, Mode of Payment, batch bundles, own shift) is granted to their own
-# PharmacyOS role by the Custom DocPerms in COUNTER_PERMISSIONS below.
+# Least privilege for counter and integration staff. ERPNext's standard roles are broad bundles:
+# "Accounts User" grants Journal Entries, Payment Entries and GL access; "Stock User" grants Stock
+# Entries (stock out of thin air); "Sales User" grants Sales Orders and Stock Reservation Entries
+# (which reserve the shelf) and Delivery Notes (which ship stock without a payment). None of them is
+# part of the Cashier, Pharmacist or Integration profiles. What those people need — to sell, to look
+# medicines up, to run their own shift — is granted to their own PharmacyOS role by CUSTOM_PERMISSIONS
+# below; the integration account works only through the PharmacyOS API (`api/v1`).
 ROLE_PROFILES = {
 	"Pharmacy Owner": [
 		"Pharmacy Owner",
@@ -73,8 +74,8 @@ ROLE_PROFILES = {
 		"Purchase User",
 		"Accounts User",
 	],
-	"Pharmacist": ["Pharmacist", "Sales User"],
-	"Cashier": ["Cashier", "Sales User"],
+	"Pharmacist": ["Pharmacist"],
+	"Cashier": ["Cashier"],
 	"Inventory Manager": [
 		"Inventory Manager",
 		"Stock Manager",
@@ -93,15 +94,15 @@ ROLE_PROFILES = {
 		"Stock User",
 		"Purchase User",
 	],
-	# integration API: online orders (Sales Order, Customer) only
-	"PharmacyOS Integration": ["PharmacyOS Integration", "Sales User"],
+	# integration API only (`api/v1`): no ERPNext document role at all
+	"PharmacyOS Integration": ["PharmacyOS Integration"],
 }
 
 # Roles that earlier releases put in these profiles and that must be taken away on upgrade.
 REVOKED_PROFILE_ROLES = {
-	"Cashier": ("Accounts User", "Stock User"),
-	"Pharmacist": ("Accounts User", "Stock User"),
-	"PharmacyOS Integration": ("Accounts User", "Stock User"),
+	"Cashier": ("Accounts User", "Stock User", "Sales User"),
+	"Pharmacist": ("Accounts User", "Stock User", "Sales User"),
+	"PharmacyOS Integration": ("Accounts User", "Stock User", "Sales User"),
 }
 
 DOSAGE_FORMS = [
@@ -145,8 +146,8 @@ def before_uninstall():
 			if name:
 				frappe.delete_doc("Custom Field", name, ignore_permissions=True, force=True)
 	frappe.db.delete("Property Setter", {"doc_type": "Item", "property": "search_fields"})
-	frappe.db.delete("Custom DocPerm", {"parent": "Item Price", "role": ["in", PRICE_READ_ROLES]})
-	frappe.db.delete("Custom DocPerm", {"parent": ["in", SHIFT_DOCTYPES], "role": ["in", SHIFT_ROLES]})
+	for role, doctypes in CUSTOM_PERMISSIONS.items():
+		frappe.db.delete("Custom DocPerm", {"parent": ["in", list(doctypes)], "role": role})
 	for doctype, fieldname in DESCRIPTION_OVERRIDES:
 		frappe.db.delete(
 			"Property Setter", {"doc_type": doctype, "field_name": fieldname, "property": "description"}
@@ -164,8 +165,7 @@ def ensure_structure():
 	ensure_description_overrides()
 	ensure_role_profiles()
 	ensure_dosage_forms()
-	ensure_price_read_access()
-	ensure_cashier_shift_access()
+	ensure_custom_permissions()
 	ensure_branch_dimension_fields()
 
 
@@ -189,70 +189,147 @@ def ensure_roles():
 			).insert(ignore_permissions=True)
 
 
-# ERPNext v17 lets only Sales/Purchase Master Manager read Item Price, but the POS barcode/serial
-# search reads it with the caller's permissions, so a cashier's scan fails with "Insufficient
-# Permission for Item Price". Read-only access for the roles that sell (the counter permissions below
-# are the other Custom DocPerm on core DocTypes). Frappe copies the standard rules first, so existing
-# access is unchanged; the rows are removed on uninstall.
-PRICE_READ_ROLES = ("Pharmacy Owner", "Pharmacy Manager", "Branch Manager", "Pharmacist", "Cashier")
+# --------------------------------------------------------------------------- permissions
+#
+# Everything a PharmacyOS role may do beyond the ERPNext roles in its profile, as Custom DocPerms on the
+# PharmacyOS role itself (permission level 0). The table is declarative: install and every migrate set
+# each (role, DocType) row to exactly these rights, and uninstall removes the rows. Frappe copies a
+# DocType's standard rules into Custom DocPerm the first time one is added, so other roles keep their
+# access.
+#
+# Who may do what (the HTTP matrix in tests/test_permissions_matrix.py proves it):
+#
+# * Item Price (medicine prices; ERPNext v16 reserves it for Sales/Purchase *Master* Manager, which
+#   would also hand out customers, price lists, pricing rules and territories):
+#   read — every pharmacy role (the POS reads prices with the caller's permissions);
+#   create/edit — Pharmacy Owner, Pharmacy Manager, Inventory Manager (ERPNext creates an Item Price
+#   when a medicine is added with a selling rate); delete — Pharmacy Owner, Pharmacy Manager.
+# * Cancelling a sale (stock and GL reversal) — Pharmacy Owner (Accounts Manager), Pharmacy Manager and
+#   Pharmacy Accountant (Accounts Manager). Cancelling a batch sale also cancels its Serial and Batch
+#   Bundle, which ERPNext reserves for stock roles: the accountant gets read + cancel on bundles only.
+#   Cashiers, pharmacists and branch managers cannot cancel.
+# * Counter (Cashier, Pharmacist): sell (Sales/POS Invoice create + submit, no cancel), run their own
+#   POS shift (if_owner), create the batch bundles a sale needs, register a walk-in customer, and read
+#   the masters the POS screen and the invoice form look up. No Sales Order, Delivery Note, Stock
+#   Reservation, Quotation, Journal/Payment Entry, Stock Entry or GL access. Pharmacists additionally
+#   read batches and the stock ledger.
+# * Branch (HR-only in ERPNext): read for every pharmacy role, maintained by the owner.
 
+_READ = ("read", "select")
+_SELECT = ("select",)
+_SELL = ("read", "select", "create", "write", "submit", "print", "email")
+_PRICE_ADMIN = ("read", "select", "create", "write", "delete", "report", "export", "print")
+_PRICE_EDIT = ("read", "select", "create", "write", "report", "export", "print")
 
-def ensure_price_read_access():
-	from frappe.permissions import add_permission, update_permission_property
-
-	for role in PRICE_READ_ROLES:
-		if not frappe.db.exists("Role", role):
-			continue
-		if not frappe.db.exists("Custom DocPerm", {"parent": "Item Price", "role": role, "permlevel": 0}):
-			add_permission("Item Price", role, 0, ptype="read")
-		update_permission_property("Item Price", role, 0, "select", 1, validate=False)
-
-
-# Counter selling with the minimum ERPNext permissions, applied as Custom DocPerms on the PharmacyOS
-# roles (Frappe copies the standard rules first, so other roles keep their access; removed on
-# uninstall):
-# * POS shifts: ERPNext lets only Sales Manager open/close them. A cashier runs their own shift:
-#   read/create/submit POS Opening and Closing Entries they own (if_owner); no cancel, no delete, no
-#   access to other cashiers' shifts.
-# * Selling: Sales Invoice / POS Invoice create + submit (no cancel, no delete), POS Profile and Mode
-#   of Payment read. ERPNext only grants these through "Accounts User", which would also allow
-#   Journal Entries, Payment Entries and GL access.
-# * Batch medicines: selling a batch creates a Serial and Batch Bundle, which ERPNext reserves for
-#   stock roles; without it a cashier cannot sell any batch-tracked medicine.
-# * Pharmacists additionally read batches and the stock ledger (stock and expiry questions) without
-#   any stock-creating permission.
-_SELL = ("read", "create", "write", "submit", "print", "email")
 _COUNTER = {
+	# selling and the shift
+	"Sales Invoice": _SELL,
+	"POS Invoice": _SELL,
 	"POS Opening Entry": ("read", "create", "write", "submit", "print", "if_owner"),
 	"POS Closing Entry": ("read", "create", "write", "submit", "print", "if_owner"),
 	"Serial and Batch Bundle": ("read", "create", "write", "submit"),
-	"Sales Invoice": _SELL,
-	"POS Invoice": _SELL,
-	"POS Profile": ("read",),
-	"Mode of Payment": ("read",),
+	"Customer": ("read", "select", "create", "write"),
+	# the invoice renders the customer's address and contact (Frappe's "All" role reads only its own)
+	"Address": _READ,
+	"Contact": _READ,
+	# masters the POS screen and the invoice form read (read-only)
+	"Item": _READ,
+	"Item Group": _READ,
+	"Item Price": _READ,
+	"Price List": _READ,
+	"Brand": _READ,
+	"UOM": _READ,
+	"Warehouse": _READ,
+	"Bin": _READ,
+	"Batch": _SELECT,
+	"Company": _READ,
+	"Currency": _READ,
+	"Customer Group": _READ,
+	"Territory": _READ,
+	"Branch": _READ,
+	"POS Profile": _READ,
+	"POS Settings": ("read",),
+	"Mode of Payment": _READ,
+	"Sales Taxes and Charges Template": _READ,
+	"Terms and Conditions": _READ,
+	"Accounts Settings": ("read",),
+	"Selling Settings": ("read",),
+	"Stock Settings": ("read",),
+	"Fiscal Year": _READ,
+	"Account": _SELECT,
+	"Cost Center": _SELECT,
+	"Item Tax Template": _SELECT,
+	"Tax Category": _SELECT,
+	"Loyalty Program": _SELECT,
 }
-COUNTER_PERMISSIONS = {
+
+CUSTOM_PERMISSIONS = {
 	"Cashier": _COUNTER,
-	"Pharmacist": {**_COUNTER, "Batch": ("read",), "Stock Ledger Entry": ("read", "report")},
+	"Pharmacist": {
+		**_COUNTER,
+		"Batch": ("read", "select", "report"),
+		"Stock Ledger Entry": ("read", "report"),
+	},
+	"Pharmacy Owner": {"Item Price": _PRICE_ADMIN, "Branch": ("read", "select", "create", "write")},
+	"Pharmacy Manager": {
+		"Item Price": _PRICE_ADMIN,
+		"Sales Invoice": ("read", "select", "cancel", "amend"),
+		"POS Invoice": ("read", "select", "cancel", "amend"),
+		"Branch": _READ,
+	},
+	"Inventory Manager": {"Item Price": _PRICE_EDIT, "Branch": _READ},
+	"Purchasing Officer": {"Item Price": _READ, "Branch": _READ},
+	"Pharmacy Accountant": {
+		"Item Price": _READ,
+		# Frappe saves a cancelled document, which checks write as well as cancel (submitted bundles
+		# stay immutable; only the accountant's own drafts could be edited, and none are created)
+		"Serial and Batch Bundle": ("read", "select", "write", "cancel"),
+		"Branch": _READ,
+	},
+	"Branch Manager": {"Item Price": _READ, "Branch": _READ},
 }
-SHIFT_ROLES = tuple(COUNTER_PERMISSIONS)
-SHIFT_DOCTYPES = tuple(sorted({dt for perms in COUNTER_PERMISSIONS.values() for dt in perms}))
+
+_RIGHTS = (
+	"select",
+	"read",
+	"write",
+	"create",
+	"delete",
+	"submit",
+	"cancel",
+	"amend",
+	"print",
+	"email",
+	"report",
+	"import",
+	"export",
+	"share",
+)
 
 
-def ensure_cashier_shift_access():
-	from frappe.permissions import add_permission, update_permission_property
+def ensure_custom_permissions():
+	"""Set every (role, DocType) row of CUSTOM_PERMISSIONS to exactly its rights (idempotent)."""
+	from frappe.permissions import add_permission
 
-	for role, doctypes in COUNTER_PERMISSIONS.items():
+	touched = set()
+	for role, doctypes in CUSTOM_PERMISSIONS.items():
 		if not frappe.db.exists("Role", role):
 			continue
-		for doctype, ptypes in doctypes.items():
+		for doctype, granted in doctypes.items():
 			if not frappe.db.exists("DocType", doctype):
 				continue
-			if not frappe.db.exists("Custom DocPerm", {"parent": doctype, "role": role, "permlevel": 0}):
-				add_permission(doctype, role, 0, ptype="read")
-			for ptype in ptypes:
-				update_permission_property(doctype, role, 0, ptype, 1, validate=False)
-			frappe.clear_cache(doctype=doctype)
+			name = frappe.db.get_value("Custom DocPerm", {"parent": doctype, "role": role, "permlevel": 0})
+			if not name:
+				name = add_permission(doctype, role, 0, ptype="read")
+			row = frappe.get_doc("Custom DocPerm", name)
+			wanted = {right: int(right in granted) for right in _RIGHTS}
+			wanted["if_owner"] = int("if_owner" in granted)
+			if any(row.get(k) != v for k, v in wanted.items()):
+				row.update(wanted)
+				row.save(ignore_permissions=True)
+			touched.add(doctype)
+	for doctype in touched:
+		frappe.clear_cache(doctype=doctype)
 
 
 def ensure_role_profiles():

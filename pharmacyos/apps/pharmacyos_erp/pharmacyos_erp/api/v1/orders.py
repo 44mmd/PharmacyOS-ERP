@@ -16,6 +16,7 @@ reservation.
 
 import hashlib
 import json
+from contextlib import contextmanager
 
 import frappe
 from frappe import _
@@ -29,6 +30,25 @@ from pharmacyos_erp.pharmacy.stock_guard import current_free_qty, lock_bins
 
 class OrderConflictError(frappe.DuplicateEntryError):
 	"""Same order ID, different payload (HTTP 409)."""
+
+
+@contextmanager
+def _endpoint_authority():
+	"""Build the order with system authority, then record the calling integration account as its owner.
+
+	The integration account holds no ERPNext document role, so it cannot create, submit or cancel
+	Sales Orders (or read item masters, costs included) through the REST API: this endpoint is its only
+	way to place an order. ERPNext's item lookup (`get_item_details`) checks Item read for the session
+	user even when the document ignores permissions, so the session user is switched for the insert
+	and submit only. Frappe caches permissions per user, so nothing leaks into the caller's checks
+	afterwards. ERPNext validation, naming and stock rules all still apply.
+	"""
+	caller = frappe.session.user
+	frappe.local.session.user = "Administrator"
+	try:
+		yield caller
+	finally:
+		frappe.local.session.user = caller
 
 
 def payload_hash(payload: dict) -> str:
@@ -98,7 +118,9 @@ def _existing_order(order_id: str, digest: str, current: bool = False) -> dict |
 		# the stock locks) and answer from the committed order.
 		frappe.db.rollback()
 	if existing.pharmacyos_payload_hash != digest:
-		raise OrderConflictError(_("Order {0} was already received with different contents.").format(order_id))
+		raise OrderConflictError(
+			_("Order {0} was already received with different contents.").format(order_id)
+		)
 	return _response(existing.name, created=False)
 
 
@@ -200,12 +222,17 @@ def create_order(
 				"warehouse": warehouses[0] if len(warehouses) == 1 else branch.pharmacyos_warehouse,
 			},
 		)
-	if payload["notes"]:
-		so.add_comment("Comment", text=frappe.utils.escape_html(payload["notes"]))
 	try:
-		so.insert()
-		so.submit()
-	except (frappe.DuplicateEntryError, frappe.UniqueValidationError):
+		with _endpoint_authority() as caller:
+			so.insert()
+			so.submit()
+		# audit trail: the order belongs to the account that placed it
+		frappe.db.set_value(
+			"Sales Order", so.name, {"owner": caller, "modified_by": caller}, update_modified=False
+		)
+		if payload["notes"]:
+			so.add_comment("Comment", text=frappe.utils.escape_html(payload["notes"]))
+	except frappe.DuplicateEntryError, frappe.UniqueValidationError:
 		# a concurrent request with the same order ID won the race (Frappe reports the unique
 		# pharmacyos_order_id violation as UniqueValidationError)
 		frappe.db.rollback()

@@ -26,6 +26,8 @@ def ensure_customer(
 		}
 	)
 	customer.flags.ignore_mandatory = False
+	# the integration account has no Customer permission of its own: only this endpoint creates customers
+	customer.flags.ignore_permissions = True
 	try:
 		customer.insert()
 	except frappe.DuplicateEntryError:
@@ -47,5 +49,5 @@ def upsert_customer(
 		changed = {k: v for k, v in updates.items() if doc.get(k) != v}
 		if changed:
 			doc.update(changed)
-			doc.save()
+			doc.save(ignore_permissions=True)  # only the fields above, through this endpoint
 	return {"customer": customer, "customer_id": customer_id}
