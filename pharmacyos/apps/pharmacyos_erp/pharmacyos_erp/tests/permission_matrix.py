@@ -62,6 +62,14 @@ EXPECTED = {
 	"sales_invoice.return": _row(
 		owner=A, manager=A, cashier=A, pharmacist=A, inventory=D, integration=D, guest=D
 	),
+	# credit notes beyond the counter return (round 3): free-standing (no original sale, here a
+	# non-medicine item) and money-only (no goods back against a stock sale) need a manager
+	"credit_note.standalone": _row(
+		owner=A, manager=A, cashier=D, pharmacist=D, inventory=D, integration=D, guest=D
+	),
+	"credit_note.money_only": _row(
+		owner=A, manager=A, cashier=D, pharmacist=D, inventory=D, integration=D, guest=D
+	),
 	# the whole shift as the POS screen runs it: open, list items, sell, close with the cash count
 	"pos.full_shift": _row(owner=A, manager=A, cashier=A, pharmacist=A, integration=D, guest=D),
 	"sales_order.create": _row(
@@ -304,6 +312,48 @@ class Matrix:
 				"frappe.client.insert", {"doc": self.sale_doc(code, batch, 1, return_against=sale)}
 			),
 			lambda r: c.post("frappe.client.submit", {"doc": r[1]["message"]}),
+		)
+
+	def non_medicine(self, stock=5):
+		code = "PNM-" + _uid()
+		self.ok(
+			"frappe.client.insert",
+			doc={
+				"doctype": "Item",
+				"item_code": code,
+				"item_name": f"Matrix product {code}",
+				"item_group": self.ctx.get("item_group", "Products"),
+				"stock_uom": "Nos",
+				"is_stock_item": 1,
+			},
+		)
+		entry = self.stock_entry(code, None, stock, docstatus=1)
+		for row in entry["items"]:
+			row.pop("batch_no"), row.pop("use_serial_batch_fields")
+		self.ok("frappe.client.insert", doc=entry)
+		return code
+
+	def _plain_sale(self, code, qty, return_against=None, update_stock=1, docstatus=0):
+		doc = self.sale_doc(code, None, qty, return_against=return_against, docstatus=docstatus)
+		doc["update_stock"] = update_stock
+		for row in doc["items"]:
+			row.pop("batch_no"), row.pop("use_serial_batch_fields")
+		return doc
+
+	def op_credit_note_standalone(self, c, profile):
+		code = self.non_medicine()
+		doc = self._plain_sale(code, 1)
+		doc.update({"is_return": 1, "docstatus": 1})
+		doc["items"][0]["qty"] = -1
+		doc["payments"][0]["amount"] = -1000
+		return c.post("frappe.client.insert", {"doc": doc})
+
+	def op_credit_note_money_only(self, c, profile):
+		code = self.non_medicine()
+		sale = self.ok("frappe.client.insert", doc=self._plain_sale(code, 2, docstatus=1))["name"]
+		return c.post(
+			"frappe.client.insert",
+			{"doc": self._plain_sale(code, 1, return_against=sale, update_stock=0, docstatus=1)},
 		)
 
 	def op_pos_full_shift(self, c, profile):

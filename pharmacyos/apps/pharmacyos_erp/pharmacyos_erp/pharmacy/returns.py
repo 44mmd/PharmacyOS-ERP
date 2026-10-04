@@ -18,6 +18,12 @@ built:
 A medicine return must reference the original sale: a free-standing return would put stock back that
 was never sold from this pharmacy.
 
+Credit-note authority (round 3). A return is a refund. Counter staff (anyone without
+`CREDIT_NOTE_ROLES`) may only issue the counter return: linked to a sale they can open, bringing the
+goods back when the sale took them from stock, within the quantities and rates above. A free-standing
+credit note (no original sale, any item) or a money-only credit note against a stock sale needs a
+manager's or the accountant's authority (CreditNoteAuthorityError, HTTP 403).
+
 Concurrency — the invariant must hold for simultaneous requests on different server workers:
 
 * **One serialisation point.** Submitting or cancelling a return locks the original document's row
@@ -74,6 +80,57 @@ class ReturnAgainstCancelledSaleError(frappe.ValidationError):
 
 class SaleHasActiveReturnsError(frappe.LinkExistsError):
 	"""The sale has submitted returns: cancel them first, then the sale."""
+
+
+class CreditNoteAuthorityError(frappe.PermissionError):
+	"""A refund beyond the counter return (free-standing, or money only) by a user without authority."""
+
+
+# roles that may issue credit notes beyond the counter return
+CREDIT_NOTE_ROLES = (
+	"Pharmacy Owner",
+	"Pharmacy Manager",
+	"Pharmacy Accountant",
+	"Accounts Manager",
+	"System Manager",
+)
+
+
+def has_credit_note_authority(user: str | None = None) -> bool:
+	user = user or frappe.session.user
+	return user == "Administrator" or bool(set(frappe.get_roles(user)) & set(CREDIT_NOTE_ROLES))
+
+
+def check_credit_note_authority(doc) -> None:
+	"""Counter staff: only the linked counter return (see the module doc)."""
+	if has_credit_note_authority():
+		return
+	if not doc.get("return_against"):
+		frappe.throw(
+			_(
+				"A credit note that does not reference the original sale needs a pharmacy manager or the accountant. Use the Return button on the original invoice."
+			),
+			CreditNoteAuthorityError,
+			title=_("Return not linked to a sale"),
+		)
+	if not frappe.has_permission(doc.doctype, "read", doc=doc.return_against):
+		frappe.throw(
+			_("You cannot open {0}, so you cannot return against it.").format(
+				frappe.bold(doc.return_against)
+			),
+			CreditNoteAuthorityError,
+			title=_("Not permitted"),
+		)
+	if doc.doctype in ("Sales Invoice", "POS Invoice"):
+		took_stock = cint(frappe.db.get_value(doc.doctype, doc.return_against, "update_stock"))
+		if took_stock and not cint(doc.get("update_stock")):
+			frappe.throw(
+				_(
+					"{0} took the goods from stock: a counter return brings them back (Update Stock). A refund without the goods needs a pharmacy manager or the accountant."
+				).format(frappe.bold(doc.return_against)),
+				CreditNoteAuthorityError,
+				title=_("Money-only credit note"),
+			)
 
 
 def _over_return_error():
@@ -282,6 +339,7 @@ def validate_return(doc, method=None):
 		return
 	items = {row.item_code for row in doc.get("items") or [] if row.item_code}
 	medicines = _medicines(items)
+	check_credit_note_authority(doc)
 
 	if not doc.get("return_against"):
 		if medicines:

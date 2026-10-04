@@ -36,12 +36,9 @@ class TestCostExposure(IntegrationTestCase):
 		from pharmacyos_erp.setup.install import ensure_structure
 
 		ensure_structure()
-		tag = frappe.generate_hash(length=6).lower()
-		cls.users = {}
+		cls.users = {}  # fixed accounts, re-used across runs (Frappe throttles bulk user creation)
 		for profile in (*NO_COST, *CONTROL):
-			email = make_user(
-				f"cost-{profile.lower().replace(' ', '-')}-{tag}@example.com", profile_roles(profile)
-			)
+			email = make_user(f"cost-{profile.lower().replace(' ', '-')}@example.com", profile_roles(profile))
 			update_password(email, PASSWORD)
 			frappe.defaults.set_user_default("Company", COMPANY, email)
 			cls.users[profile] = email

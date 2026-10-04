@@ -85,6 +85,8 @@ matrix against a running multi-worker server: `dev/permission_check.py`). ✓ al
 | Counter sale (save + submit) | ✓ | ✓ | ✓ | ✓ | – | ✗ | ✗ | ✗ |
 | Whole POS shift (open, list, sell, close) | ✓ | ✓ | ✓ | ✓ | – | – | ✗ | ✗ |
 | Return against a sale | ✓ | ✓ | ✓ | ✓ | – | ✗ | ✗ | ✗ |
+| Free-standing credit note (no original sale) | ✓ | ✓ | ✗ | ✗ | – | ✗ | ✗ | ✗ |
+| Money-only credit note against a stock sale | ✓ | ✓ | ✗ | ✗ | – | ✗ | ✗ | ✗ |
 | Cancel a batch-medicine sale (stock, batch, GL reversed) | ✓ | ✓ | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ |
 | Sales Order create / submit / cancel | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | Delivery Note create / submit / cancel | ✓ | ✓ | ✗ | ✗ | ✗ | ✓ | ✗ | ✗ |
@@ -101,6 +103,14 @@ matrix against a running multi-worker server: `dev/permission_check.py`). ✓ al
 
 Cashiers open and close **their own** POS shift (narrow Custom DocPerm, `if_owner`); they cannot
 cancel invoices or see other cashiers' shifts. Counter sessions expire after 12 idle hours.
+
+### Returns and credit notes
+
+A counter return (Cashier, Pharmacist) must reference a sale the user can open, bring the goods back
+when that sale took them from stock, and stay within the quantities (per item and per batch) and the
+rates of that sale — whoever sold it. Free-standing credit notes and money-only credit notes against
+a stock sale need a pharmacy manager, the owner or the accountant (`returns.CREDIT_NOTE_ROLES`,
+`CreditNoteAuthorityError`, HTTP 403). Medicine returns must reference the original sale for everyone.
 
 ### Cost data (purchase prices, valuation, stock value)
 
