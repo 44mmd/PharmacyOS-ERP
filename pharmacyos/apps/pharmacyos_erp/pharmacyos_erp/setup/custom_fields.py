@@ -13,6 +13,22 @@ STORAGE_OPTIONS = "\nRoom Temperature (15-25 °C)\nCool (8-15 °C)\nRefrigerated
 MEDICINE_DEP = "eval:doc.pharma_is_medicine"
 SEARCH_KEY_LENGTH = 1000
 
+# Cumulative quantities returned against a sale: one entry per submitted return, written in the return's
+# own transaction and read with a locking read of the (locked) original row — see pharmacy/returns.py.
+RETURN_LEDGER = {
+	"fieldname": "pharma_return_ledger",
+	"fieldtype": "Long Text",
+	"label": "Returned Quantities (PharmacyOS)",
+	"insert_after": "return_against",
+	"read_only": 1,
+	"hidden": 1,
+	"no_copy": 1,
+	"print_hide": 1,
+	"report_hide": 1,
+	"allow_on_submit": 1,
+	"description": "Maintained by PharmacyOS: quantities already returned against this document.",
+}
+
 CUSTOM_FIELDS = {
 	"Item": [
 		{
@@ -255,6 +271,9 @@ CUSTOM_FIELDS = {
 			"no_copy": 1,
 		},
 	],
+	"Sales Invoice": [RETURN_LEDGER],
+	"POS Invoice": [RETURN_LEDGER],
+	"Delivery Note": [RETURN_LEDGER],
 	"Customer": [
 		{
 			"fieldname": "pharmacyos_customer_id",

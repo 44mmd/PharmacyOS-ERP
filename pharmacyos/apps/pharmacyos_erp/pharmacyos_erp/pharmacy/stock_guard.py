@@ -103,15 +103,20 @@ def _stock_rows(doc):
 
 
 def lock_document_stock(doc, method=None):
-	"""doc_event (before_validate): lock the document's Bin rows before anything else.
+	"""Lock the document's Bin rows, then (for a return) the original sale, before anything else.
 
-	Runs on every save and on submit. `before_validate` is the earliest point of the transaction,
-	before ERPNext creates batch bundles (drafts included) or ledger entries, so concurrent saves and
-	submissions of the same items queue here instead of deadlocking later.
+	Runs first in every save, submit and cancel (`document_classes.StockLockFirst`, Frappe's
+	`load_doc_before_save`) and again in `before_validate`; taking a lock already held is a no-op.
+	That is before ERPNext creates batch bundles (drafts included) or ledger entries, so concurrent
+	saves, submissions and cancellations of the same items queue here instead of deadlocking later.
+	Every such transaction locks in the same order: Bin rows (sorted), the original sale of a return
+	(`returns.lock_original_sale`, which serialises returns against one sale), then everything else.
 	"""
-	if doc.docstatus == 2 or not _moves_stock(doc):
-		return
-	lock_bins((row.item_code, row.warehouse) for row in _stock_rows(doc))
+	from pharmacyos_erp.pharmacy.returns import lock_original_sale
+
+	if _moves_stock(doc):
+		lock_bins((row.item_code, row.warehouse) for row in _stock_rows(doc))
+	lock_original_sale(doc)
 
 
 def reservations_protected() -> bool:

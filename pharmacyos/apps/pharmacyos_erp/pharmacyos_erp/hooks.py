@@ -78,12 +78,15 @@ _sales_validate = [
 	"pharmacyos_erp.pharmacy.stock_guard.protect_reservations",
 ]
 _receipt_validate = [_branch, "pharmacyos_erp.pharmacy.receiving.validate_receipt"]
+# cumulative returned quantities on the original sale (read under its row lock; see pharmacy/returns.py)
+_record_return = "pharmacyos_erp.pharmacy.returns.record_return"
 
 _outbox = "pharmacyos_erp.integration.outbox"
 _fulfilment = f"{_outbox}.on_fulfilment_document"
 _order_event = f"{_outbox}.on_sales_order"
 
-# Stock lock order for sales documents: Bin rows before Frappe's own row locks (see the module)
+# Lock order for sales documents: Bin rows, then a return's original sale, before Frappe's own row
+# locks — on save, submit and cancel (see the module)
 override_doctype_class = {
 	"Sales Invoice": "pharmacyos_erp.pharmacy.document_classes.PharmacySalesInvoice",
 	"POS Invoice": "pharmacyos_erp.pharmacy.document_classes.PharmacyPOSInvoice",
@@ -103,15 +106,20 @@ doc_events = {
 	"Sales Invoice": {
 		"before_validate": _lock_stock,
 		"validate": _sales_validate,
-		"on_submit": _fulfilment,
-		"on_cancel": _fulfilment,
+		"on_submit": [_record_return, _fulfilment],
+		"on_cancel": [_record_return, _fulfilment],
 	},
-	"POS Invoice": {"before_validate": _lock_stock, "validate": _sales_validate},
+	"POS Invoice": {
+		"before_validate": _lock_stock,
+		"validate": _sales_validate,
+		"on_submit": _record_return,
+		"on_cancel": _record_return,
+	},
 	"Delivery Note": {
 		"before_validate": _lock_stock,
 		"validate": _sales_validate,
-		"on_submit": _fulfilment,
-		"on_cancel": _fulfilment,
+		"on_submit": [_record_return, _fulfilment],
+		"on_cancel": [_record_return, _fulfilment],
 	},
 	"Purchase Receipt": {"validate": _receipt_validate},
 	"Purchase Invoice": {"validate": _receipt_validate},

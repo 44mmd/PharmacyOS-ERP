@@ -4,5 +4,6 @@
 pharmacyos_erp.patches.v1.arabic_first_locale
 pharmacyos_erp.patches.v1.backup_defaults
 pharmacyos_erp.patches.v1.remediation_least_privilege
+pharmacyos_erp.patches.v1.return_ledger
 
 [post_fixture_sync]

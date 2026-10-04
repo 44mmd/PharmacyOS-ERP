@@ -18,10 +18,28 @@ built:
 A medicine return must reference the original sale: a free-standing return would put stock back that
 was never sold from this pharmacy.
 
-Concurrent returns against the same original are serialised by locking the original document's row
-when a return is submitted, so two simultaneous returns cannot each see the "remaining" quantity.
+Concurrency — the invariant must hold for simultaneous requests on different server workers:
+
+* **One serialisation point.** Submitting or cancelling a return locks the original document's row
+  (`lock_original_sale`) at the start of the transaction, after the stock (Bin) locks and before
+  anything else (`stock_guard.lock_document_stock`). Two returns against the same sale therefore run
+  one after the other.
+* **A current read of what was already returned.** Waiting for the lock is not enough on its own:
+  MariaDB runs at REPEATABLE READ, so ordinary reads in the second transaction still see the snapshot
+  taken before the first one committed — its return would be invisible. The cumulative returned
+  quantities therefore live on the original document itself (`pharma_return_ledger`, one entry per
+  submitted return) and are read with a locking read of that same, already locked, row. A locking
+  read always returns the latest committed version, never the snapshot.
+* **Updated in the same transaction.** The return's entry is written to the ledger on submit and
+  removed on cancel, inside the return's own transaction, while the lock is held.
+
+The loser of a race therefore waits for the winner, sees its return, and gets the ordinary
+"Return exceeds sale" error (StockOverReturnError, HTTP 417) — never a double refund or a deadlock.
+Originals whose ledger was never written (returns submitted before this version) are computed from
+their submitted returns, and the upgrade patch fills the ledger for all of them.
 """
 
+import json
 from collections import defaultdict
 
 import frappe
@@ -29,6 +47,9 @@ from frappe import _
 from frappe.utils import flt
 
 from pharmacyos_erp.pharmacy.fefo import get_row_batches
+
+RETURN_DOCTYPES = ("Sales Invoice", "POS Invoice", "Delivery Note")
+LEDGER_FIELD = "pharma_return_ledger"
 
 
 def _over_return_error():
@@ -66,6 +87,117 @@ def _totals(doc):
 	return qty, batch_qty, rate
 
 
+def is_tracked_return(doc) -> bool:
+	return bool(
+		doc.doctype in RETURN_DOCTYPES
+		and doc.get("is_return")
+		and doc.get("return_against")
+		and not doc.get("is_consolidated")
+	)
+
+
+# ------------------------------------------------------------------ serialisation and the ledger
+
+
+def lock_original_sale(doc) -> None:
+	"""Lock the original sale's row while a return against it is submitted or cancelled.
+
+	Called by `stock_guard.lock_document_stock`, i.e. at the very start of the save (Frappe's
+	`load_doc_before_save`) and again in `before_validate`; re-locking a row already held is a no-op.
+	"""
+	if doc.docstatus in (1, 2) and is_tracked_return(doc):
+		frappe.db.sql(f"select name from `tab{doc.doctype}` where name=%s for update", doc.return_against)
+
+
+def _contribution(doc) -> dict:
+	"""What one return document returns: {"items": {item: qty}, "batches": {item: {batch: qty}}}."""
+	qty, batch_qty, _rate = _totals(doc)
+	batches = defaultdict(dict)
+	for (item_code, batch), value in batch_qty.items():
+		batches[item_code][batch] = flt(value, 9)
+	return {"items": {k: flt(v, 9) for k, v in qty.items()}, "batches": dict(batches)}
+
+
+def _read_ledger(doctype: str, original: str, current: bool) -> dict | None:
+	"""The stored ledger. `current=True` is a locking read: the latest committed value, not the snapshot."""
+	rows = frappe.db.sql(
+		f"select `{LEDGER_FIELD}` from `tab{doctype}` where name=%s{' for update' if current else ''}",
+		original,
+	)
+	raw = rows[0][0] if rows else None
+	if not raw:
+		return None
+	ledger = json.loads(raw)
+	ledger.setdefault("returns", {})
+	return ledger
+
+
+def _write_ledger(doctype: str, original: str, ledger: dict) -> None:
+	# a direct column update: the original stays unmodified (no new `modified`, no version entry)
+	frappe.db.sql(
+		f"update `tab{doctype}` set `{LEDGER_FIELD}`=%s where name=%s",
+		(json.dumps(ledger, sort_keys=True, separators=(",", ":")), original),
+	)
+
+
+def compute_ledger(doctype: str, original: str) -> dict:
+	"""Ledger rebuilt from the submitted return documents (upgrade patch, reconciliation, fallback)."""
+	names = frappe.get_all(
+		doctype,
+		filters={"return_against": original, "is_return": 1, "docstatus": 1},
+		pluck="name",
+		order_by="creation asc",
+	)
+	return {"returns": {name: _contribution(frappe.get_doc(doctype, name)) for name in names}}
+
+
+def rebuild_ledger(doctype: str, original: str) -> dict:
+	ledger = compute_ledger(doctype, original)
+	_write_ledger(doctype, original, ledger)
+	return ledger
+
+
+def _ledger(doctype: str, original: str, current: bool) -> dict:
+	ledger = _read_ledger(doctype, original, current)
+	if ledger is None:
+		# never written: no return was submitted against it since PharmacyOS keeps the ledger (any
+		# such return writes it before committing, and the locking read above would see it), so the
+		# submitted documents are the complete history
+		ledger = compute_ledger(doctype, original)
+	return ledger
+
+
+def returned_so_far(doctype: str, original: str, exclude: str | None = None, current: bool = True):
+	"""(qty per item, qty per (item, batch)) returned by submitted returns, excluding `exclude`."""
+	ledger = _ledger(doctype, original, current)
+	returned, returned_batches = defaultdict(float), defaultdict(float)
+	for name, entry in ledger["returns"].items():
+		if name == exclude:
+			continue
+		for item_code, qty in (entry.get("items") or {}).items():
+			returned[item_code] += flt(qty)
+		for item_code, batches in (entry.get("batches") or {}).items():
+			for batch, qty in batches.items():
+				returned_batches[(item_code, batch)] += flt(qty)
+	return returned, returned_batches
+
+
+def record_return(doc, method=None):
+	"""doc_event (on_submit / on_cancel): add or remove this return's entry in the original's ledger."""
+	if not is_tracked_return(doc):
+		return
+	lock_original_sale(doc)  # already held since the start of the transaction; kept for safety
+	ledger = _ledger(doc.doctype, doc.return_against, current=True)
+	if doc.docstatus == 1:
+		ledger["returns"][doc.name] = _contribution(doc)
+	else:
+		ledger["returns"].pop(doc.name, None)
+	_write_ledger(doc.doctype, doc.return_against, ledger)
+
+
+# ------------------------------------------------------------------ validation
+
+
 def validate_return(doc, method=None):
 	"""doc_event (validate) for Sales Invoice, POS Invoice and Delivery Note."""
 	if not doc.get("is_return") or doc.get("is_consolidated"):
@@ -83,30 +215,18 @@ def validate_return(doc, method=None):
 			)
 		return
 
-	if doc.docstatus == 1:
-		# serialise concurrent returns against the same sale: the second waits for the first to commit
-		frappe.db.get_value(doc.doctype, doc.return_against, "name", for_update=True)
+	submitting = doc.docstatus == 1
+	if submitting:
+		# normally already held since the start of the transaction (stock_guard.lock_document_stock)
+		lock_original_sale(doc)
 
 	original = frappe.get_doc(doc.doctype, doc.return_against)
 	sold, sold_batches, sold_rate = _totals(original)
-
-	other_returns = frappe.get_all(
-		doc.doctype,
-		filters={
-			"return_against": doc.return_against,
-			"is_return": 1,
-			"docstatus": 1,
-			"name": ["!=", doc.name or ""],
-		},
-		pluck="name",
+	# on submit: a locking read of the ledger on the locked original — includes every return
+	# committed by a concurrent request; drafts get the same check as early, advisory feedback
+	returned, returned_batches = returned_so_far(
+		doc.doctype, doc.return_against, exclude=doc.name, current=submitting
 	)
-	returned, returned_batches = defaultdict(float), defaultdict(float)
-	for name in other_returns:
-		qty, batch_qty, _rate = _totals(frappe.get_doc(doc.doctype, name))
-		for key, value in qty.items():
-			returned[key] += value
-		for key, value in batch_qty.items():
-			returned_batches[key] += value
 
 	this_qty, this_batches, this_rate = _totals(doc)
 	error = _over_return_error()
@@ -164,7 +284,10 @@ def validate_return(doc, method=None):
 		if flt(qty, precision) > remaining:
 			frappe.throw(
 				_("{0}: at most {1} of batch {2} can still be returned against {3}.").format(
-					frappe.bold(item_code), max(remaining, 0), frappe.bold(batch_id), frappe.bold(doc.return_against)
+					frappe.bold(item_code),
+					max(remaining, 0),
+					frappe.bold(batch_id),
+					frappe.bold(doc.return_against),
 				),
 				error,
 				title=_("Return exceeds sale"),
