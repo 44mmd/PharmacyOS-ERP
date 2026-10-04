@@ -110,13 +110,17 @@ def lock_document_stock(doc, method=None):
 	That is before ERPNext creates batch bundles (drafts included) or ledger entries, so concurrent
 	saves, submissions and cancellations of the same items queue here instead of deadlocking later.
 	Every such transaction locks in the same order: Bin rows (sorted), the original sale of a return
-	(`returns.lock_original_sale`, which serialises returns against one sale), then everything else.
+	(`returns.lock_original_sale`, which serialises returns against one sale) — or, when an original
+	sale itself is cancelled, that sale's row (`returns.guard_original_cancellation`) — then everything
+	else.
 	"""
-	from pharmacyos_erp.pharmacy.returns import lock_original_sale
+	from pharmacyos_erp.pharmacy.returns import guard_original_cancellation, lock_original_sale
 
 	if _moves_stock(doc):
 		lock_bins((row.item_code, row.warehouse) for row in _stock_rows(doc))
 	lock_original_sale(doc)
+	# cancelling an original sale: its own row next (same order as a return), refused while returns exist
+	guard_original_cancellation(doc)
 
 
 def reservations_protected() -> bool:

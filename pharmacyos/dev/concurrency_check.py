@@ -27,6 +27,7 @@ import argparse
 import json
 import sys
 import threading
+import time
 import uuid
 from collections import Counter
 
@@ -203,6 +204,11 @@ class Shop:
 		)
 		return sum(r["actual_qty"] for r in rows)
 
+	def batch_balance(self, batch):
+		"""The batch's own on-hand quantity as ERPNext reports it (Batch.batch_qty)."""
+		row = self.api.get_list("Batch", fields=["batch_qty"], filters={"name": batch})
+		return row[0]["batch_qty"] if row else None
+
 	def gl_balanced(self, voucher):
 		rows = self.api.get_list(
 			"GL Entry", fields=["debit", "credit"], filters={"voucher_no": voucher, "is_cancelled": 0}
@@ -353,6 +359,205 @@ def check_mixed(api, shop, rounds):
 	return failures
 
 
+# exception types a race loser may legitimately receive (HTTP 417 business errors, never 5xx)
+CONTROLLED = {
+	"StockOverReturnError",  # the sale's quantity is already returned
+	"ReturnAgainstCancelledSaleError",  # the sale was cancelled while the return waited
+	"CancelledLinkError",  # Frappe: the return links a sale it already sees cancelled
+	"SaleHasActiveReturnsError",  # the sale has submitted returns
+	"LinkExistsError",  # Frappe/ERPNext: submitted documents link to the sale
+}
+# a cancel that read the document before a concurrent change: Frappe refuses ("modified after you
+# opened it, refresh"), nothing is changed — a controlled refusal, the retry then decides on the merits
+STALE = "TimestampMismatchError"
+
+
+def controlled(outcome, kind=None):
+	status, exc = outcome
+	if status != 417:
+		return False
+	return any(name in exc for name in CONTROLLED) or (kind in ("cancel", "return-cancel") and STALE in exc)
+
+
+def delayed(seconds, fn):
+	def run():
+		if seconds:
+			time.sleep(seconds)
+		return fn()
+
+	return run
+
+
+def original_state(shop, code, batch, sale, sold, received):
+	"""Every invariant of a sale and its returns, read back after a race. Returns a list of problems."""
+	api = shop.api
+	doc = api.ok("frappe.client.get", doctype="Sales Invoice", name=sale)
+	returns = api.get_list(
+		"Sales Invoice",
+		fields=["name", "docstatus"],
+		filters={"return_against": sale, "is_return": 1, "docstatus": ["<", 2]},
+	)
+	submitted = [r["name"] for r in returns if r["docstatus"] == 1]
+	items = api.get_list(
+		"Sales Invoice Item",
+		fields=["qty"],
+		parent="Sales Invoice",
+		filters={"parent": ["in", submitted or [""]]},
+	)
+	returned = -sum(r["qty"] for r in items)
+	problems = []
+	active = doc["docstatus"] == 1
+	if not active and submitted:
+		problems.append(f"sale {sale} is cancelled but returns {submitted} are submitted")
+	if returned > sold:
+		problems.append(f"returned {returned} > sold {sold} (double refund)")
+	expected = received - sold + returned if active else received
+	stock = shop.batch_qty(code, batch)
+	if stock != expected:
+		problems.append(f"stock ledger {stock} != expected {expected} (phantom stock)")
+	bins = api.get_list(
+		"Bin", fields=["actual_qty"], filters={"item_code": code, "warehouse": shop.warehouse}
+	)
+	if not bins or bins[0]["actual_qty"] != expected:
+		problems.append(f"Bin {bins} != expected {expected}")
+	from_batch = shop.batch_balance(batch)
+	if from_batch is not None and from_batch != expected:
+		problems.append(f"batch quantity {from_batch} != expected {expected}")
+	# GL: submitted vouchers balanced; nothing live for cancelled ones or against a cancelled sale
+	for voucher in [sale, *submitted]:
+		if (voucher == sale and active) or voucher != sale:
+			if not shop.gl_balanced(voucher):
+				problems.append(f"GL of {voucher} not balanced")
+	if not active:
+		live = api.get_list(
+			"GL Entry",
+			fields=["voucher_no"],
+			filters={"is_cancelled": 0, "against_voucher": sale, "voucher_type": "Sales Invoice"},
+		)
+		live += api.get_list(
+			"GL Entry", fields=["voucher_no"], filters={"is_cancelled": 0, "voucher_no": sale}
+		)
+		if live:
+			problems.append(f"live GL against cancelled sale: {sorted({g['voucher_no'] for g in live})}")
+	# return tracking ledger on the original == the submitted returns
+	raw = doc.get("pharma_return_ledger")
+	tracked = sorted(json.loads(raw)["returns"]) if raw else []
+	if tracked != sorted(submitted):
+		problems.append(f"return ledger {tracked} != submitted returns {sorted(submitted)}")
+	return problems, {
+		"sale": "active" if active else "cancelled",
+		"returns": len(submitted),
+		"returned": returned,
+	}
+
+
+def check_original_cancel(api, canceller, shop, rounds):
+	"""A return (or several) racing the cancellation of the ORIGINAL sale — simultaneous and staggered.
+
+	Whatever wins, the end state is consistent: either the sale is active with its returns, or it is
+	cancelled and has no submitted return. The loser gets a controlled business error (417), and
+	repeating the losing operation afterwards fails the same controlled way."""
+	sold, received = 4, 10
+	scenarios = [
+		# label, return qtys, return delay, cancel delay, existing return to cancel in the race
+		("simultaneous return vs cancel", [2], 0, 0, False),
+		("staggered return -> cancel", [2], 0, "s", False),
+		("staggered cancel -> return", [2], "s", 0, False),
+		("several returns vs cancel", [2, 1, 1], 0, 0, False),
+		("several returns staggered vs cancel", [2, 1, 1], "s", 0, False),
+		("return cancel vs original cancel", [], 0, 0, True),
+		("return cancel + new return vs original cancel", [1], 0, "s", True),
+	]
+	failures = []
+	for label, qtys, return_delay, cancel_delay, with_existing in scenarios:
+		for rnd in range(rounds):
+			stagger = 0.03 * (rnd % 8)  # 0 … 210 ms: covers "before", "during" and "after" the winner
+			rd = stagger if return_delay == "s" else return_delay
+			cd = stagger if cancel_delay == "s" else cancel_delay
+			code, batch = shop.medicine(stock=received)
+			sale = api.ok("frappe.client.insert", doc={**shop.sale_doc(code, batch, sold), "docstatus": 1})[
+				"name"
+			]
+			calls, kinds = [], []
+			if with_existing:
+				existing = api.ok(
+					"frappe.client.insert",
+					doc={**shop.sale_doc(code, batch, 1, return_against=sale), "docstatus": 1},
+				)["name"]
+				s = api.session()
+				calls.append(
+					delayed(
+						rd,
+						lambda s=s, n=existing: api.call(
+							"frappe.client.cancel", session=s, doctype="Sales Invoice", name=n
+						),
+					)
+				)
+				kinds.append("return-cancel")
+			for q in qtys:
+				s = api.session()
+				calls.append(
+					delayed(
+						rd,
+						lambda s=s, q=q: api.call(
+							"frappe.client.insert",
+							session=s,
+							doc={**shop.sale_doc(code, batch, q, return_against=sale), "docstatus": 1},
+						),
+					)
+				)
+				kinds.append("return")
+			s = canceller.session()
+			calls.append(
+				delayed(
+					cd,
+					lambda s=s: canceller.call(
+						"frappe.client.cancel", session=s, doctype="Sales Invoice", name=sale
+					),
+				)
+			)
+			kinds.append("cancel")
+			outcome = [classify(r) for r in simultaneous(calls)]
+			problems = []
+			for kind, o in zip(kinds, outcome, strict=True):
+				if o[0] != 200 and not controlled(o, kind):
+					problems.append(f"{kind} got {o[0]} {o[1]} (not a controlled business error)")
+			state_problems, state = original_state(shop, code, batch, sale, sold, received)
+			problems += state_problems
+			# repeated attempts after one side won: the loser's operation fails the same controlled way
+			# (a sale left with no returns can then be cancelled normally)
+			for _ in range(2):
+				if state["sale"] == "cancelled":
+					again = classify(
+						api.call(
+							"frappe.client.insert",
+							doc={**shop.sale_doc(code, batch, 1, return_against=sale), "docstatus": 1},
+						)
+					)
+				elif state["returns"]:
+					again = classify(
+						canceller.call("frappe.client.cancel", doctype="Sales Invoice", name=sale)
+					)
+				else:
+					again = classify(
+						canceller.call("frappe.client.cancel", doctype="Sales Invoice", name=sale)
+					)
+					if again[0] != 200:
+						problems.append(f"cancelling the sale without returns got {again}")
+					state = original_state(shop, code, batch, sale, sold, received)[1]
+					continue
+				if not any(name in again[1] for name in CONTROLLED) or again[0] != 417:
+					problems.append(f"retry after the race got {again}")
+			problems += original_state(shop, code, batch, sale, sold, received)[0]
+			print(
+				f"original_cancel {label} round {rnd + 1}: {'FAIL' if problems else 'ok'} "
+				f"{dict(zip(kinds, [o[0] if o[0] == 200 else f'{o[0]} {o[1]}' for o in outcome], strict=True))} {state} {problems or ''}"
+			)
+			if problems:
+				failures.append((f"original_cancel:{label}", rnd, problems))
+	return failures
+
+
 def check_last_unit(api, shop, rounds):
 	failures = []
 	for rnd in range(rounds):
@@ -441,7 +646,9 @@ def main():
 	p.add_argument("--integration-key")
 	p.add_argument("--integration-secret")
 	p.add_argument("--rounds", type=int, default=8)
-	p.add_argument("--only", default="returns,mixed,last_unit,checkout")
+	p.add_argument("--canceller-key", help="user who cancels original sales (default: --key)")
+	p.add_argument("--canceller-secret")
+	p.add_argument("--only", default="returns,mixed,original_cancel,last_unit,checkout")
 	args = p.parse_args()
 	api = Api(args.url, args.site, args.key, args.secret)
 	setup = Api(args.url, args.site, args.setup_key, args.setup_secret) if args.setup_key else api
@@ -453,6 +660,11 @@ def main():
 		failures += check_returns(api, shop, args.rounds, "submit")
 	if "mixed" in only:
 		failures += check_mixed(api, shop, args.rounds)
+	if "original_cancel" in only:
+		canceller = (
+			Api(args.url, args.site, args.canceller_key, args.canceller_secret) if args.canceller_key else api
+		)
+		failures += check_original_cancel(api, canceller, shop, args.rounds)
 	if "last_unit" in only:
 		failures += check_last_unit(api, shop, args.rounds)
 	if "checkout" in only and args.integration_key:

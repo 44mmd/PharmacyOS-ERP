@@ -286,3 +286,236 @@ class TestReturnLedger(IntegrationTestCase):
 		]
 		self.assertTrue(bins and original, statements)
 		self.assertLess(max(bins), min(original), "Bin rows first, then the original sale")
+
+
+class TestOriginalSaleCancellation(IntegrationTestCase):
+	"""A return racing the cancellation of the ORIGINAL sale.
+
+	Before: both could commit — the sale cancelled (its stock and GL reversed) while the return stayed
+	submitted (stock back on the shelf, a live refund against a reversed sale): 10 received, 4 sold,
+	2 returned, sale cancelled → 12 on hand. Frappe's back-link check on cancel and ERPNext's "return
+	against must be submitted" check both read the REPEATABLE READ snapshot. Now both sides decide from
+	locking reads under the original's row lock (`returns.guard_original_cancellation`,
+	`returns.ensure_original_submitted`).
+	"""
+
+	@classmethod
+	def setUpClass(cls):
+		super().setUpClass()
+		ensure_cash_mode()
+		frappe.db.commit()  # requests run on their own database connections
+
+	def new_sale(self, sold=4, received=10):
+		tag = frappe.generate_hash(length=6).upper()
+		item = make_medicine(f"RACE-CXL-{tag}")
+		batch = make_batch(item.name, f"RC-{tag}", 300)
+		receive(item.name, batch, received)
+		sale = frappe.get_doc(submitted_doc(item.name, sold, batch))
+		sale.insert()
+		frappe.db.commit()
+		return item.name, batch, sale.name
+
+	def assert_consistent(self, item, batch, sale, sold=4, received=10):
+		"""The invariant: either an active sale with its returns, or a cancelled sale with none."""
+		frappe.db.rollback()  # a fresh snapshot: see what the requests committed
+		active = frappe.db.get_value("Sales Invoice", sale, "docstatus") == 1
+		returns = frappe.get_all(
+			"Sales Invoice", filters={"return_against": sale, "is_return": 1, "docstatus": 1}, pluck="name"
+		)
+		returned = -sum(
+			flt(q)
+			for q in frappe.get_all(
+				"Sales Invoice Item", filters={"parent": ["in", returns or [""]]}, pluck="qty"
+			)
+		)
+		if not active:
+			self.assertEqual(returns, [], f"{sale} cancelled with submitted returns {returns}")
+		self.assertLessEqual(returned, sold, "double refund")
+		expected = received - sold + returned if active else received
+		self.assertEqual(batch_qty(batch), expected, "phantom stock")
+		self.assertEqual(
+			flt(frappe.db.get_value("Bin", {"item_code": item, "warehouse": WAREHOUSE}, "actual_qty")),
+			expected,
+		)
+		for name in returns + ([sale] if active else []):
+			gl = frappe.get_all(
+				"GL Entry", filters={"voucher_no": name, "is_cancelled": 0}, fields=["debit", "credit"]
+			)
+			self.assertTrue(gl, name)
+			self.assertAlmostEqual(sum(g.debit for g in gl), sum(g.credit for g in gl), msg=f"GL of {name}")
+		if not active:
+			live = frappe.get_all(
+				"GL Entry",
+				filters={"is_cancelled": 0, "against_voucher": sale, "voucher_type": "Sales Invoice"},
+				pluck="voucher_no",
+			)
+			self.assertEqual(live, [], "live GL against a cancelled sale")
+		raw = frappe.db.get_value("Sales Invoice", sale, "pharma_return_ledger")
+		tracked = sorted(json.loads(raw)["returns"]) if raw else []
+		self.assertEqual(tracked, sorted(returns), "return ledger out of step")
+		return active, returns
+
+	def assert_controlled(self, response, *names):
+		body = response.get_data(as_text=True)
+		self.assertEqual(response.status_code, 417, body[:400])
+		self.assertTrue(any(n in body for n in names), body[:400])
+
+	def test_cancel_after_a_stale_snapshot_sees_the_committed_return(self):
+		from pharmacyos_erp.pharmacy.returns import SaleHasActiveReturnsError
+
+		item, batch, sale = self.new_sale()
+		doc = frappe.get_doc("Sales Invoice", sale)  # this transaction's snapshot: no return yet
+		other = post(
+			admin_client(),
+			"frappe.client.insert",
+			{"doc": submitted_doc(item, 2, batch, return_against=sale)},
+		)
+		self.assertEqual(other.status_code, 200, other.get_data(as_text=True)[:300])
+		self.assertFalse(frappe.db.exists("Sales Invoice", {"return_against": sale, "docstatus": 1}))
+		with self.assertRaises(SaleHasActiveReturnsError):
+			doc.cancel()
+		self.assert_consistent(item, batch, sale)
+
+	def test_return_after_a_stale_snapshot_sees_the_committed_cancellation(self):
+		from pharmacyos_erp.pharmacy.returns import ReturnAgainstCancelledSaleError
+
+		item, batch, sale = self.new_sale()
+		frappe.db.sql("select name from `tabSales Invoice` where name=%s", sale)  # take the snapshot now
+		other = post(admin_client(), "frappe.client.cancel", {"doctype": "Sales Invoice", "name": sale})
+		self.assertEqual(other.status_code, 200, other.get_data(as_text=True)[:300])
+		self.assertEqual(frappe.db.get_value("Sales Invoice", sale, "docstatus"), 1)  # snapshot: still active
+		with self.assertRaises(ReturnAgainstCancelledSaleError):
+			frappe.get_doc(submitted_doc(item, 2, batch, return_against=sale)).insert()
+		self.assert_consistent(item, batch, sale)
+
+	def test_sale_with_returns_cannot_be_cancelled_until_they_are(self):
+		from pharmacyos_erp.pharmacy.returns import SaleHasActiveReturnsError
+
+		item, batch, sale = self.new_sale()
+		ret = frappe.get_doc(submitted_doc(item, 1, batch, return_against=sale))
+		ret.insert()
+		with self.assertRaises(SaleHasActiveReturnsError):
+			frappe.get_doc("Sales Invoice", sale).cancel()
+		ret.reload()
+		ret.cancel()
+		frappe.get_doc("Sales Invoice", sale).cancel()
+		frappe.db.commit()
+		self.assertEqual(self.assert_consistent(item, batch, sale), (False, []))
+
+	def race(self, returns=(2,), cancel_existing=False, stagger=0.0, cancel_first=False):
+		import time
+
+		item, batch, sale = self.new_sale()
+		calls, kinds = [], []
+
+		def later(seconds, fn):
+			def run():
+				time.sleep(seconds)
+				return fn()
+
+			return run
+
+		return_delay, cancel_delay = (stagger, 0.0) if cancel_first else (0.0, stagger)
+		if cancel_existing:
+			existing = frappe.get_doc(submitted_doc(item, 1, batch, return_against=sale))
+			existing.insert()
+			frappe.db.commit()
+			c = admin_client()
+			calls.append(
+				later(
+					return_delay,
+					lambda c=c, n=existing.name: post(
+						c, "frappe.client.cancel", {"doctype": "Sales Invoice", "name": n}
+					),
+				)
+			)
+			kinds.append("return-cancel")
+		for qty in returns:
+			c = admin_client()
+			calls.append(
+				later(
+					return_delay,
+					lambda c=c, q=qty: post(
+						c, "frappe.client.insert", {"doc": submitted_doc(item, q, batch, return_against=sale)}
+					),
+				)
+			)
+			kinds.append("return")
+		c = admin_client()
+		calls.append(
+			later(
+				cancel_delay,
+				lambda c=c: post(c, "frappe.client.cancel", {"doctype": "Sales Invoice", "name": sale}),
+			)
+		)
+		kinds.append("cancel")
+		responses = simultaneously(calls)
+		for kind, response in zip(kinds, responses, strict=True):
+			if response.status_code != 200:
+				names = [
+					"StockOverReturnError",
+					"ReturnAgainstCancelledSaleError",
+					"CancelledLinkError",
+					"SaleHasActiveReturnsError",
+					"LinkExistsError",
+				]
+				if kind != "return":
+					names.append("TimestampMismatchError")  # stale form: nothing changed, retry decides
+				self.assert_controlled(response, *names)
+		active, submitted = self.assert_consistent(item, batch, sale)
+		# repeating the losing side afterwards fails the same controlled way
+		if not active:
+			again = post(
+				admin_client(),
+				"frappe.client.insert",
+				{"doc": submitted_doc(item, 1, batch, return_against=sale)},
+			)
+			self.assert_controlled(again, "ReturnAgainstCancelledSaleError", "CancelledLinkError")
+		elif submitted:
+			again = post(admin_client(), "frappe.client.cancel", {"doctype": "Sales Invoice", "name": sale})
+			self.assert_controlled(again, "SaleHasActiveReturnsError", "LinkExistsError")
+		self.assert_consistent(item, batch, sale)
+
+	def test_return_vs_original_cancel_simultaneous(self):
+		for _ in range(3):
+			self.race()
+
+	def test_return_vs_original_cancel_staggered_both_ways(self):
+		for stagger in (0.05, 0.15):
+			self.race(stagger=stagger)
+			self.race(stagger=stagger, cancel_first=True)
+
+	def test_several_returns_vs_original_cancel(self):
+		self.race(returns=(2, 1, 1))
+		self.race(returns=(2, 1, 1), stagger=0.1, cancel_first=True)
+
+	def test_return_cancellation_vs_original_cancel(self):
+		# (the three-way race "return cancel + new return vs original cancel" runs in
+		# pharmacyos/dev/concurrency_check.py against gunicorn: under tests ERPNext reposts stock inline,
+		# inside the cancelling request's own stale snapshot, which a real server does in a background job)
+		self.race(returns=(), cancel_existing=True)
+		self.race(returns=(), cancel_existing=True, stagger=0.1)
+		self.race(returns=(), cancel_existing=True, stagger=0.1, cancel_first=True)
+
+	def test_cancelling_an_original_locks_bins_then_the_sale(self):
+		from unittest.mock import patch
+
+		from pharmacyos_erp.pharmacy import stock_guard
+
+		_item, _batch, sale = self.new_sale()
+		doc = frappe.get_doc("Sales Invoice", sale)
+		doc.docstatus = 2
+		statements = []
+		real = frappe.db.sql
+
+		def spy(query, *args, **kwargs):
+			statements.append(" ".join(str(query).split()))
+			return real(query, *args, **kwargs)
+
+		with patch.object(frappe.db, "sql", side_effect=spy):
+			stock_guard.lock_document_stock(doc)
+		bins = [i for i, q in enumerate(statements) if "from `tabBin`" in q and "for update" in q]
+		own = [i for i, q in enumerate(statements) if "from `tabSales Invoice` where name=%s for update" in q]
+		self.assertTrue(bins and own, statements)
+		self.assertLess(max(bins), min(own), "Bin rows first, then the sale itself")
+		frappe.db.rollback()

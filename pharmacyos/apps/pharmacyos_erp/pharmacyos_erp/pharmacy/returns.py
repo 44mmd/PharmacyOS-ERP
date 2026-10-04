@@ -37,6 +37,22 @@ The loser of a race therefore waits for the winner, sees its return, and gets th
 "Return exceeds sale" error (StockOverReturnError, HTTP 417) — never a double refund or a deadlock.
 Originals whose ledger was never written (returns submitted before this version) are computed from
 their submitted returns, and the upgrade patch fills the ledger for all of them.
+
+Cancelling the original sale takes part in the same serialisation. Invariant: an original sale is
+never cancelled while a submitted return against it exists, and a return is never submitted against
+a sale that is not (currently) submitted. Frappe's own back-link check on cancel and ERPNext's
+"return against must be submitted" check both read the REPEATABLE READ snapshot, so a return and a
+cancellation racing each other could both pass (cancelled sale + live refund + phantom stock). Now:
+
+* **Cancelling an original** (`guard_original_cancellation`) locks the sale's row right after its Bin
+  rows — the same order as a return — and decides from a locking read of the ledger (the latest
+  committed returns, never the snapshot). Any submitted return → SaleHasActiveReturnsError (HTTP 417),
+  nothing is cancelled. This runs before Frappe's own locks and checks (`load_doc_before_save`).
+* **Submitting a return** re-reads the original's docstatus with a locking read under the same lock;
+  a sale cancelled meanwhile → ReturnAgainstCancelledSaleError (HTTP 417), nothing is posted.
+
+Lock order for every participant: Bin rows (sorted), the original sale's row, then the return's own
+row and everything else — so the two sides queue on the original's row instead of deadlocking.
 """
 
 import json
@@ -44,12 +60,20 @@ from collections import defaultdict
 
 import frappe
 from frappe import _
-from frappe.utils import flt
+from frappe.utils import cint, flt
 
 from pharmacyos_erp.pharmacy.fefo import get_row_batches
 
 RETURN_DOCTYPES = ("Sales Invoice", "POS Invoice", "Delivery Note")
 LEDGER_FIELD = "pharma_return_ledger"
+
+
+class ReturnAgainstCancelledSaleError(frappe.ValidationError):
+	"""The original sale is no longer submitted (cancelled meanwhile): nothing can be returned against it."""
+
+
+class SaleHasActiveReturnsError(frappe.LinkExistsError):
+	"""The sale has submitted returns: cancel them first, then the sale."""
 
 
 def _over_return_error():
@@ -107,6 +131,60 @@ def lock_original_sale(doc) -> None:
 	"""
 	if doc.docstatus in (1, 2) and is_tracked_return(doc):
 		frappe.db.sql(f"select name from `tab{doc.doctype}` where name=%s for update", doc.return_against)
+
+
+def ensure_original_submitted(doc) -> None:
+	"""A return being submitted: the original must be submitted *now* (locking read, not the snapshot)."""
+	row = frappe.db.sql(
+		f"select docstatus from `tab{doc.doctype}` where name=%s for update", doc.return_against
+	)
+	if not row or cint(row[0][0]) != 1:
+		frappe.throw(
+			_("{0} is cancelled, so nothing can be returned against it.").format(
+				frappe.bold(doc.return_against)
+			),
+			ReturnAgainstCancelledSaleError,
+			title=_("Original sale cancelled"),
+		)
+
+
+def active_returns(doctype: str, original: str) -> list[str]:
+	"""Submitted returns against `original`, from current (locking) reads. Call with its row locked."""
+	ledger = _read_ledger(doctype, original, current=True)
+	if ledger is not None:
+		return sorted(ledger["returns"])
+	# never written (no return since the ledger exists, or an original from before it): the returns'
+	# own rows, read with a locking read so a return committed after this transaction's snapshot counts
+	return [
+		r[0]
+		for r in frappe.db.sql(
+			f"""select name from `tab{doctype}`
+			where return_against=%s and is_return=1 and docstatus=1 for update""",
+			original,
+		)
+	]
+
+
+def guard_original_cancellation(doc) -> None:
+	"""An original sale being cancelled: lock its row and refuse while a submitted return exists.
+
+	Called by `stock_guard.lock_document_stock` (after the Bin locks, before Frappe locks and reloads
+	the document). Only a submitted, non-return document moving to cancelled is concerned.
+	"""
+	if doc.doctype not in RETURN_DOCTYPES or doc.get("is_return") or doc.docstatus != 2 or doc.is_new():
+		return
+	row = frappe.db.sql(f"select docstatus from `tab{doc.doctype}` where name=%s for update", doc.name)
+	if not row or cint(row[0][0]) != 1:
+		return  # not a submitted sale being cancelled (e.g. a draft discarded)
+	returns = active_returns(doc.doctype, doc.name)
+	if returns:
+		frappe.throw(
+			_(
+				"{0} cannot be cancelled while returns against it are submitted: {1}. Cancel the returns first."
+			).format(frappe.bold(doc.name), ", ".join(returns)),
+			SaleHasActiveReturnsError,
+			title=_("Sale has returns"),
+		)
 
 
 def _contribution(doc) -> dict:
@@ -219,6 +297,9 @@ def validate_return(doc, method=None):
 	if submitting:
 		# normally already held since the start of the transaction (stock_guard.lock_document_stock)
 		lock_original_sale(doc)
+		# ERPNext checked the original's docstatus in this transaction's snapshot; a cancellation that
+		# committed while we waited for the lock is only visible to a locking read
+		ensure_original_submitted(doc)
 
 	original = frappe.get_doc(doc.doctype, doc.return_against)
 	sold, sold_batches, sold_rate = _totals(original)

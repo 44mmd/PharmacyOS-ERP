@@ -475,7 +475,10 @@ class TestReturnIntegrity(IntegrationTestCase):
 			submit_sale(self.item.name, 3, self.batch, is_return=True, return_against=sale.name)
 
 	def test_linked_return_from_the_return_button_still_works(self):
-		from erpnext.accounts.doctype.sales_invoice.sales_invoice import make_sales_return
+		try:  # ERPNext moved the document mappers out of the controller module
+			from erpnext.accounts.doctype.sales_invoice.mapper import make_sales_return
+		except ImportError:
+			from erpnext.accounts.doctype.sales_invoice.sales_invoice import make_sales_return
 
 		sale = submit_sale(self.item.name, 2, self.batch)
 		ret = make_sales_return(sale.name)
@@ -642,18 +645,18 @@ class TestConcurrentCounterSales(IntegrationTestCase):
 			frappe.db.commit()
 
 			def sell(client, item_code=item.name, batch_no=batch):
+				# Frappe's ThreadWithReturnValue reads and closes the response the target returns
 				draft = client.post("/api/method/frappe.client.insert", json={"doc": sale_doc(item_code, 1, batch_no)})
 				if draft.status_code != 200:
-					return draft.status_code, draft.get_data(as_text=True)[:300]
-				done = client.post("/api/method/frappe.client.submit", json={"doc": draft.json["message"]})
-				return done.status_code, done.get_data(as_text=True)[:300]
+					return draft
+				return client.post("/api/method/frappe.client.submit", json={"doc": draft.json["message"]})
 
 			threads = [ThreadWithReturnValue(target=sell, args=(client,)) for client in clients]
 			for thread in threads:
 				thread.start()
 			for thread in threads:
 				thread.join()
-			results = [thread._return for thread in threads]
+			results = [(t._return.status_code, t._return.get_data(as_text=True)[:300]) for t in threads]
 			statuses = sorted(r[0] for r in results)
 			self.assertNotIn(500, statuses, f"round {attempt}: {results}")
 			self.assertEqual(statuses.count(200), 1, f"round {attempt}: {results}")
