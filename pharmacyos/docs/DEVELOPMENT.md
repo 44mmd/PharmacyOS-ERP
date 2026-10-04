@@ -84,8 +84,24 @@ bench --site pharmacyos.localhost execute pharmacyos_erp.setup.demo_data.create_
 Tests (on the test site only):
 
 ```bash
-bench --site test.localhost run-tests --app pharmacyos_erp                     # PharmacyOS (53 tests)
+bench --site test.localhost run-tests --app pharmacyos_erp                     # PharmacyOS (157 tests)
 bench --site test.localhost run-tests --lightmode --module erpnext.stock.doctype.batch.test_batch   # upstream
+```
+
+The PharmacyOS suite is self-contained: it creates ERPNext's standard test masters itself
+(`tests/utils.py → ensure_test_masters`, ERPNext's own idempotent BootStrapTestData), so it passes on a
+brand-new site with only erpnext + pharmacyos_erp installed — no `payments` app, no CI warm-up run — and
+gives the same result whatever runs first: each test alone, each module alone, modules in any order, and
+the full suite repeatedly on the same database.
+
+Acceptance tools against a running server (several gunicorn workers; never a production site):
+
+```bash
+# simultaneous returns, last-unit sales and duplicate checkouts, released at the same instant
+python3 pharmacyos/dev/concurrency_check.py --site <site> --key K --secret S --setup-key AK --setup-secret AS \
+    --integration-key IK --integration-secret IS --rounds 8
+# the staff / API permission matrix (one API key per role profile, see the script)
+python3 pharmacyos/dev/permission_check.py --site <site> --actors actors.json
 ```
 
 Navigation (Dock + Sidebars) is generated from `pharmacyos_erp/setup/navigation.py`; after changing it,

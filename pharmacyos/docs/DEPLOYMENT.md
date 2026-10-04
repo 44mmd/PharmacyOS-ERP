@@ -29,9 +29,9 @@ Production runs on **stable Frappe/ERPNext `version-16`** (upstream), plus the P
 
 * The app has no ERPNext core changes, so it installs on upstream stable as is.
 * **Commercial target: Frappe 16.36.1 / ERPNext 16.37.0, Python 3.14, MariaDB 10.11.**
-* Tested: the full PharmacyOS suite passes on that version-16 bench (133/133 after the
-  release-candidate remediation). The develop tree was last verified before the remediation and is
-  not a release target.
+* Tested: the full PharmacyOS suite (157 tests) passes on that version-16 bench, on a CI-warmed test site
+  and on a brand-new site (erpnext + pharmacyos_erp only), twice in a row, module by module in reverse
+  order, and test by test on a pristine database. The develop tree is not a release target.
 * The app ships both desk shells:
   * develop: Dock/Sidebar;
   * version-16: Workspace Sidebar + Desktop Icon.

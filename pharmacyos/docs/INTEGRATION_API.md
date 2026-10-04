@@ -7,12 +7,16 @@ system is connected**; outbound events are disabled until an administrator confi
 
 * The PharmacyOS **backend** is the only caller. The storefront never talks to the ERP directly.
 * Authenticate as a dedicated user that has the **PharmacyOS Integration** role (role profile of the
-  same name: + Sales User only — no stock or accounting roles; it cannot see staff User records)
+  same name: no ERPNext document role at all — it cannot create, submit or cancel Sales Orders,
+  Delivery Notes or stock reservations through the REST API, read item costs, or see staff User
+  records; everything it may do is one of the endpoints below)
   using a per-user API key/secret
   (`Authorization: token <key>:<secret>`) or OAuth2 client credentials. Never use Administrator.
   Pharmacy staff roles are rejected by every endpoint (403).
 * ERPNext is authoritative for prices, stock and order state. Documents are created through normal
-  ERPNext APIs, so validation, permissions and the audit trail apply.
+  ERPNext document code, so validation, naming and stock rules apply. `create_order` builds the Sales
+  Order with system authority (ERPNext's item lookup checks Item read for the session user) and records
+  the integration account as its owner.
 * All endpoints: `/api/method/pharmacyos_erp.api.v1.<module>.<function>`. Responses are wrapped by
   Frappe as `{"message": ...}`.
 
@@ -21,7 +25,7 @@ system is connected**; outbound events are disabled until an administrator confi
 | Method | Path (`pharmacyos_erp.api.v1.` …) | Purpose |
 |---|---|---|
 | GET | `branches.get_branches` | Branch ↔ storefront code ↔ warehouse mapping |
-| GET | `catalog.get_catalog?cursor=&modified_since=&limit=` | Published items (`Item.pharmacyos_publish = 1`), keyset-paginated by `(modified, name)` |
+| GET | `catalog.get_catalog?cursor=&modified_since=&limit=` | Published items (`Item.pharmacyos_publish = 1`), keyset-paginated by `(modified, name)`, where `modified` is the later of the Item's and its selling Item Price's — a price change alone moves the item forward |
 | GET | `availability.get_availability?branch_code=&item_codes=` | Sellable quantity per branch and item |
 | POST | `orders.create_order` | Idempotent online order → submitted Sales Order |
 | GET | `orders.get_order_status?order_id=` | Order state, delivery/billing progress, documents |
@@ -86,7 +90,7 @@ only when it is newer than the one they hold, so a delayed retry never overwrite
 |---|---|---|
 | `availability.changed` | stock ledger entry for a published item | `item_code, branch_code, qty, nearest_expiry` (computed at the first delivery attempt) |
 | `order.status_changed` | PharmacyOS Sales Order submitted/updated/cancelled, or a Delivery Note / Sales Invoice against it | `sales_order, pharmacyos_order_id, status, docstatus, per_delivered, per_billed` |
-| `catalog.changed` | published item saved | `item_code, published` |
+| `catalog.changed` | published item saved; its selling Item Price added, changed or deleted (no Item save needed); the catalog's selling price list switched | `item_code, published, item` (catalog entry incl. `price`; `price: null` when the ERP has no selling price — the Cloud then takes the item off sale) |
 
 Request: `POST <endpoint>` with JSON `{event, event_id, occurred_at, computed_at, data}` and headers
 `X-PharmacyOS-Event`, `X-PharmacyOS-Event-Id`,

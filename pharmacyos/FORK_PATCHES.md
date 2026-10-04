@@ -13,8 +13,10 @@ Extension points used for consistency and least privilege (still no ERPNext file
 
 | Extension | What | Why |
 |---|---|---|
-| `override_doctype_class` | Sales Invoice, POS Invoice, Delivery Note, Sales Order → subclasses in `pharmacy/document_classes.py` that only add one step: lock the document's Bin rows before Frappe reloads the stored copy | One lock order for every sale, delivery and website order, so competing last-unit transactions wait instead of deadlocking. Another app that overrides the same classes would conflict; none is installed. |
-| `doc_events` | `before_validate` Bin lock on sales documents; `validate`: return integrity (`pharmacy/returns.py`) and website-reservation protection (`pharmacy/stock_guard.py`) | Returns can never exceed what was sold; counter sales cannot take units reserved for website orders. |
+| `override_doctype_class` | Sales Invoice, POS Invoice, Delivery Note, Sales Order → subclasses in `pharmacy/document_classes.py` that only add one step: take the document's locks (Bin rows, then a return's original sale) before Frappe reloads the stored copy — on save, submit **and cancel** | One lock order for every sale, return, delivery and website order, so competing transactions wait instead of deadlocking, and returns against one sale run one after the other. Another app that overrides the same classes would conflict; none is installed. |
+| `doc_events` on sales documents | `before_validate` lock; `validate`: return integrity (`pharmacy/returns.py`) and website-reservation protection (`pharmacy/stock_guard.py`); `on_submit` / `on_cancel`: the original sale's return ledger | Returns can never exceed what was sold — also for simultaneous requests (see below); counter sales cannot take units reserved for website orders. |
+| Custom field `pharma_return_ledger` (Sales Invoice, POS Invoice, Delivery Note; hidden, no-copy) | Quantities returned against the document, one entry per submitted return, written in the return's transaction and read with a locking read of the (locked) original row | MariaDB's REPEATABLE READ snapshot hides a return committed while the second one waited for the lock; a locking read of the ledger does not. Filled for existing sales by patch `v1.return_ledger`. |
+| `doc_events` on Item Price (`on_update`, `on_trash`) and Selling Settings | Queue `catalog.changed` (+ availability) for published items | The ERP price reaches the website without an Item save. |
 | `permission_query_conditions` / `has_permission` on User | The PharmacyOS Integration account sees only its own User record | Cloud credentials cannot enumerate staff accounts. |
 
 Site-level configuration applied by the app (reversible from the UI, not code changes):
@@ -32,19 +34,31 @@ Site-level configuration applied by the app (reversible from the UI, not code ch
 | Property Setter Item.search_fields | + Arabic name, generic name, normalized search key | search |
 | Property Setter Sales Invoice.default_print_format | PharmacyOS Invoice | printing |
 | POS Settings search fields | + Arabic name, generic name, normalized search key | POS search |
-| Role profiles Cashier, Pharmacist, PharmacyOS Integration | Accounts User and Stock User **removed** (revoked from existing profile users at upgrade) | Those standard roles allow Journal Entries, Payment Entries, GL access and arbitrary Stock Entries. Counter roles get exactly the permissions below instead. |
-| Custom DocPerm on POS Opening/Closing Entry (read, create, write, submit, print, **if_owner**) | Cashier, Pharmacist | So cashiers run their own shift. ERPNext reserves shifts for Sales Manager. No cancel or delete, and no access to other cashiers' shifts. |
-| Custom DocPerm on Serial and Batch Bundle (read, create, write, submit) | Cashier, Pharmacist | Selling a batch medicine creates a bundle, which ERPNext reserves for stock roles. Without it a cashier cannot sell any batch-tracked medicine (found and tested in `test_pos_shift`). |
-| Custom DocPerm on Sales Invoice and POS Invoice (read, create, write, submit, print, email — no cancel) | Cashier, Pharmacist | Counter sales without Accounts User. Cancelling an invoice stays with managers/accountants. |
-| Custom DocPerm on POS Profile and Mode of Payment (read) | Cashier, Pharmacist | The POS screen loads its profile and payment methods. |
-| Custom DocPerm on Batch (read) and Stock Ledger Entry (read, report) | Pharmacist | Stock and expiry questions at the counter, without any stock-creating permission. |
+| Role profiles Cashier, Pharmacist, PharmacyOS Integration | only their PharmacyOS role: Accounts User, Stock User and **Sales User removed** (revoked from existing profile users at upgrade) | Accounts User allows Journal/Payment Entries and GL access, Stock User arbitrary Stock Entries, Sales User Sales Orders, Stock Reservation Entries (which reserve the shelf) and Delivery Notes (which ship stock without payment). |
+| Custom DocPerms on PharmacyOS roles (`setup/install.py` → `CUSTOM_PERMISSIONS`, declarative: each row is set to exactly its rights on every migrate) | see below | Least privilege |
 | System Settings → session expiry | 12:00 | A forgotten counter session ends after one shift of inactivity. |
 | PharmacyOS Settings → Protect Website Reservations | on | Counter sales cannot sell units reserved by submitted website orders. |
 | System Settings → language / time zone (only when country = Iraq) | `ar` / Asia/Baghdad | Arabic-first Iraqi deployment |
-| Custom DocPerm on Item Price (read + select only) | Pharmacy Owner, Pharmacy Manager, Pharmacist, Cashier | ERPNext's POS barcode search reads Item Price with the user's permissions, but only Sales/Purchase Master Manager can read it. Frappe copies the standard rules first. The rows are removed on uninstall. |
 
-All Custom DocPerm rows are created by `setup/install.py` (`ensure_cashier_shift_access`,
-`ensure_price_read_access`) on install and migrate, and removed on uninstall.
+`CUSTOM_PERMISSIONS` (permission level 0, on the PharmacyOS role only):
+
+| Role | Rights |
+|---|---|
+| Cashier | Sales Invoice / POS Invoice read, create, submit, print (no cancel, no delete); own POS Opening/Closing Entry (if_owner, no cancel); Serial and Batch Bundle read, create, submit; Customer read, create, write; read of the masters the POS and invoice form use (Item, Item Group, Item Price, Price List, Brand, UOM, Warehouse, Bin, Company, Currency, Customer Group, Territory, Address, Contact, Branch, POS Profile, POS Settings, Mode of Payment, Sales Taxes Template, Terms, Accounts/Selling/Stock Settings, Fiscal Year); select only on Batch, Account, Cost Center, Item Tax Template, Tax Category, Loyalty Program |
+| Pharmacist | Cashier's rights + Batch read/report + Stock Ledger Entry read/report |
+| Pharmacy Owner | Item Price full (incl. delete); Branch read/create/write |
+| Pharmacy Manager | Item Price full (incl. delete); Sales Invoice / POS Invoice cancel + amend; Branch read |
+| Inventory Manager | Item Price read/create/write (no delete); Branch read |
+| Pharmacy Accountant | Item Price read; Serial and Batch Bundle read/write/cancel (cancelling a batch sale cancels its bundle; Frappe checks write on cancel); Branch read |
+| Purchasing Officer, Branch Manager | Item Price read; Branch read |
+| PharmacyOS Integration | none — it works only through the PharmacyOS API (`api/v1`), whose order endpoint builds the Sales Order with system authority and records the integration account as its owner |
+
+Frappe copies a DocType's standard rules into Custom DocPerm the first time one is added (so other roles keep
+their access); from then on, upstream changes to that DocType's standard permissions no longer apply
+automatically on these sites — review `CUSTOM_PERMISSIONS` when upgrading ERPNext. The rows are removed on
+uninstall. Proof: `tests/test_permissions_matrix.py` (HTTP, real logins) and `dev/permission_check.py`
+(the same matrix against a running server).
+
 
 Repository-level additions outside `pharmacyos/` (new files, no ERPNext file changed):
 

@@ -57,33 +57,47 @@ PharmacyOS sidebars *own* their entities (`is_default_module`), so direct links 
 Receipt open inside PharmacyOS navigation. Links the user has no permission for are hidden by Frappe.
 Login lands on the PharmacyOS dashboard (`System Settings → default app`).
 
-## Roles (role profiles; ERPNext standard roles plus narrow counter permissions)
+## Roles (role profiles; ERPNext standard roles plus narrow PharmacyOS permissions)
 
 | Profile | Includes |
 |---|---|
-| Pharmacy Owner | all PharmacyOS roles + Accounts/Stock/Sales/Purchase Manager, Item Manager, Report Manager. The owner created by first-run setup also gets **System Manager** (needed to add staff accounts and change settings); the setup wizard's other roles (HR, Projects, …) are removed. |
-| Pharmacy Manager | Stock Manager, Sales Manager, Purchase User, Accounts User, Item Manager |
-| Pharmacist | Sales User + counter permissions (POS/Sales Invoice create & submit, own POS shift, batch bundles, POS profile, payment modes) + read of Batch and Stock Ledger |
-| Cashier | Sales User + counter permissions |
-| Inventory Manager | Stock Manager, Stock User, Item Manager, Purchase User |
-| Purchasing Officer | Purchase User/Manager, Stock User |
-| Pharmacy Accountant | Accounts User/Manager |
-| PharmacyOS Integration | API only: Sales User. Sees only its own User record. |
+| Pharmacy Owner | all PharmacyOS roles + Accounts/Stock/Sales/Purchase Manager, Item Manager, Report Manager; maintains prices (incl. delete) and branches. The owner created by first-run setup also gets **System Manager** (needed to add staff accounts and change settings); the setup wizard's other roles (HR, Projects, …) are removed. |
+| Pharmacy Manager | Stock Manager, Sales Manager, Purchase User, Accounts User, Item Manager + maintains prices (incl. delete) + cancels sales |
+| Pharmacist | **only** the Pharmacist role: counter permissions (Sales/POS Invoice create & submit, own POS shift, batch bundles, walk-in customers, read of the masters the POS uses) + read of Batch and Stock Ledger |
+| Cashier | **only** the Cashier role: counter permissions |
+| Inventory Manager | Stock Manager, Stock User, Item Manager, Purchase User + creates/edits prices (no delete) |
+| Purchasing Officer | Purchase User/Manager, Stock User; reads prices |
+| Pharmacy Accountant | Accounts User/Manager; cancels sales (incl. batch medicines); reads prices |
+| PharmacyOS Integration | API only (`api/v1`): **no ERPNext document role**. Sees only its own User record. |
 
-Cashier, Pharmacist and the integration user do **not** hold Accounts User or Stock User: those
-standard roles would let them post Journal Entries and Payment Entries, read the General Ledger and
-create arbitrary Stock Entries. Upgrading removes them from existing users of these profiles.
+Cashier, Pharmacist and the integration user hold none of ERPNext's broad roles: Accounts User (Journal and
+Payment Entries, GL), Stock User (arbitrary Stock Entries) and Sales User (Sales Orders, Stock Reservation
+Entries and Delivery Notes — reserving the shelf or shipping stock without a payment). Upgrading removes them
+from existing users of these profiles. The exact rights are the table `CUSTOM_PERMISSIONS` in
+`setup/install.py` (see `FORK_PATCHES.md`).
 
-Verified over HTTP with real logins (`tests/test_remediation.py`):
+Verified over HTTP with real logins, one account per profile (`tests/test_permissions_matrix.py`; the same
+matrix against a running multi-worker server: `dev/permission_check.py`). ✓ allowed (200), ✗ refused (403),
+– not asserted:
 
-| | Counter sale | Own shift | Journal Entry | Payment Entry | Stock Entry | GL read | Read batches / stock ledger | Website order API | Staff user list |
-|---|---|---|---|---|---|---|---|---|---|
-| Cashier | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | – | ✗ | names only (link fields) |
-| Pharmacist | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✓ | ✗ | names only (link fields) |
-| PharmacyOS Integration | ✗ | – | ✗ | ✗ | ✗ | ✗ | – | ✓ | ✗ (own record only) |
-
-(✓ allowed, ✗ refused with 403/PermissionError, – not applicable / not granted. The Payment Entry and
-GL rows for the integration user come from the role-matrix probe; all others from the HTTP tests.)
+| | Owner | Manager | Cashier | Pharmacist | Accountant | Inventory | Integration | Guest |
+|---|---|---|---|---|---|---|---|---|
+| Counter sale (save + submit) | ✓ | ✓ | ✓ | ✓ | – | ✗ | ✗ | ✗ |
+| Whole POS shift (open, list, sell, close) | ✓ | ✓ | ✓ | ✓ | – | – | ✗ | ✗ |
+| Return against a sale | ✓ | ✓ | ✓ | ✓ | – | ✗ | ✗ | ✗ |
+| Cancel a batch-medicine sale (stock, batch, GL reversed) | ✓ | ✓ | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ |
+| Sales Order create / submit / cancel | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Delivery Note create / submit / cancel | ✓ | ✓ | ✗ | ✗ | ✗ | ✓ | ✗ | ✗ |
+| Stock Reservation Entry | – | – | ✗ | ✗ | ✗ | – | ✗ | ✗ |
+| Journal Entry / Payment Entry | ✓ | ✓ | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ |
+| Stock Entry | ✓ | ✓ | ✗ | ✗ | ✗ | ✓ | ✗ | ✗ |
+| GL read | ✓ | ✓ | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ |
+| Item Price read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ |
+| Item Price create / edit; Add Medicine with a price | ✓ | ✓ | ✗ | ✗ | ✗ | ✓ | ✗ | ✗ |
+| Item Price delete | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Open a batch / read the stock ledger | ✓ | ✓ | ✗ | ✓ | – | ✓ | ✗ | ✗ |
+| Branches | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ |
+| Website order API (`create_order`) | ✗ | ✗ | ✗ | ✗ | – | – | ✓ | ✗ |
 
 Cashiers open and close **their own** POS shift (narrow Custom DocPerm, `if_owner`); they cannot
 cancel invoices or see other cashiers' shifts. Counter sessions expire after 12 idle hours.
@@ -103,7 +117,10 @@ cancel invoices or see other cashiers' shifts. Counter sessions expire after 12 
   setting; it is not configurable today.
 * **Returns**: a return can never exceed what was sold — per item and per batch, cumulatively across
   all returns, at no more than the rate charged — and a medicine return must reference the original
-  sale. Applies to returns built in the POS, the desk or the REST API.
+  sale. Applies to returns built in the POS, the desk or the REST API, and to simultaneous returns:
+  returns against one sale are serialised on the sale's row and read what was already returned with a
+  locking read (a ledger on the sale), so the loser of a race gets "Return exceeds sale", never a
+  double refund (`tests/test_return_concurrency.py`, `dev/concurrency_check.py`).
 * **Last unit**: every sale, delivery and website order locks the item's stock rows in one order, so
   competing cashiers get a clear stock error instead of a database deadlock; counter sales cannot
   take units reserved by submitted website orders (*Protect Website Reservations*, on by default).
