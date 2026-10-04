@@ -121,6 +121,9 @@ doc_events = {
 		"on_submit": [_record_return, _fulfilment],
 		"on_cancel": [_record_return, _fulfilment],
 	},
+	# ERP prices are authoritative for the website: a price change alone reaches the Cloud
+	"Item Price": {"on_update": f"{_outbox}.on_item_price", "on_trash": f"{_outbox}.on_item_price"},
+	"Selling Settings": {"on_update": f"{_outbox}.on_selling_settings"},
 	"Purchase Receipt": {"validate": _receipt_validate},
 	"Purchase Invoice": {"validate": _receipt_validate},
 	"Sales Order": {

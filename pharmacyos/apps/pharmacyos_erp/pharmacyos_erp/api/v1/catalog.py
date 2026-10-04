@@ -6,13 +6,14 @@ from frappe.utils import cint, get_datetime
 from pharmacyos_erp.api.v1 import require_integration
 
 
-def _selling_price_list() -> str:
+def selling_price_list() -> str:
+	"""The price list whose selling prices the website shows (Selling Settings → Default Price List)."""
 	return frappe.db.get_single_value("Selling Settings", "selling_price_list") or "Standard Selling"
 
 
 @frappe.whitelist(methods=["GET"])
 def get_catalog(modified_since: str | None = None, cursor: str | None = None, limit: int = 200) -> dict:
-	"""Items with `pharmacyos_publish = 1`, oldest change first.
+	"""Items with `pharmacyos_publish = 1`, oldest change (item or selling price) first.
 
 	Pass the returned `next_cursor` back as `cursor` to continue; `has_more` is false at the end.
 	Disabled items are returned with `disabled: 1` so the storefront can unpublish them.
@@ -20,33 +21,37 @@ def get_catalog(modified_since: str | None = None, cursor: str | None = None, li
 	require_integration()
 	limit = min(max(cint(limit), 1), 500)
 
-	fields = [
-		"name",
-		"item_name",
-		"pharma_name_ar",
-		"pharma_generic_name",
-		"pharma_strength",
-		"pharma_dosage_form",
-		"pharma_pack_size",
-		"pharma_dispensing",
-		"pharma_is_medicine",
-		"brand",
-		"item_group",
-		"stock_uom",
-		"image",
-		"disabled",
-		"modified",
-	]
-	item = frappe.qb.DocType("Item")
-	query = frappe.qb.from_(item).select(*[item[f] for f in fields]).where(item.pharmacyos_publish == 1)
+	# A product's catalog version is the later of its Item and its selling Item Price: a price change
+	# alone (no Item save) moves the product forward in the feed. Keyset pagination on (version, name).
+	params = {"price_list": selling_price_list(), "limit": limit + 1}
+	conditions = ["i.pharmacyos_publish = 1"]
 	if cursor:
-		# keyset pagination on (modified, name): exact even when many rows share a timestamp
 		mod, _sep, last_name = cursor.partition("|")
-		mod = get_datetime(mod)
-		query = query.where((item.modified > mod) | ((item.modified == mod) & (item.name > last_name)))
+		params.update({"mod": get_datetime(mod), "last_name": last_name})
+		conditions.append("(v.version > %(mod)s or (v.version = %(mod)s and i.name > %(last_name)s))")
 	elif modified_since:
-		query = query.where(item.modified >= get_datetime(modified_since))
-	rows = query.orderby(item.modified).orderby(item.name).limit(limit + 1).run(as_dict=True)
+		params["since"] = get_datetime(modified_since)
+		conditions.append("v.version >= %(since)s")
+	columns = ", ".join(f"i.`{f}`" for f in CATALOG_FIELDS if f != "modified")
+	rows = frappe.db.sql(
+		f"""
+		select {columns}, v.version as modified
+		from `tabItem` i
+		join (
+			select it.name, greatest(it.modified, coalesce(max(ip.modified), it.modified)) as version
+			from `tabItem` it
+			left join `tabItem Price` ip
+				on ip.item_code = it.name and ip.price_list = %(price_list)s and ip.selling = 1
+			where it.pharmacyos_publish = 1
+			group by it.name, it.modified
+		) v on v.name = i.name
+		where {" and ".join(conditions)}
+		order by v.version, i.name
+		limit %(limit)s
+		""",
+		params,
+		as_dict=True,
+	)
 	has_more = len(rows) > limit
 	rows = rows[:limit]
 
@@ -80,7 +85,7 @@ def serialize_items(rows) -> list[dict]:
 	prices = dict(
 		frappe.get_all(
 			"Item Price",
-			filters={"item_code": ["in", codes], "price_list": _selling_price_list(), "selling": 1},
+			filters={"item_code": ["in", codes], "price_list": selling_price_list(), "selling": 1},
 			fields=["item_code", "price_list_rate"],
 			as_list=True,
 		)
@@ -106,7 +111,7 @@ def serialize_items(rows) -> list[dict]:
 			"image": r.image,
 			"barcodes": barcodes.get(r.name, []),
 			"price": prices.get(r.name),
-			"currency": frappe.db.get_value("Price List", _selling_price_list(), "currency"),
+			"currency": frappe.db.get_value("Price List", selling_price_list(), "currency"),
 			"disabled": cint(r.disabled),
 			"modified": str(r.modified),
 		}

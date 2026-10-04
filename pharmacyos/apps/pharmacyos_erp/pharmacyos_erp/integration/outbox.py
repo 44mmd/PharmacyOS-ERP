@@ -113,10 +113,58 @@ def on_fulfilment_document(doc, method=None):
 
 
 def on_item(doc, method=None):
-	if doc.get("pharmacyos_publish") or (
-		doc.get_doc_before_save() and doc.get_doc_before_save().get("pharmacyos_publish")
-	):
+	if doc.get("pharmacyos_publish"):
+		# with its sellable stock: stock received before the item was published sent no event
+		queue_catalog(doc.name)
+	elif doc.get_doc_before_save() and doc.get_doc_before_save().get("pharmacyos_publish"):
 		queue_event("catalog.changed", "Item", doc.name, f"catalog:{doc.name}")
+
+
+def queue_catalog(item_code: str) -> None:
+	"""A published item's public catalog entry (names, barcodes, ERP price) changed.
+
+	Its sellable stock per branch is queued too: stock received before the item was published sent no
+	availability event, and the website takes an item without an ERP price off sale (stock 0), so a
+	newly published or re-priced item needs its current stock again.
+	"""
+	if not item_code or not frappe.db.get_value("Item", item_code, "pharmacyos_publish"):
+		return
+	queue_event("catalog.changed", "Item", item_code, f"catalog:{item_code}")
+	for warehouse in frappe.get_all(
+		"Branch", filters={"pharmacyos_warehouse": ["is", "set"]}, pluck="pharmacyos_warehouse"
+	):
+		queue_event("availability.changed", "Item", item_code, f"availability:{item_code}:{warehouse}")
+
+
+def on_item_price(doc, method=None):
+	"""doc_event (on_update / on_trash) for Item Price: the ERP price is authoritative for the website.
+
+	Changing, adding or deleting the price of a published item in the catalog's selling price list
+	queues a `catalog.changed` event for that item — no Item save needed. The event's payload is the
+	item's catalog entry read when it is first sent (so it carries the newest price); a price change
+	after an event was first attempted is queued as a new event with a later `computed_at`, and the
+	Cloud applies a state only when it is newer than the one it holds.
+	"""
+	if not outbound_enabled():
+		return
+	from pharmacyos_erp.api.v1.catalog import selling_price_list
+
+	price_list = selling_price_list()
+	before = doc.get_doc_before_save() if method == "on_update" else None
+	for row in (doc, before):
+		if row is not None and row.get("price_list") == price_list:
+			queue_catalog(row.get("item_code"))
+
+
+def on_selling_settings(doc, method=None):
+	"""The catalog's selling price list changed: every published item now has a different price."""
+	before = doc.get_doc_before_save()
+	if before is not None and before.get("selling_price_list") == doc.get("selling_price_list"):
+		return
+	if not outbound_enabled():
+		return
+	for code in frappe.get_all("Item", filters={"pharmacyos_publish": 1}, pluck="name"):
+		queue_event("catalog.changed", "Item", code, f"catalog:{code}")
 
 
 # ------------------------------------------------------------------ payloads & delivery
