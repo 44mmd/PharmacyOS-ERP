@@ -333,12 +333,20 @@ def process_outbox() -> None:
 	secret = settings.get_password("outbound_secret", raise_exception=False) or ""
 	timeout = cint(settings.outbound_timeout) or 10
 	now = now_datetime()
-	events = frappe.get_all(
-		"PharmacyOS Sync Event",
-		filters={"status": ["in", ["Pending", "Failed"]], "attempts": ["<", MAX_ATTEMPTS]},
-		fields=["name", "attempts", "modified"],
-		order_by="creation asc",
-		limit_page_length=BATCH_SIZE,
+	# only events that are due: events waiting out their back-off must never fill the batch and hold
+	# back newer ones (e.g. a price expiry behind a hundred failed deliveries); same delay as is_due
+	events = frappe.db.sql(
+		"""
+		select name, attempts, modified
+		from `tabPharmacyOS Sync Event`
+		where status in ('Pending', 'Failed') and attempts < %(max)s
+			and (attempts = 0
+				or timestampadd(minute, least(power(2, attempts), 60), modified) <= %(now)s)
+		order by creation asc
+		limit %(limit)s
+		""",
+		{"max": MAX_ATTEMPTS, "now": now, "limit": BATCH_SIZE},
+		as_dict=True,
 	)
 	delivered = False
 	for row in events:

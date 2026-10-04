@@ -316,3 +316,48 @@ class TestPriceExpiry(PriceCase):
 			frappe.db.exists("Sales Order Item", {"item_code": self.item, "docstatus": 1}),
 			"never ordered at a stale or zero price",
 		)
+
+
+class TestOutboxNeverStarves(PriceCase):
+	def test_failed_events_in_back_off_do_not_hold_back_a_new_price(self):
+		"""More than a batch of failed deliveries waiting to retry must not delay a price expiry."""
+		from pharmacyos_erp.integration import outbox
+
+		backlog = []
+		for _ in range(outbox.BATCH_SIZE + 20):
+			event = frappe.get_doc(
+				{
+					"doctype": "PharmacyOS Sync Event",
+					"event_type": "catalog.changed",
+					"reference_doctype": "Item",
+					"reference_name": self.item,
+					"dedupe_key": f"backlog:{frappe.generate_hash(length=8)}",
+					"status": "Failed",
+					"attempts": 1,
+					"payload": "{}",
+				}
+			).insert(ignore_permissions=True)
+			backlog.append(event.name)
+		frappe.db.sql(  # older than the new event, failed a moment ago: in back-off
+			"update `tabPharmacyOS Sync Event` set creation=%s, modified=%s where name in %s",
+			(add_days(now_datetime(), -1), now_datetime(), tuple(backlog)),
+		)
+		self.public.price_list_rate = 1300
+		self.public.save()
+		from pharmacyos_erp.tests.test_price_sync import Delivery
+
+		sender = Delivery()
+		with patch("requests.post", side_effect=sender):
+			outbox.process_outbox()  # one run, as the scheduler does every minute
+		sent = [
+			s
+			for s in sender.sent
+			if s["id"] not in backlog
+			and s["body"]["event"] == "catalog.changed"
+			and s["body"]["data"]["item_code"] == self.item
+		]
+		self.assertTrue(sent, "the new price event waited behind the back-off backlog")
+		self.assertEqual(flt(sent[-1]["body"]["data"]["item"]["price"]), 1300)
+		self.assertFalse(
+			set(s["id"] for s in sender.sent) & set(backlog), "events in back-off are not retried early"
+		)

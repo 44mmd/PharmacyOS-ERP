@@ -570,7 +570,11 @@ def run_pricing_flows(erp, cloud, check, branch, secret):
 	erp.job("frappe.db.set_value", ["Item Price", public, "valid_upto", yesterday])
 	erp.job("frappe.db.set_default", ["pharmacyos_price_validity_date", yesterday])
 	queued = erp.job(date_job)
-	check("expiry: the date job queued the item", queued.splitlines()[-1].strip() not in ("0", ""), queued)
+	check(
+		"expiry: the date job queued the item",
+		(queued.strip().splitlines() or ["0"])[-1].strip() != "0",
+		queued,
+	)
 	erp.job(outbox)  # Cloud unreachable: kept for retry
 	cloud.start()
 	time.sleep(125)  # back-off of a failed event
@@ -591,7 +595,12 @@ def run_pricing_flows(erp, cloud, check, branch, secret):
 	refused = requests.post(f"{cloud.base}/experience/public/orders", json=order, timeout=20)
 	check("expiry: checkout at the expired price is refused", refused.status_code == 409, refused.text[:200])
 	again = erp.job(date_job)
-	check("expiry: running the date job again queues nothing", again.splitlines()[-1].strip() == "0", again)
+	# (bench execute prints nothing for a falsy result: no output = 0 items queued)
+	check(
+		"expiry: running the date job again queues nothing",
+		(again.strip().splitlines() or ["0"])[-1].strip() == "0",
+		again,
+	)
 
 	# duplicate delivery of the expiry event
 	sent = erp.call(
