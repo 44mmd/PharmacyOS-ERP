@@ -11,6 +11,13 @@ the role profile it is listed under. Guest is tested without credentials.
 
 Prints the matrix as a Markdown table and exits non-zero on any mismatch. Creates uniquely named
 test medicines and documents: never point it at a production site.
+
+	python3 permission_check.py --site <site> --actors actors.json --cost
+
+runs the cost-data red-team instead (`tests/cost_exposure.py`): every profile's REST/RPC/report
+access is searched for the purchase price, valuation and stock value of a fresh medicine. Counter
+profiles (Cashier, Pharmacist) and the integration account must never receive them; cost-reading
+profiles must (control).
 """
 
 import argparse
@@ -26,6 +33,35 @@ MATRIX = (
 	pathlib.Path(__file__).resolve().parents[1]
 	/ "apps/pharmacyos_erp/pharmacyos_erp/tests/permission_matrix.py"
 )
+
+
+COST = MATRIX.with_name("cost_exposure.py")
+NO_COST_PROFILES = ("Cashier", "Pharmacist", "PharmacyOS Integration", "Guest")
+COST_PROFILES = ("Pharmacy Owner", "Pharmacy Manager", "Inventory Manager")
+
+
+def load_module(path, name):
+	spec = importlib.util.spec_from_file_location(name, path)
+	module = importlib.util.module_from_spec(spec)
+	spec.loader.exec_module(module)
+	return module
+
+
+def run_cost(admin, clients, ctx):
+	probe = load_module(COST, "cost_exposure").CostProbe(admin, clients, ctx)
+	probe.run()
+	print(probe.table())
+	failures = []
+	for profile in clients:
+		leaks = probe.leaks(profile)
+		if profile in NO_COST_PROFILES:
+			failures += [f"LEAK {profile}: {name} ({status}) {values}" for name, status, values in leaks]
+		elif profile in COST_PROFILES and not leaks:
+			failures.append(f"CONTROL {profile}: no probe saw the costs — the probe proves nothing")
+	for f in failures:
+		print(f)
+	print(json.dumps({"checks": len(probe.results), "failures": len(failures)}))
+	sys.exit(1 if failures else 0)
 
 
 def load_matrix():
@@ -178,6 +214,7 @@ def main():
 	p.add_argument("--site", required=True)
 	p.add_argument("--actors", required=True)
 	p.add_argument("--only", help="comma-separated operations")
+	p.add_argument("--cost", action="store_true", help="run the cost-data red-team instead")
 	args = p.parse_args()
 	matrix = load_matrix()
 	actors = json.load(open(args.actors))
@@ -189,6 +226,8 @@ def main():
 	}
 	clients["Guest"] = Http(args.url, args.site)
 	ctx = discover(admin)
+	if args.cost:
+		run_cost(admin, clients, ctx)
 	run = matrix.Matrix(
 		admin, clients, ctx, pos_profiles(admin, ctx, {k: v for k, v in actors.items() if k in clients})
 	)

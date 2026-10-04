@@ -102,6 +102,29 @@ matrix against a running multi-worker server: `dev/permission_check.py`). ✓ al
 Cashiers open and close **their own** POS shift (narrow Custom DocPerm, `if_owner`); they cannot
 cancel invoices or see other cashiers' shifts. Counter sessions expire after 12 idle hours.
 
+### Cost data (purchase prices, valuation, stock value)
+
+Counter staff search medicines, see selling prices, quantities, batches and expiry, and sell — but
+never receive what the pharmacy paid (`pharmacy/cost_privacy.py`):
+
+* **Field level** — Item valuation and last purchase rate, Bin valuation and stock value, every rate and
+  value of the stock ledger, the sale's own cost of goods (`incoming_rate`) and the batch bundle's
+  rates sit at permission level 5, granted to every role that reads those documents *except* Cashier,
+  Pharmacist and the integration account. Frappe strips them from documents, form loads, lists, report
+  views, `get_value`, doc-method answers; aggregates and filters on them are refused. Values a counter
+  user sends for them are discarded; the server computes and stores costs as before.
+* **Rows** — buying Item Prices (purchase prices) are invisible to them.
+* **ERPNext helpers** that compute costs (`get_valuation_rate`, `get_incoming_rate`, quick stock balance,
+  stock-entry/reconciliation/asset helpers, the stock-value chart) are refused; item details, stock
+  balance and the item dashboard answer without the cost keys; buying-side item details are refused.
+* **PharmacyOS pages** (dashboard, batches & expiry, expiry intelligence, inventory health, reorder)
+  send `null` for every value figure (shown as "—") and never rank by value; quantities, counts and
+  expiry status are unchanged.
+
+Red-team proof: `tests/test_cost_exposure.py` / `dev/permission_check.py --cost` seed a medicine with
+distinctive costs and search every answer of ~60 routes per profile for those values (owner, manager,
+inventory and accountant must see them — the control).
+
 ## Pharmacy workflows
 
 * **Medicines**: Add Medicine dialog (batch & expiry tracked by default; commercial/Arabic/generic

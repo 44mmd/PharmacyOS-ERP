@@ -94,9 +94,22 @@ override_doctype_class = {
 	"Sales Order": "pharmacyos_erp.pharmacy.document_classes.PharmacySalesOrder",
 }
 
-# The integration account cannot list or open staff User records (least privilege for Cloud credentials)
-permission_query_conditions = {"User": "pharmacyos_erp.permissions.user_query_conditions"}
-has_permission = {"User": "pharmacyos_erp.permissions.user_has_permission"}
+# The integration account cannot list or open staff User records (least privilege for Cloud credentials);
+# purchase prices (buying Item Prices) are for cost-reading roles only (pharmacy/cost_privacy.py)
+_cost = "pharmacyos_erp.pharmacy.cost_privacy"
+permission_query_conditions = {
+	"User": "pharmacyos_erp.permissions.user_query_conditions",
+	"Item Price": f"{_cost}.item_price_query_conditions",
+}
+has_permission = {
+	"User": "pharmacyos_erp.permissions.user_has_permission",
+	"Item Price": f"{_cost}.item_price_has_permission",
+}
+
+# ERPNext helpers that compute costs: refused (or answered without the costs) for counter staff
+from pharmacyos_erp.pharmacy.cost_privacy import OVERRIDES as _COST_OVERRIDES
+
+override_whitelisted_methods = dict(_COST_OVERRIDES)
 
 doc_events = {
 	"Item": {

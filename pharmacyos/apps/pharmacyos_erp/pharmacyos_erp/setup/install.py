@@ -148,6 +148,9 @@ def before_uninstall():
 	frappe.db.delete("Property Setter", {"doc_type": "Item", "property": "search_fields"})
 	for role, doctypes in CUSTOM_PERMISSIONS.items():
 		frappe.db.delete("Custom DocPerm", {"parent": ["in", list(doctypes)], "role": role})
+	from pharmacyos_erp.pharmacy.cost_privacy import remove_cost_privacy
+
+	remove_cost_privacy()
 	for doctype, fieldname in DESCRIPTION_OVERRIDES:
 		frappe.db.delete(
 			"Property Setter", {"doc_type": doctype, "field_name": fieldname, "property": "description"}
@@ -166,7 +169,15 @@ def ensure_structure():
 	ensure_role_profiles()
 	ensure_dosage_forms()
 	ensure_custom_permissions()
+	ensure_cost_privacy()
 	ensure_branch_dimension_fields()
+
+
+def ensure_cost_privacy():
+	"""Purchase prices, valuation and stock values: not for counter staff (pharmacy/cost_privacy.py)."""
+	from pharmacyos_erp.pharmacy.cost_privacy import ensure_cost_privacy as apply
+
+	apply()
 
 
 def ensure_branch_dimension_fields():

@@ -27,6 +27,11 @@ const WHOLE_UNIT_CURRENCIES = new Set(["IQD"]);
 
 pharmacyos.format_money = (value, currency) => format_currency(value || 0, currency || pharmacyos.default_currency());
 
+// a cost figure (valuation, stock value, value at risk, gross profit): the server sends null to roles
+// without cost access — shown as "—", never as 0
+pharmacyos.format_cost = (value, currency) =>
+	value === null || value === undefined ? "—" : pharmacyos.format_money(value, currency);
+
 pharmacyos.default_currency = () =>
 	(frappe.boot.sysdefaults && frappe.boot.sysdefaults.currency) || "IQD";
 

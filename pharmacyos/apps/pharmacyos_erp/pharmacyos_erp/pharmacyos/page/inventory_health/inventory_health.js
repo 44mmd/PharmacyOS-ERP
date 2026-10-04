@@ -123,7 +123,7 @@ class PharmacyOSInventoryHealth {
 		this.render_states(data.counts);
 		this.$root
 			.find('[data-slot="meta"]')
-			.text(`${__("{0} medicines", [data.total])} · ${__("Inventory value")}: ${pharmacyos.format_money(data.inventory_value)}`);
+			.text(`${__("{0} medicines", [data.total])} · ${__("Inventory value")}: ${pharmacyos.format_cost(data.inventory_value)}`);
 		const $body = this.$root.find('[data-slot="body"]');
 		if (!data.rows.length) {
 			$body.html(
@@ -168,7 +168,7 @@ class PharmacyOSInventoryHealth {
 								<td class="num"><a href="${pharmacyos.ui.base}/batches-expiry?search=${encodeURIComponent(r.item_code)}">${r.batches}</a></td>
 								<td>${expiry(r)}</td>
 								<td class="num">${r.expired_qty ? pharmacyos.format_qty(r.expired_qty) : "<span class='pos-muted'>—</span>"}</td>
-								<td class="num">${pharmacyos.format_money(r.value)}</td>
+								<td class="num">${pharmacyos.format_cost(r.value)}</td>
 							</tr>`;
 						})
 						.join("")}</tbody>

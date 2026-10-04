@@ -20,6 +20,7 @@ from frappe.utils import add_days, cint, flt, nowdate
 
 from pharmacyos_erp.permissions import require_pharmacy_role
 from pharmacyos_erp.pharmacy.branches import get_permitted_warehouses, resolve_warehouses
+from pharmacyos_erp.pharmacy.cost_privacy import can_see_costs, page_costs
 
 SALES_VOUCHERS = ("Sales Invoice", "Delivery Note", "POS Invoice")
 
@@ -177,12 +178,10 @@ def slow_movers(warehouses, days=60, limit=6):
 	bin_filters = {"actual_qty": [">", 0]}
 	if warehouses is not None:
 		bin_filters["warehouse"] = ["in", warehouses or [""]]
-	stocked = frappe.get_all(
-		"Bin",
-		filters=bin_filters,
-		fields=["item_code", {"SUM": "actual_qty", "as": "qty"}, {"SUM": "stock_value", "as": "value"}],
-		group_by="item_code",
-	)
+	fields = ["item_code", {"SUM": "actual_qty", "as": "qty"}]
+	# ranked by stock value for cost-reading roles, by quantity otherwise (no value to rank by)
+	fields.append({"SUM": "stock_value" if can_see_costs() else "actual_qty", "as": "value"})
+	stocked = frappe.get_all("Bin", filters=bin_filters, fields=fields, group_by="item_code")
 	if not stocked:
 		return []
 	sle_filters = {
@@ -368,24 +367,26 @@ def get_dashboard(branch: str | None = None) -> dict:
 			"negative_bins": negative,
 		}
 
-	return {
-		"date": today,
-		"currency": frappe.get_cached_value(
-			"Company", frappe.defaults.get_user_default("Company"), "default_currency"
-		)
-		if frappe.defaults.get_user_default("Company")
-		else None,
-		"sales": None if sales is None else {k: v for k, v in sales.items() if not k.endswith("_names")},
-		"week": None if week is None else {k: v for k, v in week.items() if not k.endswith("_names")},
-		"gross_profit": None
-		if sales is None or not _can("Stock Ledger Entry")
-		else gross_profit(sales["si_names"], sales["pos_names"]),
-		"top_sellers": None if month is None else top_sellers(month["si_names"], month["pos_names"]),
-		"slow_movers": slow_movers(warehouses),
-		"recent_sales": recent_sales(None if sales is None else week["si_names"]),
-		"recent_movements": recent_movements(warehouses),
-		"stock": stock,
-		"purchasing": purchasing_summary(warehouses),
-		"system": system_attention(),
-		"user": {"full_name": frappe.utils.get_fullname()},
-	}
+	return page_costs(
+		{
+			"date": today,
+			"currency": frappe.get_cached_value(
+				"Company", frappe.defaults.get_user_default("Company"), "default_currency"
+			)
+			if frappe.defaults.get_user_default("Company")
+			else None,
+			"sales": None if sales is None else {k: v for k, v in sales.items() if not k.endswith("_names")},
+			"week": None if week is None else {k: v for k, v in week.items() if not k.endswith("_names")},
+			"gross_profit": None
+			if sales is None or not _can("Stock Ledger Entry")
+			else gross_profit(sales["si_names"], sales["pos_names"]),
+			"top_sellers": None if month is None else top_sellers(month["si_names"], month["pos_names"]),
+			"slow_movers": slow_movers(warehouses),
+			"recent_sales": recent_sales(None if sales is None else week["si_names"]),
+			"recent_movements": recent_movements(warehouses),
+			"stock": stock,
+			"purchasing": purchasing_summary(warehouses),
+			"system": system_attention(),
+			"user": {"full_name": frappe.utils.get_fullname()},
+		}
+	)

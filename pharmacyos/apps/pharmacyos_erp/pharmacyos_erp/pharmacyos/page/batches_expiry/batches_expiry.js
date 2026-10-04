@@ -154,17 +154,17 @@ class PharmacyOSBatchesExpiry {
 		this.$root.find('[data-slot="summary"]').html(`
 			<div class="pos-kpi">
 				<div class="pos-kpi-label">${ui.icon("circle-x", "xs")} ${__("Expired — value at risk")}</div>
-				<div class="pos-kpi-value">${pharmacyos.format_money(data.value.expired)}</div>
+				<div class="pos-kpi-value">${pharmacyos.format_cost(data.value.expired)}</div>
 				<div class="pos-kpi-sub">${__("{0} batches", [data.counts.expired])}</div>
 			</div>
 			<div class="pos-kpi">
 				<div class="pos-kpi-label">${ui.icon("triangle-alert", "xs")} ${__("Expiring in 30 days")}</div>
-				<div class="pos-kpi-value">${pharmacyos.format_money(data.value["30"])}</div>
+				<div class="pos-kpi-value">${pharmacyos.format_cost(data.value["30"])}</div>
 				<div class="pos-kpi-sub">${__("{0} batches", [data.counts["30"]])}</div>
 			</div>
 			<div class="pos-kpi">
 				<div class="pos-kpi-label">${ui.icon("clock", "xs")} ${__("Expiring in 90 days")}</div>
-				<div class="pos-kpi-value">${pharmacyos.format_money(data.value["90"])}</div>
+				<div class="pos-kpi-value">${pharmacyos.format_cost(data.value["90"])}</div>
 				<div class="pos-kpi-sub">${__("{0} batches", [data.counts["90"]])}</div>
 			</div>`);
 
@@ -221,7 +221,7 @@ class PharmacyOSBatchesExpiry {
 							<td class="num">${pharmacyos.format_qty(r.qty)} <span class="pos-muted">${ui.esc(__(r.uom || ""))}</span></td>
 							<td><span class="pos-num">${ui.date(r.expiry_date)}</span><br><span class="pos-days">${ui.days_text(r.days)}</span></td>
 							<td>${ui.chip(r.status)}</td>
-							<td class="num">${pharmacyos.format_money(r.value)}</td>
+							<td class="num">${pharmacyos.format_cost(r.value)}</td>
 							<td><bdi dir="auto">${ui.esc(r.supplier || "—")}</bdi></td>
 							<td>${source(r)}</td>
 						</tr>`

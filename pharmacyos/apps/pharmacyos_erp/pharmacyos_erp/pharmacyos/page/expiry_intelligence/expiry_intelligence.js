@@ -97,7 +97,7 @@ class PharmacyOSExpiryIntelligence {
 
 	render(d) {
 		const ui = this.ui;
-		const money = pharmacyos.format_money;
+		const money = pharmacyos.format_cost; // every figure on this page is a cost (null without cost access)
 		const expired = d.buckets.find((b) => b.key === "expired") || { value: 0, batches: 0 };
 		const window_label = d.horizon ? __("within {0} days", [d.horizon]) : __("expired only");
 		this.$root.find('[data-slot="kpis"]').html(`

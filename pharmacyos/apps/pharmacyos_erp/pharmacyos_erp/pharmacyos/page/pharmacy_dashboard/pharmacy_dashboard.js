@@ -119,7 +119,7 @@ class PharmacyOSDashboard {
 			kpi({
 				label: __("Inventory value"),
 				icon: "package",
-				value: d.stock ? money(d.stock.inventory_value) : na,
+				value: d.stock ? pharmacyos.format_cost(d.stock.inventory_value) : na,
 				sub: d.stock ? __("at current valuation") : "",
 				href: d.stock ? pharmacyos.ui.base + "/inventory-health" : null,
 			})
@@ -142,7 +142,7 @@ class PharmacyOSDashboard {
 					value ? `<span class="pos-attention-value">${value}</span>` : ""
 				}</span></a>`);
 		if (st) {
-			att("danger", "circle-x", st.expired_batches, __("Expired batches"), pharmacyos.ui.base + "/batches-expiry?bucket=expired", st.expired_batches ? money(st.expired_value) : "");
+			att("danger", "circle-x", st.expired_batches, __("Expired batches"), pharmacyos.ui.base + "/batches-expiry?bucket=expired", st.expired_batches ? pharmacyos.format_cost(st.expired_value) : "");
 			att("warning", "calendar-clock", st.expiring_30, __("Expiring within 30 days"), pharmacyos.ui.base + "/batches-expiry?bucket=30");
 			att("danger", "package-x", st.counts.out, __("Out of stock"), pharmacyos.ui.base + "/inventory-health?state=out");
 			att("warning", "trending-down", st.counts.low, __("Low stock"), pharmacyos.ui.base + "/inventory-health?state=low");
@@ -205,7 +205,7 @@ class PharmacyOSDashboard {
 					? denied
 					: slow.length
 					? `<ul class="pos-list">${slow
-							.map((r) => `<li><div class="pos-list-main">${med(r)}</div><div class="pos-list-end">${money(r.value)}<div class="pos-days">${__("{0} in stock", [pharmacyos.format_qty(r.qty)])}</div></div></li>`)
+							.map((r) => `<li><div class="pos-list-main">${med(r)}</div><div class="pos-list-end">${pharmacyos.format_cost(r.value)}<div class="pos-days">${__("{0} in stock", [pharmacyos.format_qty(r.qty)])}</div></div></li>`)
 							.join("")}</ul>`
 					: ui.state({ kind: "ok", title: __("Everything in stock has sold recently") })
 			)

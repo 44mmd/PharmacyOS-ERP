@@ -23,6 +23,7 @@ from frappe.utils import cint, flt
 
 from pharmacyos_erp.permissions import require_pharmacy_role
 from pharmacyos_erp.pharmacy.branches import get_permitted_warehouses, resolve_warehouses
+from pharmacyos_erp.pharmacy.cost_privacy import can_see_costs, page_costs
 from pharmacyos_erp.pharmacy.expiry import enrich, get_batch_stock, get_windows
 from pharmacyos_erp.utils.arabic import normalize_arabic
 
@@ -64,19 +65,10 @@ def _bins(warehouses, item_codes=None):
 	filters = {"warehouse": ["in", warehouses]}
 	if item_codes is not None:
 		filters["item_code"] = ["in", item_codes or [""]]
-	return frappe.get_all(
-		"Bin",
-		filters=filters,
-		fields=[
-			"item_code",
-			"warehouse",
-			"actual_qty",
-			"reserved_qty",
-			"projected_qty",
-			"stock_value",
-			"valuation_rate",
-		],
-	)
+	fields = ["item_code", "warehouse", "actual_qty", "reserved_qty", "projected_qty"]
+	if can_see_costs():  # stock value and valuation only for cost-reading roles
+		fields += ["stock_value", "valuation_rate"]
+	return frappe.get_all("Bin", filters=filters, fields=fields)
 
 
 def _reorder_rows(warehouses):
@@ -196,12 +188,14 @@ def get_inventory_health(
 	selected = [r for r in rows if not state or r["state"] == state]
 	order = {s: i for i, s in enumerate(STATES)}
 	selected.sort(key=lambda r: (order[r["state"]], (r["item_name"] or r["item_code"]).lower()))
-	return {
-		"rows": selected[cint(start) : cint(start) + page_length],
-		"total": len(selected),
-		"counts": counts,
-		"inventory_value": flt(sum(r["value"] for r in rows), 2),
-	}
+	return page_costs(
+		{
+			"rows": selected[cint(start) : cint(start) + page_length],
+			"total": len(selected),
+			"counts": counts,
+			"inventory_value": flt(sum(r["value"] for r in rows), 2),
+		}
+	)
 
 
 @frappe.whitelist()
@@ -266,4 +260,4 @@ def get_reorder_suggestions(
 			}
 		)
 	rows.sort(key=lambda x: (x["projected"] - x["reorder_level"], x["item_code"]))
-	return {"rows": rows, "total": len(rows)}
+	return page_costs({"rows": rows, "total": len(rows)})

@@ -20,6 +20,7 @@ from frappe.utils import cint, date_diff, flt, getdate, nowdate
 
 from pharmacyos_erp.permissions import require_pharmacy_role
 from pharmacyos_erp.pharmacy.branches import get_permitted_warehouses, resolve_warehouses
+from pharmacyos_erp.pharmacy.cost_privacy import can_see_costs, page_costs
 from pharmacyos_erp.utils.arabic import normalize_arabic
 
 BUCKETS = ("expired", "30", "60", "90", "all")
@@ -121,14 +122,19 @@ def enrich(rows: list[dict]) -> list[dict]:
 		)
 	}
 	warehouses = list({r["warehouse"] for r in rows})
-	valuation = {
-		(b.item_code, b.warehouse): flt(b.valuation_rate)
-		for b in frappe.get_all(
-			"Bin",
-			filters={"item_code": ["in", item_codes], "warehouse": ["in", warehouses]},
-			fields=["item_code", "warehouse", "valuation_rate"],
-		)
-	}
+	# no valuation at all without cost access: nothing to sort or rank by, nothing to send
+	valuation = (
+		{}
+		if not can_see_costs()
+		else {
+			(b.item_code, b.warehouse): flt(b.valuation_rate)
+			for b in frappe.get_all(
+				"Bin",
+				filters={"item_code": ["in", item_codes], "warehouse": ["in", warehouses]},
+				fields=["item_code", "warehouse", "valuation_rate"],
+			)
+		}
+	)
 
 	critical_days, soon_days = get_windows()
 	today = nowdate()
@@ -216,13 +222,15 @@ def get_batches(
 	selected.sort(
 		key=lambda r: (r["days"] is None, r["days"] if r["days"] is not None else 0, r["item_code"])
 	)
-	return {
-		"rows": selected[start : start + page_length],
-		"total": len(selected),
-		"counts": counts,
-		"value": {k: flt(v, 2) for k, v in value.items()},
-		"windows": dict(zip(("critical_days", "expiring_soon_days"), get_windows(), strict=True)),
-	}
+	return page_costs(
+		{
+			"rows": selected[start : start + page_length],
+			"total": len(selected),
+			"counts": counts,
+			"value": {k: flt(v, 2) for k, v in value.items()},
+			"windows": dict(zip(("critical_days", "expiring_soon_days"), get_windows(), strict=True)),
+		}
+	)
 
 
 @frappe.whitelist()
@@ -279,17 +287,19 @@ def get_expiry_intelligence(
 	for row in by_item:
 		row["item_name"], row["name_ar"] = names.get(row["key"], (None, None))
 
-	return {
-		"horizon": horizon,
-		"buckets": buckets,
-		"total_value": flt(sum(r["value"] for r in rows), 2),
-		"risk_value": flt(sum(r["value"] for r in risk), 2),
-		"risk_batches": len(risk),
-		"by_warehouse": group(lambda r: r["warehouse"]),
-		"by_supplier": group(lambda r: r["supplier"] or ""),
-		"by_item": by_item,
-		"batches": sorted(risk, key=lambda r: r["days"])[:100],
-	}
+	return page_costs(
+		{
+			"horizon": horizon,
+			"buckets": buckets,
+			"total_value": flt(sum(r["value"] for r in rows), 2),
+			"risk_value": flt(sum(r["value"] for r in risk), 2),
+			"risk_batches": len(risk),
+			"by_warehouse": group(lambda r: r["warehouse"]),
+			"by_supplier": group(lambda r: r["supplier"] or ""),
+			"by_item": by_item,
+			"batches": sorted(risk, key=lambda r: r["days"])[:100],
+		}
+	)
 
 
 @frappe.whitelist()
