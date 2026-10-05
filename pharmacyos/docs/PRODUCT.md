@@ -167,8 +167,10 @@ PharmacyOS Integration account, Guest.
   what was paid**: per item, the refunded net amount stays within the returned portion's share of the
   item's net amount on the sale (row and document discounts included), and the refund total (taxes
   included) within that share scaled by the sale's own gross/net ratio ("Refund exceeds sale"). A
-  partial return is worth its portion; a tax, rate or discount the sale never had is not refundable;
-  rounding of distributed discounts is tolerated up to one currency unit per unit returned. A
+  partial return is worth its portion; a tax, rate or discount the sale never had is not refundable.
+  Money is compared as actually owed (rounded totals), and refunds are rounded cumulatively per sale
+  (round 5): however a return is split, all returns together refund exactly the returned goods'
+  share of what was paid, never more (100 × 4.6 returned one by one refunds 460, as at once). A
   medicine return must reference the original sale. Applies to returns built in the POS, the desk or
   the REST API, and to simultaneous returns: returns against one sale are serialised on the sale's
   row and read what was already returned with a locking read (a ledger of quantities and amounts on
@@ -176,7 +178,9 @@ PharmacyOS Integration account, Guest.
   (`tests/test_return_integrity_round4.py`, `tests/test_return_concurrency.py`,
   `dev/concurrency_check.py`). ERPNext's consolidated credit notes (POS closing) reference the
   consolidated invoice — an original — and are recorded in its ledger, never re-validated; a
-  client-set `is_consolidated` is refused ("Not a consolidated invoice").
+  client-set `is_consolidated` is refused ("Not a consolidated invoice"). Any value other than
+  0 / 1 (text, fractions, lists, objects) is also refused, as a controlled error and never a 500
+  (round 5).
 * **Last unit**: every sale, delivery and website order locks the item's stock rows in one order, so
   competing cashiers get a clear stock error instead of a database deadlock; counter sales cannot
   take units reserved by submitted website orders (*Protect Website Reservations*, on by default).

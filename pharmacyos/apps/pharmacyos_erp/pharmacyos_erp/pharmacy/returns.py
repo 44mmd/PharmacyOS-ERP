@@ -26,8 +26,22 @@ built:
   net amount on the sale (row and document discounts included), and the cumulative refund total
   (taxes included) stays within that share scaled by the sale's own gross/net ratio
   (RefundExceedsSaleError). A partial return is worth its portion, never the whole sale; a tax or a
-  rate the sale never charged is not refundable. Rounding of distributed discounts is tolerated up
-  to one currency unit per unit of goods returned, never more.
+  rate the sale never charged is not refundable. Per item, rounding of distributed discounts is
+  tolerated up to one currency unit per unit of goods returned.
+* **the money actually owed is what is bounded, and splitting a return changes nothing (round 5,
+  B-2).** Every document is measured by its *effective* total — the rounded total when ERPNext rounds
+  it, else the grand total, in company currency: what the customer paid, and what a return refunds
+  or credits. ERPNext rounds each return on its own, so the returns of one sale added up to more
+  (100 one-unit returns of a 4.6 IQD item, each rounded to 5, refunded 500 on a 460 sale) or less
+  (50 returns of 2 × 4.6 refunded 450) than the same goods returned at once. Refunds are therefore
+  rounded cumulatively per root sale: after each return, all its returns together have refunded
+  exactly the returned goods' share of what the sale charged, rounded as the sale was — never more
+  than the sale charged, with ONE precision unit of tolerance for the whole root sale (never one
+  per return document). A return that differs from that figure by rounding alone is settled to it
+  (its own rounding is switched off and the difference becomes a document discount; a POS return
+  in one payment row pays out exactly that); a larger shortfall is the cashier's own deduction and
+  is kept; anything above is refused. The total refunded therefore depends only on what was
+  returned, never on how the return was split.
 
 A medicine return must reference the original sale: a free-standing return would put stock back that
 was never sold from this pharmacy.
@@ -198,19 +212,29 @@ def _row_amount(row) -> float:
 	return 0.0
 
 
-def _doc_total(doc) -> float:
-	"""What the document charges or refunds, taxes included, before ERPNext's whole-unit rounding.
+def _rounded(doc) -> bool:
+	"""ERPNext rounds this document's total (its rounded total is the amount owed)."""
+	return not cint(doc.get("disable_rounded_total")) and bool(
+		flt(doc.get("base_rounded_total")) or flt(doc.get("rounded_total"))
+	)
 
-	The unrounded total is compared on both sides: the rounding adjustment of each document (at most
-	half a currency unit, posted to the round-off account by ERPNext) is the only play left to rounding.
-	"""
+
+def _unrounded_total(doc) -> float:
 	for field in ("base_grand_total", "grand_total"):
 		if flt(doc.get(field)):
 			return abs(flt(doc.get(field)))
-	for field in ("base_rounded_total", "rounded_total"):
-		if flt(doc.get(field)):
-			return abs(flt(doc.get(field)))
 	return 0.0
+
+
+def _doc_total(doc) -> float:
+	"""The document's effective total in company currency, taxes included: the amount actually owed —
+	charged by a sale, refunded or credited by a return. That is ERPNext's rounded total when the
+	document is rounded, else its grand total."""
+	if _rounded(doc):
+		for field in ("base_rounded_total", "rounded_total"):
+			if flt(doc.get(field)):
+				return abs(flt(doc.get(field)))
+	return _unrounded_total(doc)
 
 
 def _medicines(item_codes) -> dict:
@@ -226,7 +250,8 @@ def _medicines(item_codes) -> dict:
 
 def _totals(doc):
 	"""Per item: quantity (stock units), quantity per (item, batch), highest rate per stock unit and
-	net amount; plus the document total."""
+	net amount (its share of the effective total when the document is rounded); plus the document's
+	effective total."""
 	qty, batch_qty, rate, amount = (
 		defaultdict(float),
 		defaultdict(float),
@@ -241,7 +266,12 @@ def _totals(doc):
 		amount[row.item_code] += _row_amount(row)
 		for batch, batch_qty_used in get_row_batches(doc, row).items():
 			batch_qty[(row.item_code, batch)] += abs(flt(batch_qty_used))
-	return frappe._dict(qty=qty, batches=batch_qty, rate=rate, amount=amount, total=_doc_total(doc))
+	total, unrounded = _doc_total(doc), _unrounded_total(doc)
+	if unrounded and total != unrounded:
+		# the document's rounding is shared by its items: amounts in the money actually owed (round 5)
+		for item_code in amount:
+			amount[item_code] *= total / unrounded
+	return frappe._dict(qty=qty, batches=batch_qty, rate=rate, amount=amount, total=total)
 
 
 def qty_precision(doctype: str) -> int:
@@ -372,6 +402,8 @@ def _contribution(doc) -> dict:
 		"batches": dict(batches),
 		"amounts": {k: flt(v, 9) for k, v in totals.amount.items()},
 		"total": flt(totals.total, 9),
+		# the total is the effective (owed) amount (round 5); older entries are rebuilt on read
+		"effective": 1,
 	}
 
 
@@ -435,8 +467,9 @@ def _ledger(doctype: str, original: str, current: bool) -> dict:
 		# such return writes it before committing, and the locking read above would see it), so the
 		# submitted documents are the complete history
 		ledger = compute_ledger(doctype, original)
-	elif any("amounts" not in entry for entry in ledger["returns"].values()):
-		# written by a version that tracked quantities only: complete it from the documents
+	elif any("amounts" not in entry or not entry.get("effective") for entry in ledger["returns"].values()):
+		# written by a version that tracked quantities only, or measured totals before rounding:
+		# complete it from the documents
 		ledger = rebuild_ledger(doctype, original) if current else compute_ledger(doctype, original)
 	return ledger
 
@@ -502,6 +535,63 @@ def _check_reference(doc) -> None:
 		)
 	if cint(ref.docstatus) != 1:
 		_throw_not_submitted(doc.return_against, cint(ref.docstatus))
+
+
+def _sale_rounding_step(original) -> float:
+	"""The rounding step of the sale's own total: the currency's smallest fraction when ERPNext
+	rounds to one, whole units otherwise; 0 when the sale is not rounded (or not in company currency)."""
+	if not _rounded(original) or flt(original.get("conversion_rate") or 1.0) != 1.0:
+		return 0.0
+	step = flt(
+		frappe.db.get_value(
+			"Currency", original.get("currency"), "smallest_currency_fraction_value", cache=True
+		)
+	)
+	return step or 1.0
+
+
+def _round_like_the_sale(original, value: float) -> float:
+	"""`value` rounded exactly as ERPNext rounded the sale's total (unchanged when it was not)."""
+	if not _sale_rounding_step(original):
+		return value
+	from frappe.utils import round_based_on_smallest_currency_fraction
+
+	return round_based_on_smallest_currency_fraction(
+		value, original.get("currency"), original.precision("rounded_total")
+	)
+
+
+def _settle_refund(doc, target: float, unit: float) -> None:
+	"""Make a return refund exactly `target` (company currency): its own rounding is switched off and
+	the rounding difference becomes a document discount (negative on a return lowers the refund).
+
+	A POS return pays out the settled refund. ERPNext's recalculation replaces the payment rows of a
+	POS return whose payout differs from its total (with a row that has no account yet, since its
+	validation has already run), so the rows are kept as they were and set to the exact payout; a
+	single payment row takes the settled refund, several rows must already add up to it."""
+	conversion = flt(doc.get("conversion_rate")) or 1.0
+	payments = [row.as_dict(no_default_fields=True) for row in doc.get("payments") or []]
+	doc.disable_rounded_total = 1
+	for _attempt in range(3):  # a discount on taxes is spread per row; converge on the exact figure
+		doc.calculate_taxes_and_totals()
+		gap = abs(flt(doc.get("base_grand_total"))) - target  # > 0: it refunds too much
+		if abs(gap) < unit / 2:
+			break
+		by = gap / conversion
+		if doc.get("apply_discount_on") == "Net Total" and flt(doc.get("grand_total")):
+			by *= abs(flt(doc.get("net_total")) / flt(doc.get("grand_total")))
+		else:
+			doc.apply_discount_on = "Grand Total"
+		doc.additional_discount_percentage = 0
+		doc.discount_amount = flt(flt(doc.get("discount_amount")) - by, doc.precision("discount_amount"))
+		doc.calculate_taxes_and_totals()
+	if doc.get("is_pos") and payments:
+		paying = [row for row in payments if flt(row.get("amount"))] or payments[:1]
+		if len(paying) == 1:
+			paying[0]["amount"] = flt(doc.get("grand_total"))
+			paying[0]["base_amount"] = flt(doc.get("base_grand_total"))
+		doc.set("payments", payments)
+		doc.calculate_taxes_and_totals()
 
 
 def _rounding_tolerance(unit: float, qty: float) -> float:
@@ -595,7 +685,8 @@ def validate_return(doc, method=None):
 		unit_value = sold.amount[item_code] / sold.qty[item_code] if sold.qty[item_code] else 0.0
 		refunded = returned.amount[item_code] + this.amount[item_code]
 		entitled = unit_value * (already + qty)
-		allowed = entitled + _rounding_tolerance(unit, already + qty)
+		# + one rounding step of the sale: refunds are rounded cumulatively (below), never per return
+		allowed = entitled + _rounding_tolerance(unit, already + qty) + _sale_rounding_step(original)
 		if flt(refunded, currency_precision) > flt(allowed, currency_precision):
 			frappe.throw(
 				_("{0}: {1} charged on {2}, {3} already refunded; at most {4} can be refunded.").format(
@@ -636,9 +727,15 @@ def validate_return(doc, method=None):
 				title=_("Return exceeds sale"),
 			)
 
-	# the total (taxes included): the returned portions' net value, scaled by the sale's own
-	# gross/net ratio — taxes follow the goods; a tax row the sale never charged is not refundable
-	refund_total = returned.total + this.total
+	# the total (taxes included), in effective money (round 5, B-2). The returned goods are worth
+	# their share of what the sale actually charged: U = their net value × the sale's charged/net
+	# ratio (taxes follow the goods; a tax row the sale never charged is not refundable). ERPNext
+	# rounds every return on its own, so returns of one sale used to add up to more (100 × 4.6 → 500
+	# refunded on 460) or less (50 × 9.2 → 450) than the same goods returned at once. The refund is
+	# therefore rounded cumulatively: after this return, the returns of the root sale have refunded
+	# exactly round(U) — rounded as the sale was — and never more than the sale charged. This return's
+	# refund is that figure minus what the earlier returns refunded: the total depends only on what
+	# was returned, never on how the return was split.
 	net_sold = sum(sold.amount.values())
 	gross_ratio = sold.total / net_sold if net_sold else 1.0
 	entitled_net = sum(
@@ -647,8 +744,18 @@ def validate_return(doc, method=None):
 		for item in set(returned.qty) | set(this.qty)
 		if item in sold.qty
 	)
-	returned_units = sum(returned.qty.values()) + sum(this.qty.values())
-	allowed_total = entitled_net * gross_ratio + _rounding_tolerance(unit, returned_units)
+	share = min(sold.total, entitled_net * gross_ratio)
+	cumulative = min(sold.total, _round_like_the_sale(original, share))
+	target = flt(cumulative - returned.total, currency_precision)
+	# play: what rounding alone can explain — the sale's rounding step and one precision unit per row
+	play = _sale_rounding_step(original) + unit * (len(doc.get("items") or []) + 1)
+	if target >= 0 and abs(this.total - target) >= unit and abs(_unrounded_total(doc) - target) <= play:
+		# differs from the exact refund by rounding only: refund exactly that. A larger difference
+		# is the cashier's own deduction (kept) or an over-refund (refused below).
+		_settle_refund(doc, target, unit)
+		this = _totals(doc)
+	allowed_total = max(cumulative, share) + unit  # ONE precision unit for the whole root sale
+	refund_total = returned.total + this.total
 	if flt(refund_total, currency_precision) > flt(allowed_total, currency_precision):
 		frappe.throw(
 			_("{0} charged {1} in total, {2} already refunded; this return would refund {3}.").format(
@@ -660,3 +767,15 @@ def validate_return(doc, method=None):
 			RefundExceedsSaleError,
 			title=_("Refund exceeds sale"),
 		)
+	if doc.get("is_pos"):
+		# what the counter actually pays out (and writes off) never exceeds the return's refund
+		paid_out = sum(abs(flt(p.get("base_amount") or p.get("amount"))) for p in doc.get("payments") or [])
+		paid_out += abs(flt(doc.get("base_write_off_amount") or doc.get("write_off_amount")))
+		if flt(paid_out, currency_precision) > flt(this.total + unit, currency_precision):
+			frappe.throw(
+				_("The refund paid out ({0}) is more than this return refunds ({1}).").format(
+					flt(paid_out, currency_precision), flt(this.total, currency_precision)
+				),
+				RefundExceedsSaleError,
+				title=_("Refund exceeds sale"),
+			)

@@ -2702,3 +2702,6 @@ msgstr "هذه الصيدلية مُعدّة مسبقاً. لم يتغير شي�
 # --- round 5 -------------------------------------------------------------------------------
 msgid "'Is Consolidated' must be 0 or 1; it is set only by POS closing when it merges the shift's invoices."
 msgstr "يجب أن تكون قيمة «مجمّعة» 0 أو 1، ولا يضبطها إلا إغلاق نقطة البيع عند دمج فواتير الوردية."
+
+msgid "The refund paid out ({0}) is more than this return refunds ({1})."
+msgstr "المبلغ المدفوع للاسترداد ({0}) أكبر مما يرده هذا المرتجع ({1})."

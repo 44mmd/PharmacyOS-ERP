@@ -382,13 +382,17 @@ class TestRefundBound(ReturnCase):
 		)
 
 	def test_rounding_of_a_distributed_discount_is_tolerated_but_not_exploitable(self):
-		"""3 × 1000 with a 1000 discount: 666.67 per unit; three partial returns (2000.01) pass, a fourth cent does not."""
+		"""3 × 1000 with a 1000 discount: 666.67 per unit; three partial returns pass, a fourth does not.
+
+		Round 5: refunds are rounded cumulatively, so the three returns refund exactly the 2000 charged
+		(667 + 666 + 667) instead of 2000.01."""
 		item, batch = self.medicine(10)
 		sale = post(doc(item, 3, batch, payment=2000, apply_discount_on="Grand Total", discount_amount=1000))
 		for _ in range(3):
 			post(doc(item, 1, batch, return_against=sale.name, rate=666.67, payment=-666.67))
 		returned = returned_so_far("Sales Invoice", sale.name)
-		self.assertEqual(flt(returned.amount[item], 2), 2000.01)
+		self.assertEqual(flt(returned.amount[item], 2), 2000)
+		self.assertEqual(flt(returned.total, 2), 2000)
 		with self.assertRaises(over_return_error()):
 			post(doc(item, 1, batch, return_against=sale.name, rate=666.67, payment=-666.67))
 
