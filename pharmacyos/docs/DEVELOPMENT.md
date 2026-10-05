@@ -84,7 +84,7 @@ bench --site pharmacyos.localhost execute pharmacyos_erp.setup.demo_data.create_
 Tests (on the test site only):
 
 ```bash
-bench --site test.localhost run-tests --app pharmacyos_erp                     # PharmacyOS (224 tests)
+bench --site test.localhost run-tests --app pharmacyos_erp                     # PharmacyOS (268 tests)
 bench --site test.localhost run-tests --lightmode --module erpnext.stock.doctype.batch.test_batch   # upstream
 ```
 
