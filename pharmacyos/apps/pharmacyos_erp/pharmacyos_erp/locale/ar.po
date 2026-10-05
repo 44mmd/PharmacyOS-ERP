@@ -2698,3 +2698,7 @@ msgstr "تعذر إعداد الصيدلية"
 
 msgid "This pharmacy is already set up. Nothing was changed: edit the pharmacy's identity in PharmacyOS Settings and reset passwords from the user screens."
 msgstr "هذه الصيدلية مُعدّة مسبقاً. لم يتغير شيء: عدّل هوية الصيدلية من إعدادات PharmacyOS وأعد تعيين كلمات المرور من شاشات المستخدمين."
+
+# --- round 5 -------------------------------------------------------------------------------
+msgid "'Is Consolidated' must be 0 or 1; it is set only by POS closing when it merges the shift's invoices."
+msgstr "يجب أن تكون قيمة «مجمّعة» 0 أو 1، ولا يضبطها إلا إغلاق نقطة البيع عند دمج فواتير الوردية."

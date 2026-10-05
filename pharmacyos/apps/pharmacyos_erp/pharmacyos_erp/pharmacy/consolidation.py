@@ -9,13 +9,19 @@ with a `TypeError` in `calculate_net_total` — an uncontrolled HTTP 500 (round-
 The flag is therefore accepted only while the POS Invoice Merge Log is creating the consolidated
 documents (`document_classes.PharmacyPOSInvoiceMergeLog` marks that window); anywhere else it is a
 controlled validation error, before ERPNext's calculations run (`before_validate`).
+
+Round 5 (independent re-validation, B-1): the value is classified strictly, never with `cint`. `cint`
+turned "true", "yes", "abc", 0.5, [1] or {...} into 0, so they passed the check while ERPNext still
+treated them as set and crashed (HTTP 500). Now only the exact representations of "not set" pass —
+absent, None, False, 0 / 0.0, "0" and "" (an empty form value) — and are stored as the integer 0;
+every other value (any other number, any other text including " ", "true", "false", "no", lists,
+objects) is refused with the same controlled ConsolidatedFlagError, before any calculation or write.
 """
 
 from contextlib import contextmanager
 
 import frappe
 from frappe import _
-from frappe.utils import cint
 
 FLAG = "pharmacyos_pos_consolidation"
 
@@ -35,17 +41,53 @@ def consolidating():
 		frappe.flags[FLAG] = previous
 
 
-def guard_consolidated_flag(doc, method=None):
-	"""doc_event (before_validate) for Sales Invoice."""
-	if not cint(doc.get("is_consolidated")) or frappe.flags.get(FLAG):
-		return
-	before = doc.get_doc_before_save() if not doc.is_new() else None
-	if before is not None and cint(before.get("is_consolidated")):
-		return  # an existing consolidated invoice (e.g. cancelled by its merge log)
-	frappe.throw(
-		_(
+# the only accepted representations of "not consolidated" (exact matches; bool is checked first)
+_NOT_SET_STRINGS = frozenset({"0", ""})
+
+
+def flag_state(value) -> str:
+	"""Classify a raw `is_consolidated` value: "unset", "set" or "invalid". Total and deterministic."""
+	if value is None or value is False:
+		return "unset"
+	if value is True:
+		return "set"
+	if isinstance(value, int):
+		return "unset" if value == 0 else ("set" if value == 1 else "invalid")
+	if isinstance(value, float):
+		if value != value or value in (float("inf"), float("-inf")):
+			return "invalid"
+		return "unset" if value == 0.0 else ("set" if value == 1.0 else "invalid")
+	if isinstance(value, str):
+		if value in _NOT_SET_STRINGS:
+			return "unset"
+		return "set" if value == "1" else "invalid"
+	return "invalid"  # lists, dicts, nested structures, anything else
+
+
+def _refuse(invalid: bool):
+	if invalid:
+		message = _(
+			"'Is Consolidated' must be 0 or 1; it is set only by POS closing when it merges the shift's invoices."
+		)
+	else:
+		message = _(
 			"'Is Consolidated' is set by POS closing when it merges the shift's invoices; it cannot be set on an invoice entered directly."
-		),
-		ConsolidatedFlagError,
-		title=_("Not a consolidated invoice"),
-	)
+		)
+	frappe.throw(message, ConsolidatedFlagError, title=_("Not a consolidated invoice"))
+
+
+def guard_consolidated_flag(doc, method=None):
+	"""doc_event (before_validate) for Sales Invoice: the strict input boundary of `is_consolidated`."""
+	state = flag_state(doc.get("is_consolidated"))
+	if state == "unset":
+		if doc.get("is_consolidated") is not None:
+			doc.is_consolidated = 0  # ERPNext and every later check see a plain integer
+		return
+	if frappe.flags.get(FLAG):
+		if state == "invalid":
+			_refuse(invalid=True)
+		return  # ERPNext's merge log is creating the consolidated documents
+	before = doc.get_doc_before_save() if not doc.is_new() else None
+	if state == "set" and before is not None and flag_state(before.get("is_consolidated")) == "set":
+		return  # an existing consolidated invoice (e.g. cancelled by its merge log)
+	_refuse(invalid=state == "invalid")
