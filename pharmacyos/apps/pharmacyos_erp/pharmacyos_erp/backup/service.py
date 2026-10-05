@@ -359,6 +359,22 @@ CRITICAL_DIMENSION_DOCTYPES = (
 )
 
 
+def stored_passwords_readable() -> bool:
+	"""True when the site's encryption_key decrypts the passwords stored in the database — false after
+	a restore onto a new site without the original site's key (round 5, M-2)."""
+	from frappe.utils.password import decrypt
+
+	row = frappe.db.sql("select password from `__Auth` where encrypted = 1 limit 1")
+	if not row:
+		return True
+	try:
+		decrypt(row[0][0])
+		return True
+	except Exception:
+		frappe.clear_messages()
+		return False
+
+
 def health_check() -> dict:
 	"""Post-install / post-restore / post-update smoke check (run with `bench execute`)."""
 	from pharmacyos_erp.pharmacy.branches import missing_branch_fields
@@ -374,6 +390,7 @@ def health_check() -> dict:
 		"missing_branch_fields": missing,
 		"critical_branch_fields": bool(dimension)
 		and all(frappe.db.has_column(dt, dimension) for dt in CRITICAL_DIMENSION_DOCTYPES),
+		"stored_passwords": stored_passwords_readable(),
 	}
 	# backups and website sync stop silently without the scheduler; documents cannot be posted
 	# while the Branch dimension columns are missing
@@ -384,6 +401,7 @@ def health_check() -> dict:
 		and checks["branch_dimension"]
 		and checks["critical_branch_fields"]
 		and not missing
+		and checks["stored_passwords"]
 	)
 	print(json.dumps(checks))
 	return checks

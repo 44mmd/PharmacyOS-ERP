@@ -161,7 +161,7 @@ installer. Nothing in this repository has been validated on a physical Windows m
 | Location | `<data>/Backups/<YYYY-MM-DD>/<HH-MM>/` holding `database.sql.gz` (+ `files.tar`, `private-files.tar` daily) and `metadata.json` (site, pharmacy, versions, time zone, SHA-256 per file). `<data>` = site config `pharmacyos_data_dir`, else PharmacyOS Settings → Data Folder, else `<bench>/pharmacyos-data/<site>`. On a single Windows PC: `C:\ProgramData\PharmacyOS`. |
 | Spreadsheets | `<data>/Sales/<date>/Sales-HH-00.xlsx` hourly, with every sale/return line of the day: invoice, time, cashier, branch, customer, barcode, medicine (EN/AR), batch, expiry, qty, price, discount, totals, payment method, status. `<data>/Daily Reports/<date>/`: Daily-Sales, Payment-Summary, Inventory-Summary .xlsx and Backup-Metadata.json. |
 | Verification | Each backup is checksummed and test-decompressed, and is only marked *Success* once verified. |
-| Encryption | Turn on System Settings → **Encrypt Backups** (gpg, AES). The passphrase is generated into the server's `site_config.json` and is never in source code. **Store a copy offline: without it an encrypted backup cannot be restored on a new machine.** |
+| Encryption | Turn on System Settings → **Encrypt Backups** (gpg, AES). The passphrase (`backup_encryption_key`) is generated into the site's `site_config.json` and is never in source code. **Keep an offline copy of the site's `site_config.json`** (it holds `backup_encryption_key` and `encryption_key`, which decrypts the passwords stored in the database): without it an encrypted backup cannot be restored on a new machine. Never paste the keys into a terminal, a ticket or a chat. |
 | Retention | PharmacyOS Settings: every backup is kept for *Keep Hourly Backups (Days)* (default 2). The last backup of each day is kept for *Keep Daily Backups (Days)* (default 30). The newest verified backup is never deleted. Spreadsheets follow the daily retention. |
 | Health | **System → System Status**: last success, next run, size, folder, free disk, last error. A dashboard alert appears only on a problem. A backup is skipped with a warning below *Minimum Free Disk*. Failures are logged and never interrupt a sale. |
 | Audit | *PharmacyOS Backup Log* is read-only in the UI. Rows left "Running" by a power cut or restore are reconciled against the files on disk. |
@@ -169,25 +169,55 @@ installer. Nothing in this repository has been validated on a physical Windows m
 
 ### Restore — Tested on Linux
 
+Run as the bench user, from the PharmacyOS folder. `BENCH_DIR` defaults to `~/frappe-bench`.
+
+**In place** (the site exists on this server):
+
 ```
-DB_ROOT_PASSWORD=… ./deploy/restore-backup.sh <site> <backup-folder> [--with-files] [--yes]
+DB_ROOT_PASSWORD=… BENCH_DIR=<bench> ./deploy/restore-backup.sh <site> <backup-folder> [--with-files] [--yes]
 ```
 
-It runs these steps:
+**On a new machine** (the site does not exist yet). First, copy the offline `site_config.json` of the
+original site onto the server, readable only by the bench user (`chmod 600`):
 
-1. verify checksums;
-2. ask the operator to confirm by typing the site name;
-3. take a **safety backup** of the current state;
-4. turn maintenance mode on;
-5. `bench restore`, which decrypts automatically when the site's key is present;
-6. `migrate`;
-7. turn maintenance mode off;
-8. health check;
-9. write an audit entry;
-10. then restart the services.
+```
+DB_ROOT_PASSWORD=… BENCH_DIR=<bench> ./deploy/restore-backup.sh <site> <backup-folder> --create-site \
+    --keys-file <copy of the original site_config.json> [--with-files] [--yes]
+```
 
-This was tested onto a fresh site and in place, including with an encrypted backup. Restore is a server
-operation, never a button in the UI.
+Then delete that copy.
+
+The script checks everything it can **before changing anything**:
+
+1. the bench folder is real;
+2. the site exists, or `--create-site` was given (so a wrong `BENCH_DIR` never creates a stray site);
+3. every file's checksum (a damaged or incomplete backup is refused);
+4. the backup is of the same site name (`--allow-other-site` to override);
+5. for an encrypted backup, that the key actually decrypts it — refused with "no key" or "wrong key" otherwise.
+
+The keys are passed to gpg on standard input and are never printed. On an existing site the keys are
+never replaced: a keys file whose keys differ from the site's is refused (restore into a new site name
+instead), so the safety backup stays restorable.
+
+It then:
+
+1. asks the operator to confirm by typing the site name;
+2. takes a **safety backup** of the current state, or creates the new site and writes the keys into its
+   `site_config.json`;
+3. turns maintenance mode on;
+4. runs `bench restore`;
+5. runs `migrate`;
+6. turns maintenance mode off and enables the scheduler;
+7. runs the health check, which includes "stored passwords decrypt", and **fails the restore if it is
+   not OK**;
+8. writes an audit entry.
+
+Restart the services afterwards. If a new-site restore fails part-way, the incomplete new site is
+dropped.
+
+This was tested in place and onto a new site (encrypted, with files), and with a missing key, a wrong key,
+a damaged backup, a wrong `BENCH_DIR` and a backup of another site. Restore is a server operation, never a
+button in the UI.
 
 ## Updates — procedure, not automatic
 
