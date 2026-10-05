@@ -29,6 +29,22 @@ RETURN_LEDGER = {
 	"description": "Maintained by PharmacyOS: quantities already returned against this document.",
 }
 
+# Idempotent counter checkout (pos/api.py): the request ID of the POS screen's cart attempt. DB-unique, so a
+# retried or doubled checkout can never create a second sale; empty on every document not made by /pos.
+POS_REQUEST_ID = {
+	"fieldname": "pharmacyos_pos_request_id",
+	"fieldtype": "Data",
+	"label": "PharmacyOS POS Request ID",
+	"insert_after": "pharma_return_ledger",
+	"unique": 1,
+	"read_only": 1,
+	"hidden": 1,
+	"no_copy": 1,
+	"print_hide": 1,
+	"report_hide": 1,
+	"description": "Set by the PharmacyOS POS screen; guarantees one sale per checkout attempt.",
+}
+
 CUSTOM_FIELDS = {
 	"Item": [
 		{
@@ -271,8 +287,8 @@ CUSTOM_FIELDS = {
 			"no_copy": 1,
 		},
 	],
-	"Sales Invoice": [RETURN_LEDGER],
-	"POS Invoice": [RETURN_LEDGER],
+	"Sales Invoice": [RETURN_LEDGER, POS_REQUEST_ID],
+	"POS Invoice": [RETURN_LEDGER, POS_REQUEST_ID],
 	"Delivery Note": [RETURN_LEDGER],
 	"Customer": [
 		{

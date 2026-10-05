@@ -2698,3 +2698,286 @@ msgstr "تعذر إعداد الصيدلية"
 
 msgid "This pharmacy is already set up. Nothing was changed: edit the pharmacy's identity in PharmacyOS Settings and reset passwords from the user screens."
 msgstr "هذه الصيدلية مُعدّة مسبقاً. لم يتغير شيء: عدّل هوية الصيدلية من إعدادات PharmacyOS وأعد تعيين كلمات المرور من شاشات المستخدمين."
+
+# --- PharmacyOS POS (/pos, web browser and Windows desktop) -----------------------------------
+msgid "The POS is for pharmacy staff."
+msgstr "نقطة البيع مخصّصة لموظفي الصيدلية."
+
+msgid "Scan a barcode or search medicine name, Arabic name or generic"
+msgstr "امسح الباركود أو ابحث باسم الدواء أو الاسم العربي أو الاسم العلمي"
+
+msgid "No medicine found."
+msgstr "لم يُعثر على دواء."
+
+msgid "No medicine found for code {0}."
+msgstr "لا يوجد دواء بالرمز {0}."
+
+msgid "Several medicines match — choose one."
+msgstr "أكثر من دواء مطابق — اختر واحدًا."
+
+msgid "Scan or search to add medicines."
+msgstr "امسح الباركود أو ابحث لإضافة الأدوية."
+
+msgid "Discount %"
+msgstr "الخصم %"
+
+msgid "Remove"
+msgstr "إزالة"
+
+msgid "Change customer"
+msgstr "تغيير الزبون"
+
+msgid "Walk-in customer"
+msgstr "زبون نقدي"
+
+msgid "Search customer name or mobile"
+msgstr "ابحث باسم الزبون أو رقم الموبايل"
+
+msgid "New customer"
+msgstr "زبون جديد"
+
+msgid "Customer name"
+msgstr "اسم الزبون"
+
+msgid "Mobile"
+msgstr "الموبايل"
+
+msgid "Close"
+msgstr "إغلاق"
+
+msgid "Subtotal"
+msgstr "المجموع الفرعي"
+
+msgid "Taxes"
+msgstr "الضرائب"
+
+msgid "Rounding"
+msgstr "التقريب"
+
+msgid "Pay"
+msgstr "دفع"
+
+msgid "Payment"
+msgstr "الدفع"
+
+msgid "Amount received"
+msgstr "المبلغ المستلم"
+
+msgid "Exact"
+msgstr "المبلغ بالضبط"
+
+msgid "Remaining"
+msgstr "المتبقي"
+
+msgid "Complete sale"
+msgstr "إتمام البيع"
+
+msgid "Completing sale…"
+msgstr "جارٍ إتمام البيع…"
+
+msgid "Sale complete"
+msgstr "تمّ البيع"
+
+msgid "New sale"
+msgstr "بيع جديد"
+
+msgid "Receipt"
+msgstr "الوصل"
+
+msgid "Return against a sale"
+msgstr "إرجاع مقابل بيع"
+
+msgid "Invoice number"
+msgstr "رقم الفاتورة"
+
+msgid "Find"
+msgstr "بحث"
+
+msgid "Sold"
+msgstr "المُباع"
+
+msgid "Can return"
+msgstr "قابل للإرجاع"
+
+msgid "Return qty"
+msgstr "كمية الإرجاع"
+
+msgid "Refund"
+msgstr "المبلغ المُعاد"
+
+msgid "Refund calculated by the ERP"
+msgstr "المبلغ المُعاد محسوب من النظام"
+
+msgid "Confirm return"
+msgstr "تأكيد الإرجاع"
+
+msgid "Return complete"
+msgstr "تمّ الإرجاع"
+
+msgid "Everything on this sale has already been returned."
+msgstr "أُرجع كل ما في هذا البيع مسبقًا."
+
+msgid "Reprint"
+msgstr "إعادة طباعة"
+
+msgid "Shift"
+msgstr "الوردية"
+
+msgid "Open shift"
+msgstr "فتح الوردية"
+
+msgid "Opening cash"
+msgstr "النقد الافتتاحي"
+
+msgid "POS Counter"
+msgstr "الكاونتر"
+
+msgid "No shift is open. Open your shift to start selling."
+msgstr "لا توجد وردية مفتوحة. افتح ورديتك لبدء البيع."
+
+msgid "No shift is open for you. Ask a pharmacy manager to open your shift."
+msgstr "لا توجد وردية مفتوحة لك. اطلب من مدير الصيدلية فتح ورديتك."
+
+msgid "No counter (POS Profile) is assigned to you. Ask a pharmacy manager."
+msgstr "لم يُخصَّص لك كاونتر بيع. راجع مدير الصيدلية."
+
+msgid "Your account is not allowed to sell at the counter."
+msgstr "حسابك غير مسموح له بالبيع على الكاونتر."
+
+msgid "Close shift"
+msgstr "إغلاق الوردية"
+
+msgid "Sign out"
+msgstr "تسجيل الخروج"
+
+msgid "Connection to the pharmacy server was lost. Nothing is saved until it returns — do not re-enter the sale."
+msgstr "انقطع الاتصال بخادم الصيدلية. لن تُحفظ العمليات حتى يعود الاتصال — لا تعِد إدخال البيع."
+
+msgid "Connection restored."
+msgstr "عاد الاتصال."
+
+msgid "Connection lost while completing the sale. Checking with the server — do not re-enter the sale."
+msgstr "انقطع الاتصال أثناء إتمام البيع. جارٍ التحقق من الخادم — لا تعِد إدخال البيع."
+
+msgid "Your session has ended. Sign in again to continue — the cart is kept."
+msgstr "انتهت الجلسة. سجّل الدخول مجددًا للمتابعة — السلة محفوظة."
+
+msgid "Only expired stock — cannot be sold."
+msgstr "المخزون منتهي الصلاحية فقط — لا يمكن بيعه."
+
+msgid "In stock"
+msgstr "متوفر"
+
+msgid "Next batch (FEFO)"
+msgstr "الوجبة التالية (الأقرب انتهاءً)"
+
+msgid "Batch {0} is expired and cannot be sold."
+msgstr "الوجبة {0} منتهية الصلاحية ولا يمكن بيعها."
+
+msgid "More than the sellable stock"
+msgstr "أكثر من المخزون القابل للبيع"
+
+msgid "Updating totals…"
+msgstr "جارٍ تحديث المجاميع…"
+
+msgid "Error"
+msgstr "خطأ"
+
+msgid "Warning"
+msgstr "تنبيه"
+
+msgid "Browser printing: choose the receipt printer in the print dialog."
+msgstr "الطباعة من المتصفح: اختر طابعة الوصولات في نافذة الطباعة."
+
+msgid "Receipt sent to the printer."
+msgstr "أُرسل الوصل إلى الطابعة."
+
+msgid "F2 search · F4 customer · F9 pay · Esc close"
+msgstr "F2 بحث · F4 الزبون · F9 دفع · Esc إغلاق"
+
+msgid "Loading…"
+msgstr "جارٍ التحميل…"
+
+msgid "This sale was already completed — showing the saved invoice."
+msgstr "تمّ هذا البيع مسبقًا — تُعرض الفاتورة المحفوظة."
+
+msgid "Please sign in to use the POS."
+msgstr "سجّل الدخول لاستخدام نقطة البيع."
+
+msgid "This counter (POS Profile) is disabled."
+msgstr "هذا الكاونتر معطّل."
+
+msgid "This counter (POS Profile) is not assigned to you."
+msgstr "هذا الكاونتر غير مخصّص لك."
+
+msgid "The cart is empty."
+msgstr "السلة فارغة."
+
+msgid "Too many lines in one sale."
+msgstr "عدد الأسطر كبير جدًا في بيع واحد."
+
+msgid "Invalid cart line."
+msgstr "سطر غير صالح في السلة."
+
+msgid "Quantity must be greater than zero."
+msgstr "يجب أن تكون الكمية أكبر من صفر."
+
+msgid "Discounts are not allowed on this counter."
+msgstr "الخصم غير مسموح على هذا الكاونتر."
+
+msgid "Changing the price is not allowed on this counter."
+msgstr "تغيير السعر غير مسموح على هذا الكاونتر."
+
+msgid "Discount must be between 0 and 100%."
+msgstr "يجب أن يكون الخصم بين 0 و100%."
+
+msgid "Price cannot be negative."
+msgstr "لا يمكن أن يكون السعر سالبًا."
+
+msgid "You are not allowed to sell at the counter."
+msgstr "غير مسموح لك بالبيع على الكاونتر."
+
+msgid "Invalid request ID."
+msgstr "معرّف الطلب غير صالح."
+
+msgid "This request belongs to another user."
+msgstr "هذا الطلب يخصّ مستخدمًا آخر."
+
+msgid "Payment method {0} is not available on this counter."
+msgstr "طريقة الدفع {0} غير متاحة على هذا الكاونتر."
+
+msgid "Payment amount cannot be negative."
+msgstr "لا يمكن أن يكون مبلغ الدفع سالبًا."
+
+msgid "Enter the invoice number."
+msgstr "أدخل رقم الفاتورة."
+
+msgid "Invoice {0} was not found."
+msgstr "لم يُعثر على الفاتورة {0}."
+
+msgid "Only a completed (submitted) sale can be returned."
+msgstr "يمكن الإرجاع فقط مقابل بيع مكتمل (معتمد)."
+
+msgid "{0} is itself a return. Use the original sale."
+msgstr "{0} هي نفسها مرتجع. استخدم البيع الأصلي."
+
+msgid "Consolidated invoices cannot be returned at the counter."
+msgstr "لا يمكن إرجاع الفواتير المجمّعة على الكاونتر."
+
+msgid "You are not allowed to make returns."
+msgstr "غير مسموح لك بالإرجاع."
+
+msgid "Invalid return line."
+msgstr "سطر إرجاع غير صالح."
+
+msgid "Choose at least one item to return."
+msgstr "اختر مادة واحدة على الأقل للإرجاع."
+
+msgid "A line to return is not on this sale or was already returned in full."
+msgstr "سطر الإرجاع غير موجود في هذا البيع أو أُرجع بالكامل."
+
+msgid "The POS needs JavaScript."
+msgstr "تحتاج نقطة البيع إلى JavaScript."
+
+msgid "⌘ Return pay · Esc close · scan or type at any time"
+msgstr "⌘ Return للدفع · Esc إغلاق · امسح أو اكتب في أي وقت"

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+{#-
+	PharmacyOS POS screen (/pos). One page for the web browser and the Windows desktop app.
+	Carries no pharmacy data: everything is loaded through the signed-in user's own API calls.
+-#}
+<html lang="{{ pos_lang }}" dir="{{ pos_dir }}">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+	<meta name="theme-color" content="#063F36">
+	<meta name="robots" content="noindex, nofollow">
+	<meta name="format-detection" content="telephone=no">
+	<title>{{ _("Point of Sale") }} · {{ brand.short_name|e }}</title>
+	<link rel="icon" href="{{ brand.favicon_url }}" type="image/svg+xml">
+	<link rel="stylesheet" href="/assets/pharmacyos_erp/css/pos.css?v={{ build_version }}">
+	<script>window.frappe = window.frappe || {};</script>
+	<!-- csrf_token -->
+</head>
+<body class="pxpos" data-lang="{{ pos_lang }}">
+	<noscript><p class="pxpos-noscript">{{ _("The POS needs JavaScript.") }}</p></noscript>
+
+	<header class="px-top" role="banner">
+		<div class="px-brand">
+			<img src="{{ brand.mark_url }}" alt="" width="30" height="30">
+			<div class="px-brand-text">
+				<strong id="px-pharmacy">{{ brand.short_name|e }}</strong>
+				<span>{{ _("Point of Sale") }}</span>
+			</div>
+		</div>
+		<div class="px-shift" id="px-shift" aria-live="polite"></div>
+		<nav class="px-actions" aria-label="{{ _('Point of Sale') }}">
+			<button type="button" class="px-btn px-btn-ghost" data-action="recent">{{ _("Recent sales") }}</button>
+			<button type="button" class="px-btn px-btn-ghost" data-action="returns">{{ _("Returns") }}</button>
+			<button type="button" class="px-btn px-btn-ghost" data-action="close-shift" hidden>{{ _("Close shift") }}</button>
+			<span class="px-user" id="px-user"></span>
+			<button type="button" class="px-btn px-btn-ghost" data-action="logout">{{ _("Sign out") }}</button>
+		</nav>
+	</header>
+
+	<div class="px-banner" id="px-banner" role="alert" hidden></div>
+
+	<main class="px-main" id="px-main" aria-busy="true">
+		<section class="px-catalog" aria-label="{{ _('Search') }}">
+			<form class="px-scan" id="px-scan-form" autocomplete="off" novalidate>
+				<label class="px-visually-hidden" for="px-scan">{{ _("Scan a barcode or search medicine name, Arabic name or generic") }}</label>
+				<input id="px-scan" class="px-scan-input" type="search" inputmode="search" enterkeyhint="search"
+					autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+					placeholder="{{ _('Scan a barcode or search medicine name, Arabic name or generic') }}">
+				<button type="submit" class="px-btn px-btn-primary">{{ _("Find") }}</button>
+			</form>
+			<div class="px-hint" id="px-hint">{{ _("F2 search · F4 customer · F9 pay · Esc close") }}</div>
+			<div class="px-results" id="px-results" role="list"></div>
+		</section>
+
+		<section class="px-cart" aria-label="{{ _('Cart') }}">
+			<div class="px-customer">
+				<span class="px-label">{{ _("Customer") }}</span>
+				<button type="button" class="px-customer-btn" data-action="customer" id="px-customer"></button>
+			</div>
+			<div class="px-lines" id="px-lines" role="list"></div>
+			<div class="px-totals" id="px-totals" aria-live="polite"></div>
+			<button type="button" class="px-btn px-btn-pay" id="px-pay" data-action="pay" disabled>
+				<span>{{ _("Pay") }}</span> <span class="px-pay-amount" id="px-pay-amount"></span> <kbd>F9</kbd>
+			</button>
+		</section>
+	</main>
+
+	<div class="px-toasts" id="px-toasts" aria-live="assertive"></div>
+	<div id="px-dialog-root"></div>
+
+	<script type="application/json" id="px-messages">{{ messages|json }}</script>
+	<script src="/assets/pharmacyos_erp/js/pos/platform.js?v={{ build_version }}"></script>
+	<script src="/assets/pharmacyos_erp/js/pos/pos.js?v={{ build_version }}"></script>
+</body>
+</html>

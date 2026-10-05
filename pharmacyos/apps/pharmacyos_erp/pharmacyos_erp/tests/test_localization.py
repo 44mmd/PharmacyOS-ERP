@@ -255,6 +255,9 @@ class TestRound4MessagesAreTranslated(IntegrationTestCase):
 		"setup/first_run.py",
 		"integration/cloud.py",
 		"pharmacyos/doctype/pharmacyos_settings/pharmacyos_settings.py",
+		# the POS screen and its server API (web browser and Windows desktop)
+		"www/pos.py",
+		"pos/api.py",
 	)
 
 	def test_user_facing_strings_have_arabic_entries(self):
