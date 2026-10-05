@@ -8,6 +8,7 @@ const DEFAULTS = {
 	serverUrl: "http://127.0.0.1", // nginx on the pharmacy server (port 80)
 	receiptPrinter: "", // empty = ask with the system print dialog
 	silentReceipts: false,
+	startPage: "desk", // "pos" opens the PharmacyOS POS screen at start (a counter PC), "desk" the ERP
 	wslDistro: "PharmacyOS", // single-PC mode: the bundled server environment
 };
 
@@ -26,6 +27,7 @@ function load(userData) {
 function save(userData, config) {
 	const clean = { ...DEFAULTS, ...config };
 	clean.serverUrl = normaliseUrl(clean.serverUrl);
+	clean.startPage = clean.startPage === "pos" ? "pos" : "desk";
 	fs.mkdirSync(userData, { recursive: true });
 	const tmp = file(userData) + ".tmp";
 	fs.writeFileSync(tmp, JSON.stringify(clean, null, 2));

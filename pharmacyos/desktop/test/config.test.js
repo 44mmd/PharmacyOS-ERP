@@ -22,6 +22,9 @@ test("config is saved atomically and survives reload; unconfigured by default", 
 	assert.equal(config.isConfigured(loaded), true);
 	assert.ok(!fs.existsSync(path.join(dir, "config.json.tmp")));
 	assert.ok(!JSON.stringify(loaded).toLowerCase().includes("password"));
+	assert.equal(loaded.startPage, "desk");
+	assert.equal(config.save(dir, { ...loaded, startPage: "pos" }).startPage, "pos");
+	assert.equal(config.save(dir, { ...loaded, startPage: "javascript:alert(1)" }).startPage, "desk");
 });
 
 test("ping reports an unreachable server as offline", async () => {

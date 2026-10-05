@@ -80,6 +80,13 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 				<label for="printer">طابعة الوصل · Receipt printer</label>
 				<select id="printer" name="receiptPrinter"><option value="">اسأل عند الطباعة · Ask when printing</option></select>
 			</div>
+			<div class="field">
+				<label for="start">عند التشغيل افتح · Open at start</label>
+				<select id="start" name="startPage">
+					<option value="pos">نقطة البيع · Point of Sale</option>
+					<option value="desk">نظام الصيدلية (ERP) · ERP</option>
+				</select>
+			</div>
 			<label class="field" style="display:flex;gap:8px;align-items:center"><input type="checkbox" name="silentReceipts"> طباعة الوصل مباشرة بدون نافذة · Print receipts directly</label>
 			<div class="row">
 				<button type="submit" class="primary">حفظ ومتابعة · Save</button>

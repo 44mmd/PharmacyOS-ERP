@@ -8,6 +8,7 @@ const { app, BrowserWindow, Menu, ipcMain, shell, dialog, session } = require("e
 const path = require("path");
 const config = require("./config");
 const server = require("./server");
+const pos = require("./pos");
 
 const CONNECT_PAGE = path.join(__dirname, "connect.html");
 const PING_EVERY_MS = 30000; // quiet health check; only a failure is shown
@@ -116,6 +117,32 @@ function maybeSilentPrint(child) {
 	});
 }
 
+// Prints a receipt from a hidden window that shares the signed-in session (same partition), so the
+// server renders it with the cashier's own permissions — exactly what the browser preview shows.
+function printReceipt(url) {
+	return new Promise((resolve) => {
+		const printer = new BrowserWindow({ show: false, webPreferences: webPreferences() });
+		guard(printer.webContents);
+		const done = (result) => {
+			if (!printer.isDestroyed()) printer.close();
+			resolve(result);
+		};
+		printer.webContents.once("did-fail-load", (_e, _code, description) => done({ ok: false, error: description }));
+		printer.webContents.once("did-finish-load", () => {
+			const options = pos.printOptions(cfg);
+			printer.webContents.print(options, (ok, reason) =>
+				done({ ok, silent: options.silent, error: ok ? null : reason })
+			);
+		});
+		printer.loadURL(url);
+	});
+}
+
+function openPath(pathname) {
+	if (!cfg || !config.isConfigured(cfg) || !online) return;
+	win.loadURL(new URL(pathname, cfg.serverUrl).href);
+}
+
 function showConnect(state) {
 	online = false;
 	win.loadFile(CONNECT_PAGE, { query: { state } });
@@ -133,7 +160,7 @@ async function openApp() {
 	}
 	if (!ok) return showConnect("offline");
 	online = true;
-	win.loadURL(lastAppUrl && isServerUrl(lastAppUrl) ? lastAppUrl : new URL("/desk", cfg.serverUrl).href);
+	win.loadURL(lastAppUrl && isServerUrl(lastAppUrl) ? lastAppUrl : new URL(pos.startPath(cfg), cfg.serverUrl).href);
 }
 
 function startMonitor() {
@@ -154,6 +181,9 @@ function buildMenu() {
 		{
 			label: "PharmacyOS ERP",
 			submenu: [
+				{ label: "Point of Sale", accelerator: "CmdOrCtrl+Shift+P", click: () => openPath(pos.START_PATHS.pos) },
+				{ label: "ERP", click: () => openPath(pos.START_PATHS.desk) },
+				{ type: "separator" },
 				{ label: "Connection & Printer…", click: () => showConnect("settings") },
 				{ type: "separator" },
 				{ role: "reload" },
@@ -193,6 +223,13 @@ function registerIpc() {
 		fromConnectPage(event) ? (await event.sender.getPrintersAsync()).map((p) => p.name) : []
 	);
 	ipcMain.handle("app:info", () => ({ version: app.getVersion(), platform: process.platform }));
+	// the POS screen's native printing (platform adapter): the server's print view only
+	ipcMain.handle("pos:print-receipt", (event, url) => {
+		if (!cfg || !isServerUrl(event.sender.getURL()) || !pos.isReceiptUrl(url, cfg.serverUrl)) {
+			return { ok: false, error: "not allowed" };
+		}
+		return printReceipt(url);
+	});
 }
 
 // Automated smoke test: PHARMACYOS_SMOKE=<png> captures the first loaded page and quits.

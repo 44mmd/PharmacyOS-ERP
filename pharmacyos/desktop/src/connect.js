@@ -17,6 +17,7 @@ async function setupForm() {
 	form.elements.serverUrl.value = cfg.mode === "network" ? cfg.serverUrl : "";
 	select.value = cfg.receiptPrinter || "";
 	form.elements.silentReceipts.checked = Boolean(cfg.silentReceipts);
+	form.elements.startPage.value = cfg.startPage === "pos" ? "pos" : "desk";
 	const sync = () => ($("[data-slot=address]").hidden = form.elements.mode.value !== "network");
 	form.addEventListener("change", sync);
 	sync();
@@ -25,6 +26,7 @@ async function setupForm() {
 		serverUrl: form.elements.mode.value === "this-pc" ? "http://127.0.0.1" : form.elements.serverUrl.value,
 		receiptPrinter: select.value,
 		silentReceipts: form.elements.silentReceipts.checked,
+		startPage: form.elements.startPage.value,
 	});
 	const status = (text, tone) => {
 		const el = $("[data-slot=status]");

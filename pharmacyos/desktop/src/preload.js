@@ -11,6 +11,10 @@ contextBridge.exposeInMainWorld("pharmacyosDesktop", {
 	retry: () => ipcRenderer.invoke("connect:retry"),
 	listPrinters: () => ipcRenderer.invoke("printers:list"),
 	onProgress: (cb) => ipcRenderer.on("connect:progress", (_e, p) => cb(p)),
+	// PharmacyOS POS (/pos): native receipt printing — silently to the receipt printer chosen in
+	// Settings, or with the system print dialog. The main process accepts only the server's own
+	// print view, from the server's own pages.
+	printReceipt: (url) => ipcRenderer.invoke("pos:print-receipt", String(url)),
 });
 
 // Connection banner for PharmacyOS pages: shown only while the server is unreachable.
