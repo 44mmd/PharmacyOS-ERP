@@ -120,6 +120,16 @@ address). You can also pick a receipt printer and choose to print receipts witho
 * if the connection drops, an Arabic or English banner appears without reloading the page;
 * in single-PC mode, the app starts the server if it is down.
 
+**PharmacyOS POS (`/pos`) — the same screen in the browser and in this app (see `WEB_POS.md`):**
+* Settings → *Open at start* → **Point of Sale** makes a counter PC open the POS directly; the menu has
+  *Point of Sale* (Ctrl+Shift+P) and *ERP*.
+* Receipts from the POS print through the app's native bridge: silently to the receipt printer chosen
+  in Settings (with *Print receipts directly*), otherwise with the system dialog. The bridge accepts only
+  the server's own `/printview`, from the server's own pages. **Tested here:** Electron E2E (sale, bridge
+  refuses other sites, a configured printer that does not exist returns a clear error). A real thermal
+  printer is hardware-only validation.
+* The same POS works in Safari / Chrome / Edge at `http(s)://<server>/pos` without installing anything.
+
 **Barcode scanners:** they work as keyboard (HID) devices; nothing is installed for them.
 
 **Tested here (Linux + Xvfb):**

@@ -84,7 +84,7 @@ bench --site pharmacyos.localhost execute pharmacyos_erp.setup.demo_data.create_
 Tests (on the test site only):
 
 ```bash
-bench --site test.localhost run-tests --app pharmacyos_erp                     # PharmacyOS (224 tests)
+bench --site test.localhost run-tests --app pharmacyos_erp                     # PharmacyOS (234 tests)
 bench --site test.localhost run-tests --lightmode --module erpnext.stock.doctype.batch.test_batch   # upstream
 ```
 
@@ -106,6 +106,11 @@ python3 pharmacyos/dev/permission_check.py --site <site> --actors actors.json
 python3 pharmacyos/dev/permission_check.py --site <site> --actors actors.json --cost
 # the round-4 sentinel matrix: four distinct cost sentinels, 71 surfaces, every profile and Guest
 python3 pharmacyos/dev/cost_matrix_check.py --site <site> --actors actors.json
+# the POS screen's HTTP path (browser-like sessions + CSRF) verified in SI/SLE/GL/batches; with
+# --cloud-dir also a real Cloud: a POS sale and return change the website availability
+python3 pharmacyos/dev/web_pos_check.py --url http://<pos host> --actors actors.json --bench-site <site> [--cloud-dir … --cloud-python …]
+# POS demo counters and test accounts on a developer-mode demo site (after demo_data.create_demo_data)
+bench --site pharmacyos.localhost execute pharmacyos_erp.setup.pos_demo.create_pos_demo --kwargs '{"cashier_password": "…", "manager_password": "…"}'
 # a real Cloud next to the ERP: catalog, public price validity, outage, orders, completion
 python3 pharmacyos/dev/live_cloud_check.py --site <site> --actors actors.json \
     --cloud-dir /path/to/PharmacyOS/backend --cloud-python /path/to/venv/bin/python

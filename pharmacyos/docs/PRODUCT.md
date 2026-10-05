@@ -195,8 +195,8 @@ PharmacyOS Integration account, Guest.
 
 * Standard document forms and list views (Sales Invoice, Purchase Order, Item, …) are ERPNext's,
   themed by tokens and wrapped in PharmacyOS navigation — not redesigned.
-* The ERPNext **POS page** is themed only; a PharmacyOS POS (Vue/frappe-ui page in this app) is the
-  planned replacement (see ARCHITECTURE.md).
+* The **PharmacyOS POS** (`/pos`, `WEB_POS.md`) is the counter screen for the web browser and the Windows
+  desktop app. ERPNext's own POS page (`/app/point-of-sale`) is still available and themed only.
 * The `/desk` apps screen and app switcher show only PharmacyOS ERP to pharmacy staff. This is
   presentation only, in `boot.py:focus_apps_screen`; System Managers still see ERPNext and Framework.
 * Website error pages (404/500), setup wizard, system emails' body templates and most reports keep
@@ -212,5 +212,5 @@ PharmacyOS Integration account, Guest.
 
 Prescriptions, controlled-drug register and regulator-confirmed rules (extension point exists:
 `pharmacyos_sale_validators`), expired-stock quarantine/disposal workflow, GS1 DataMatrix
-(GTIN + batch + expiry) scanning, PharmacyOS POS, generic substitution / ingredient search in POS,
+(GTIN + batch + expiry) scanning, generic substitution / ingredient search in POS,
 Iraqi chart-of-accounts template, near-expiry notifications (email/push), offline POS.

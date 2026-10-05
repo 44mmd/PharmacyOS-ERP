@@ -8,6 +8,7 @@ ERPNext core.
 * [`apps/pharmacyos_erp`](apps/pharmacyos_erp): **the PharmacyOS ERP Frappe app** (all product code)
 * [`docs/PRODUCT.md`](docs/PRODUCT.md): product transformation — identity, navigation, roles, workflows, remaining gaps
 * [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md): server and Windows desktop deployment, hourly backups, restore, updates, disaster recovery
+* [`docs/WEB_POS.md`](docs/WEB_POS.md): the PharmacyOS POS (`/pos`) — one POS for the web browser and the Windows desktop app; architecture, security, tests, deployment, manual test
 * [`desktop/`](desktop): PharmacyOS ERP Windows desktop app (Electron)
 * [`deploy/`](deploy): server install, Windows single-PC setup, backup restore tool
 * [`docs/LOCALIZATION.md`](docs/LOCALIZATION.md): Arabic-first localization — terminology (Batch = الوجبة), RTL/bidi, IQD, dates, Arabic search
