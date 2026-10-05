@@ -15,7 +15,13 @@
 * Delivery: scheduler job every minute (`process_outbox`), JSON POST signed with HMAC-SHA256 over
   the raw body (`X-PharmacyOS-Signature: sha256=<hex>`), with `X-PharmacyOS-Event` / `-Event-Id`
   headers. Up to MAX_ATTEMPTS tries with exponential back-off (2, 4, 8 … minutes, capped at an
-  hour), then the event stays `Failed`. Events that failed only because the Cloud was unreachable
+  hour), then the event stays `Failed`. Each run sends the never-attempted events first (oldest
+  first, up to BATCH_SIZE − RETRY_SLOTS) and then the due retries (oldest first, at least RETRY_SLOTS,
+  plus any capacity the fresh lane left unused): a newly queued stock or price change is delivered on
+  the first run that has room for it in the fresh lane, however many older events are retrying — at
+  most ceil((fresh events queued before it + 1) / (BATCH_SIZE − RETRY_SLOTS)) runs. Reordering is
+  safe: every state carries `computed_at` and the receiver applies only newer states. A failure while
+  building one event's payload marks that event Failed (non-transient) and the run continues. Events that failed only because the Cloud was unreachable
   get a fresh set of attempts as soon as a later delivery proves the connection is back (a long
   internet outage must not leave the website stale); events the Cloud rejected wait for an
   authorized user's Retry.
@@ -34,6 +40,9 @@ from frappe.utils import cint, get_datetime, now_datetime
 
 MAX_ATTEMPTS = 5
 BATCH_SIZE = 100
+# Fairness (round 5, M-1): events never attempted go first; due retries keep at least this share of
+# every run (more when there are fewer fresh events), so neither side can starve the other.
+RETRY_SLOTS = 25
 
 
 def outbound_endpoint(settings=None) -> str | None:
@@ -55,7 +64,8 @@ def queue_event(event_type: str, reference_doctype: str, reference_name: str, de
 	if not outbound_enabled():
 		return
 	if frappe.db.exists(
-		"PharmacyOS Sync Event", {"dedupe_key": dedupe_key, "status": "Pending", "attempts": 0}
+		"PharmacyOS Sync Event",
+		{"dedupe_key": dedupe_key, "status": "Pending", "attempts": 0, "payload": ["is", "not set"]},
 	):
 		return  # not sent yet: its payload is computed at first send, so it will carry this change too
 	frappe.get_doc(
@@ -318,6 +328,40 @@ def event_body(event) -> bytes:
 	return event.payload.encode()
 
 
+def due_events(now=None) -> tuple[list, list]:
+	"""(fresh, retries) for one run — the fairness rule above. Deterministic: oldest first per lane.
+	Fresh = never attempted (no attempts, no recorded error)."""
+	now = now or now_datetime()
+	fresh = frappe.db.sql(
+		"""
+		select name, attempts, modified from `tabPharmacyOS Sync Event`
+		where status in ('Pending', 'Failed') and attempts = 0 and ifnull(last_error, '') = ''
+		order by creation asc, name asc
+		limit %(limit)s
+		""",
+		{"limit": BATCH_SIZE},
+		as_dict=True,
+	)
+	# retries: anything already tried, including events revived after an outage (attempts reset to 0,
+	# last error kept) — a revived backlog never jumps ahead of new events. Events waiting out their
+	# back-off are never taken (same delay as is_due).
+	retries = frappe.db.sql(
+		"""
+		select name, attempts, modified from `tabPharmacyOS Sync Event`
+		where status in ('Pending', 'Failed') and attempts < %(max)s
+			and (attempts > 0 or ifnull(last_error, '') != '')
+			and timestampadd(minute, if(attempts = 0, 0, least(power(2, attempts), 60)), modified) <= %(now)s
+		order by creation asc, name asc
+		limit %(limit)s
+		""",
+		{"max": MAX_ATTEMPTS, "now": now, "limit": BATCH_SIZE},
+		as_dict=True,
+	)
+	retries = [r for r in retries if is_due(r, now)]
+	fresh = fresh[: BATCH_SIZE - min(len(retries), RETRY_SLOTS)]
+	return fresh, retries[: BATCH_SIZE - len(fresh)]
+
+
 def process_outbox() -> None:
 	"""Scheduler entry point. Sends pending events; no-op unless outbound is enabled."""
 	if not outbound_enabled():
@@ -333,34 +377,26 @@ def process_outbox() -> None:
 	secret = settings.get_password("outbound_secret", raise_exception=False) or ""
 	timeout = cint(settings.outbound_timeout) or 10
 	now = now_datetime()
-	# only events that are due: events waiting out their back-off must never fill the batch and hold
-	# back newer ones (e.g. a price expiry behind a hundred failed deliveries); same delay as is_due
-	events = frappe.db.sql(
-		"""
-		select name, attempts, modified
-		from `tabPharmacyOS Sync Event`
-		where status in ('Pending', 'Failed') and attempts < %(max)s
-			and (attempts = 0
-				or timestampadd(minute, least(power(2, attempts), 60), modified) <= %(now)s)
-		order by creation asc
-		limit %(limit)s
-		""",
-		{"max": MAX_ATTEMPTS, "now": now, "limit": BATCH_SIZE},
-		as_dict=True,
-	)
+	fresh, retries = due_events(now)
 	delivered = False
-	for row in events:
-		if not is_due(row, now):
-			continue
+	for row in fresh + retries:
 		event = frappe.get_doc("PharmacyOS Sync Event", row.name)
-		body = event_body(event)
+		event.attempts = cint(event.attempts) + 1
+		try:
+			body = event_body(event)
+		except Exception as e:
+			# one event whose payload cannot be built never holds back the others
+			event.status = "Failed"
+			event.last_error = ("[payload] " + str(e))[:480]
+			event.save(ignore_permissions=True)
+			frappe.db.commit()
+			continue
 		headers = {
 			"Content-Type": "application/json",
 			"X-PharmacyOS-Event": event.event_type,
 			"X-PharmacyOS-Event-Id": event.name,
 			"X-PharmacyOS-Signature": sign(body, secret),
 		}
-		event.attempts = cint(event.attempts) + 1
 		try:
 			response = requests.post(endpoint, data=body, headers=headers, timeout=timeout)
 			response.raise_for_status()

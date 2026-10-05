@@ -89,7 +89,15 @@ POST orders.create_order
 Enable in *PharmacyOS Settings → Integration* (HTTPS endpoint + signing secret; plain HTTP is refused
 except for a loopback address in developer mode). Events are recorded in the same transaction as the
 change (transactional outbox, DocType **PharmacyOS Sync Event**), merged while not yet sent, and
-delivered every 5 minutes by the scheduler.
+delivered by the scheduler every minute, at most 100 events per run.
+
+**New changes are never stuck behind retries (round 5).** Each run sends the events never attempted
+first (oldest first), then the due retries (oldest first). Retries always keep at least 25 places per
+run, plus whatever new events leave unused, so neither side can starve the other. Bound: a new event
+goes out within ⌈(new events queued before it + 1) / 75⌉ runs (minutes), however many events are
+retrying. With no backlog of new events this is the next run, even behind 1,000 retrying events. An
+event whose payload cannot be built fails alone (`[payload] …`), and the run continues. Reordering
+is safe because receivers apply only states newer than the ones they hold.
 
 **Immutable, versioned events.** An event's payload is computed once, at its first delivery attempt,
 and stored; every retry re-sends exactly the same bytes under the same `event_id`. A change after that
