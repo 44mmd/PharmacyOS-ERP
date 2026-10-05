@@ -114,12 +114,13 @@ Arabic first (RTL; English when the user's language is English), IQD, PharmacyOS
 
 | Suite | Result |
 |---|---|
-| PharmacyOS ERP (`bench run-tests --app pharmacyos_erp`, develop bench) | see the release report |
-| PharmacyOS ERP on the commercial target (version-16 bench) | see the release report |
-| `tests/test_web_pos.py` (part of the suite) | 10 tests |
-| `dev/web_pos_check.py` (HTTP, browser-like sessions, ledgers verified, optional live Cloud) | 66 checks |
-| Browser E2E (Playwright, Chromium engine = Chrome/Edge): login, shift, Arabic search, fast scans, qty (Arabic digits), customer, cash sale, receipt, return, expired batch, reload, logout/login — at 1440, 1280, 820 and 390 px | 20 checks × 4 sizes |
-| Desktop: `npm test`, packaged build, Electron E2E (same `/pos`, desktop adapter, sale, native print bridge) | |
+| PharmacyOS ERP suite, `develop` bench (Frappe/ERPNext develop + this fork) | 234 / 234 passed |
+| PharmacyOS ERP suite, **commercial target** (Frappe 16.36.1 / ERPNext 16.37.0) | 234 / 234 passed |
+| `tests/test_web_pos.py` (part of the suite) | 10 / 10 |
+| `dev/web_pos_check.py` — HTTP like a browser, ledgers verified, 8 rounds of 6 simultaneous duplicate checkouts and of last-unit races, live PharmacyOS Cloud | develop 66 / 66 (without Cloud), version-16 69 / 69 (with Cloud) |
+| Browser E2E (Playwright, Chromium engine = Chrome/Edge): login, shift, Arabic search, fast scans, qty (Arabic digits), customer, cash sale, receipt, return, expired batch, reload, logout/login | 20 / 20 at 1440, 1280, 820, 390 px (develop) and 1440 px (version-16) |
+| Desktop: `npm test`; packaged build (Linux dir); Electron E2E (same `/pos`, desktop adapter, sale, native print bridge) | 6 / 6; built; 6 / 6 |
+| Cloud backend / storefront / admin (PharmacyOS repo, unchanged) | 102 / 102; 15 / 15 + build; lint + build |
 
 Run them:
 

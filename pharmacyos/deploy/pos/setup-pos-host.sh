@@ -26,6 +26,7 @@ LISTEN="${LISTEN:-}"
 CERTBOT_EMAIL="${CERTBOT_EMAIL:-}"
 HERE="$(cd "$(dirname "$0")" && pwd)"
 CONF="/etc/nginx/conf.d/pharmacyos-pos-${POS_HOST/_/any}.conf"
+UPSTREAM_NAME="pharmacyos_pos_$(echo "${POS_HOST/_/any}" | tr -c 'A-Za-z0-9\n' '_')"  # one per POS host
 
 [ "$(id -u)" -eq 0 ] || { echo "Run as root (sudo)." >&2; exit 1; }
 [ -d "$BENCH_DIR/sites/$SITE" ] || { echo "Site $SITE not found in $BENCH_DIR/sites." >&2; exit 1; }
@@ -35,7 +36,7 @@ CONF="/etc/nginx/conf.d/pharmacyos-pos-${POS_HOST/_/any}.conf"
 
 render() { # $1 listen, $2 tls block
 	sed -e "s|__POS_HOST__|$POS_HOST|g" -e "s|__SITE__|$SITE|g" -e "s|__SITES__|$BENCH_DIR/sites|g" \
-		-e "s|__UPSTREAM__|$UPSTREAM|g" -e "s|__LISTEN__|$1|g" "$HERE/pos-host.nginx.conf.template" |
+		-e "s|__UPSTREAM_NAME__|$UPSTREAM_NAME|g" -e "s|__UPSTREAM__|$UPSTREAM|g" -e "s|__LISTEN__|$1|g" "$HERE/pos-host.nginx.conf.template" |
 		awk -v tls="$2" '{ if ($0 == "__TLS__") print tls; else print }' > "$CONF"
 }
 

@@ -15,7 +15,7 @@
 #   admin.halfpharmacy.com), SameSite=Lax; unsafe requests need Frappe's CSRF token.
 # * No CORS headers are sent: the POS calls its own origin only.
 
-upstream pharmacyos_pos_frappe {
+upstream __UPSTREAM_NAME__ {
 	server __UPSTREAM__ fail_timeout=0;
 }
 
@@ -56,7 +56,7 @@ __TLS__
 		proxy_set_header Host $host;
 		proxy_read_timeout 120;
 		proxy_redirect off;
-		proxy_pass http://pharmacyos_pos_frappe;
+		proxy_pass http://__UPSTREAM_NAME__;
 	}
 
 	location /assets {
@@ -88,6 +88,6 @@ __TLS__
 		proxy_set_header X-Use-X-Accel-Redirect True;
 		proxy_read_timeout 120;
 		proxy_redirect off;
-		proxy_pass http://pharmacyos_pos_frappe;
+		proxy_pass http://__UPSTREAM_NAME__;
 	}
 }
