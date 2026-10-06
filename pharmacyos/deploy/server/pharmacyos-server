@@ -15,6 +15,6 @@ case "${1:-status}" in
 	status) for s in "${SERVICES[@]}"; do printf '%-14s %s\n' "$s" "$(systemctl is-active "$s")"; done; supervisorctl status ;;
 	health)
 		curl -fsS -m 5 http://127.0.0.1/api/method/ping >/dev/null && echo "web ok" || { echo "web down"; exit 1; }
-		su - "$BENCH_USER" -c "cd $BENCH_DIR && bench --site all execute pharmacyos_erp.backup.service.health_check" ;;
+		su - "$BENCH_USER" -c "PATH=\$HOME/.local/bin:\$PATH; cd $BENCH_DIR && bench --site all execute pharmacyos_erp.backup.service.health_check" ;;
 	*) echo "usage: pharmacyos-server start|stop|status|health" >&2; exit 2 ;;
 esac

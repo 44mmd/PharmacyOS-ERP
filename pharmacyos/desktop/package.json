@@ -21,6 +21,7 @@
     "productName": "PharmacyOS ERP",
     "copyright": "© 2026 HALF",
     "directories": { "output": "dist", "buildResources": "build" },
+    "publish": null,
     "files": ["src/**/*", "package.json"],
     "extraResources": [{ "from": "../LICENSE-NOTICES.txt", "to": "LICENSE-NOTICES.txt" }],
     "win": { "target": "nsis", "icon": "build/icon.png", "artifactName": "PharmacyOS-ERP-Setup-${version}.${ext}" },

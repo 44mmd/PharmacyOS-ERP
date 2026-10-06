@@ -72,6 +72,14 @@ directory. It drops and recreates the site, so never point it at real data.
 
 ### Linux server — Untested end-to-end
 
+The installer brings its own toolchain (Node.js 24 + yarn from NodeSource/npm, `uv` for Python 3.14 and the
+bench CLI) and installs the pinned, verified release **Frappe v16.36.1 / ERPNext v16.37.0** — not the moving
+`version-16` branch head (v16.50.0 created sites without the Gender DocType, Oct 2026). Before Oct 2026 the
+script relied on `uv`, Node 24 and yarn being present and on `bench` being on root's PATH; on a fresh Ubuntu or
+WSL environment it stopped at the bench step. The bench steps it runs were exercised in a container with that
+toolchain and the pinned versions (site creation, app install, build, the PharmacyOS tests); the systemd /
+nginx / supervisor part needs a real Ubuntu or WSL2 machine.
+
 ```
 sudo SITE=pharmacy.local ADMIN_PASSWORD=… DB_ROOT_PASSWORD=… ./deploy/server/install-server.sh
 ```
@@ -81,6 +89,18 @@ sudo SITE=pharmacy.local ADMIN_PASSWORD=… DB_ROOT_PASSWORD=… ./deploy/server
 * Then runs `bench setup production`, which makes the services start at boot.
 
 ### Single Windows PC — Untested
+
+Needs the pharmacy's name, the owner's email and two passwords (asked for, never written to disk):
+
+```
+deploy\windows\install-server.ps1 -Site pharmacy.local -PharmacyName "Al Noor Pharmacy" -PharmacyNameAr "صيدلية النور" -OwnerEmail owner@example.com [-ShareOnNetwork]
+```
+
+Before Oct 2026 the script did not pass the pharmacy name, owner email and owner password that
+`install-server.sh` requires (it stopped at once), and converted the folder path with a PowerShell 7-only
+construct that Windows PowerShell 5.1 does not run. Values now reach Linux base64-encoded, so quotes, Arabic
+text and spaces in names or passwords are safe (checked with PowerShell 7 on Linux: the script parses and the
+values arrive byte-for-byte). It has not run on Windows.
 
 ```
 deploy/windows/install-server.ps1 -Site pharmacy.local [-ShareOnNetwork]
@@ -155,7 +175,7 @@ installer. Nothing in this repository has been validated on a physical Windows m
 * Data folders go in `%ProgramData%\PharmacyOS`. Uninstall never deletes them.
 * Build it with the **PharmacyOS Desktop (Windows)** GitHub workflow (manual or on a tag) or `npm run dist:win`
   on Windows.
-* It could not be produced in this Linux container: NSIS needs 32-bit Wine.
+* It also builds on Linux with Wine installed (`npm run dist:win`): verified in Oct 2026 — `PharmacyOS-ERP-Setup-0.1.0.exe`, about 111 MB, unsigned. `"publish": null` keeps electron-builder from looking for an update feed (there is none; see Updates).
 
 **Not built yet (Planned):**
 * code signing (needs a certificate purchase);
