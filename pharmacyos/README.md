@@ -6,6 +6,7 @@ conflict-free. PharmacyOS features are built in a separate Frappe app (`pharmacy
 ERPNext core.
 
 * [`apps/pharmacyos_erp`](apps/pharmacyos_erp): **the PharmacyOS ERP Frappe app** (all product code)
+* [`docs/LOCAL_ERP_STATUS.md`](docs/LOCAL_ERP_STATUS.md): what the LOCAL ERP does today — every subsystem classified (Oct 2026), and what remains
 * [`docs/PRODUCT.md`](docs/PRODUCT.md): product transformation — identity, navigation, roles, workflows, remaining gaps
 * [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md): server and Windows desktop deployment, hourly backups, restore, updates, disaster recovery
 * [`docs/WEB_POS.md`](docs/WEB_POS.md): the PharmacyOS POS (`/pos`) — one POS for the web browser and the Windows desktop app; architecture, security, tests, deployment, manual test
