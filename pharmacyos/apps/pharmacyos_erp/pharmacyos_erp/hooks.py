@@ -156,6 +156,8 @@ doc_events = {
 	},
 	"Purchase Order": {"validate": _branch},
 	"Stock Entry": {"validate": _branch},
+	# an expired batch is disposed of, never re-dated into sellable stock (pharmacy/disposal.py)
+	"Batch": {"validate": "pharmacyos_erp.pharmacy.disposal.guard_batch_expiry"},
 	# outbox only records when outbound events are enabled (PharmacyOS Settings)
 	"Stock Ledger Entry": {"on_submit": f"{_outbox}.on_stock_ledger_entry"},
 }

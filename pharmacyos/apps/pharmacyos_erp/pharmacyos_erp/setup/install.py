@@ -132,6 +132,10 @@ def after_install():
 def after_migrate():
 	ensure_structure()
 	compile_translations()
+	from pharmacyos_erp.setup.first_run import ensure_counter, is_initialized
+
+	if is_initialized():
+		ensure_counter()  # pharmacies set up before setup created the first counter
 
 
 def before_uninstall():
@@ -172,6 +176,14 @@ def ensure_structure():
 	ensure_cost_privacy()
 	ensure_branch_dimension_fields()
 	ensure_voucher_indexes()
+	ensure_disposal_type()
+
+
+def ensure_disposal_type():
+	"""The Stock Entry type used to dispose of expired stock (pharmacy/disposal.py)."""
+	from pharmacyos_erp.pharmacy.disposal import ensure_disposal_type as apply
+
+	apply()
 
 
 def ensure_voucher_indexes():

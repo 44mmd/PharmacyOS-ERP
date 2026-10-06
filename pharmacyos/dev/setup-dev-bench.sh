@@ -34,12 +34,14 @@ if [ "$(id -u)" -eq 0 ]; then
 	exit 1
 fi
 
-PYTHON_BIN="$(uv python find 3.14 2>/dev/null || true)"
+PYTHON_VERSION="${PYTHON_VERSION:-3.14}"           # the server installer pins the patch release
+BENCH_CLI_VERSION="${BENCH_CLI_VERSION:-}"         # e.g. 5.31.0; empty = latest
+PYTHON_BIN="$(uv python find "$PYTHON_VERSION" 2>/dev/null || true)"
 if [ -z "$PYTHON_BIN" ]; then
-	uv python install 3.14
-	PYTHON_BIN="$(uv python find 3.14)"
+	uv python install "$PYTHON_VERSION"
+	PYTHON_BIN="$(uv python find "$PYTHON_VERSION")"
 fi
-command -v bench >/dev/null || uv tool install frappe-bench --python 3.14
+command -v bench >/dev/null || uv tool install "frappe-bench${BENCH_CLI_VERSION:+==$BENCH_CLI_VERSION}" --python "$PYTHON_VERSION"
 
 node --version | grep -q '^v2[4-9]' || { echo "Node >= 24 required (Frappe develop engines)" >&2; exit 1; }
 command -v yarn >/dev/null || { echo "yarn 1.x required (corepack enable yarn)" >&2; exit 1; }

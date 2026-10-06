@@ -1421,3 +1421,11 @@ html[dir="rtl"] .pos-page svg.icon:has(> use:is(
 .pos-error-text {
 	color: #b42318;
 }
+
+/* Pharmacy Report and disposals */
+.pos-grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+.pos-btn.pos-btn-danger { color: var(--pos-danger, #b42318); border-color: currentColor; }
+@media print {
+	.page-head, .pos-toolbar, .layout-side-section, .navbar, .desk-sidebar { display: none !important; }
+	.pos-panel, .pos-kpi { break-inside: avoid; }
+}

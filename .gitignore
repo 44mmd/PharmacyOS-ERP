@@ -23,3 +23,5 @@ node_modules/
 # Banking SPA
 erpnext/public/banking
 erpnext/www/banking.html
+# PharmacyOS desktop: generated server bundle (npm run bundle)
+pharmacyos/desktop/server-bundle/

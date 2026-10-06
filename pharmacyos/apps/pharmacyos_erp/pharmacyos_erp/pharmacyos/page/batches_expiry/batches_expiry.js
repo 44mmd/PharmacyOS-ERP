@@ -28,6 +28,11 @@ class PharmacyOSBatchesExpiry {
 		this.$root = $(`<div class="pos-page"></div>`).appendTo(page.main);
 		page.set_secondary_action(__("Refresh"), () => this.load(), "refresh-cw");
 		page.add_inner_button(__("Batch list"), () => frappe.set_route("List", "Batch"));
+		page.add_inner_button(__("Disposal history"), () => this.show_disposals());
+		this.can_dispose = false;
+		pharmacyos.call("pharmacyos_erp.pharmacy.disposal.can_dispose").then((ok) => {
+			this.can_dispose = Boolean(ok);
+		});
 		this.render_shell();
 		$(document).on("pharmacyos:branch-changed", (_e, branch) => {
 			this.state.branch = branch || "";
@@ -211,6 +216,7 @@ class PharmacyOSBatchesExpiry {
 						<th class="num">${__("Value at Risk")}</th>
 						<th>${__("Supplier")}</th>
 						<th>${__("Source")}</th>
+						${this.can_dispose ? "<th></th>" : ""}
 					</tr></thead>
 					<tbody>${rows
 						.map(
@@ -224,6 +230,7 @@ class PharmacyOSBatchesExpiry {
 							<td class="num">${pharmacyos.format_cost(r.value)}</td>
 							<td><bdi dir="auto">${ui.esc(r.supplier || "—")}</bdi></td>
 							<td>${source(r)}</td>
+							${this.can_dispose ? `<td><button class="pos-btn ${r.status === "expired" ? "pos-btn-danger" : ""}" data-dispose="${rows.indexOf(r)}">${__("Dispose")}</button></td>` : ""}
 						</tr>`
 						)
 						.join("")}</tbody>
@@ -246,9 +253,97 @@ class PharmacyOSBatchesExpiry {
 				.join("")}</div>
 			${this.pager(data.total)}`;
 		$body.html(table);
+		$body.find("[data-dispose]").on("click", (e) => this.dispose(rows[Number($(e.currentTarget).attr("data-dispose"))]));
 		$body.find("[data-page]").on("click", (e) => {
 			this.state.start = Math.max(0, this.state.start + Number($(e.currentTarget).attr("data-page")) * this.state.page_length);
 			this.load();
+		});
+	}
+
+	// Write off a batch (expired, damaged, recalled): a submitted Stock Entry keeps who, what, when and why.
+	dispose(r) {
+		const m = this.ui.medicine_title(r);
+		const d = new frappe.ui.Dialog({
+			title: __("Dispose of stock"),
+			fields: [
+				{
+					fieldtype: "HTML",
+					options: `<p><b>${frappe.utils.escape_html(m.title)}</b> — ${__("batch")} <span class="pos-code">${frappe.utils.escape_html(r.batch_id)}</span>,
+						${__("expiry")} ${this.ui.date(r.expiry_date)}<br>${frappe.utils.escape_html(r.warehouse)}: ${pharmacyos.format_qty(r.qty)} ${frappe.utils.escape_html(__(r.uom || ""))}</p>`,
+				},
+				{ fieldname: "qty", fieldtype: "Float", label: __("Quantity to dispose of"), reqd: 1, default: r.qty },
+				{
+					fieldname: "reason",
+					fieldtype: "Select",
+					label: __("Reason"),
+					reqd: 1,
+					options: [
+						{ value: "Expired", label: __("Expired") },
+						{ value: "Damaged", label: __("Damaged") },
+						{ value: "Recalled", label: __("Recalled") },
+						{ value: "Other", label: __("Other") },
+					],
+					default: r.status === "expired" ? "Expired" : "Damaged",
+				},
+				{ fieldname: "note", fieldtype: "Small Text", label: __("Note") },
+				{
+					fieldtype: "HTML",
+					options: `<p class="text-muted small">${__(
+						"The units leave stock now and are recorded as a loss. The disposal stays in the history with your name; only a stock manager can cancel it."
+					)}</p>`,
+				},
+			],
+			primary_action_label: __("Dispose"),
+			primary_action: (values) => {
+				if (values.qty <= 0 || values.qty > r.qty) {
+					frappe.msgprint(__("Enter a quantity between 0 and {0}.", [pharmacyos.format_qty(r.qty)]));
+					return;
+				}
+				d.get_primary_btn().prop("disabled", true);
+				frappe
+					.xcall("pharmacyos_erp.pharmacy.disposal.dispose_batch", {
+						item_code: r.item_code,
+						batch: r.batch,
+						warehouse: r.warehouse,
+						qty: values.qty,
+						reason: values.reason,
+						note: values.note || null,
+					})
+					.then((res) => {
+						d.hide();
+						frappe.show_alert({ message: __("Disposed of {0} of batch {1} ({2}).", [pharmacyos.format_qty(res.qty), res.batch_id, res.name]), indicator: "green" });
+						this.load();
+					})
+					.catch(() => d.get_primary_btn().prop("disabled", false));
+			},
+		});
+		d.show();
+	}
+
+	show_disposals() {
+		const d = new frappe.ui.Dialog({ title: __("Disposal history"), size: "large", fields: [{ fieldname: "list", fieldtype: "HTML" }] });
+		d.fields_dict.list.$wrapper.html(this.ui.skeleton_rows());
+		d.show();
+		pharmacyos.call("pharmacyos_erp.pharmacy.disposal.get_disposals", { limit: 100 }).then((rows) => {
+			if (!rows.length) {
+				d.fields_dict.list.$wrapper.html(this.ui.state({ kind: "ok", title: __("No disposals yet") }));
+				return;
+			}
+			const esc = frappe.utils.escape_html;
+			d.fields_dict.list.$wrapper.html(`<div class="pos-table-wrap"><table class="pos-table">
+				<thead><tr><th>${__("Date")}</th><th>${__("Medicine")}</th><th>${__("Batch No")}</th><th class="num">${__("Qty")}</th><th>${__("Reason")}</th><th>${__("By")}</th><th></th></tr></thead>
+				<tbody>${rows
+					.map((e) =>
+						e.items
+							.map(
+								(i) => `<tr><td class="pos-num">${this.ui.date(e.posting_date)}</td><td>${esc(i.item_name || i.item_code)}</td>
+								<td><span class="pos-code">${esc(i.batch_id || "")}</span></td><td class="num">${pharmacyos.format_qty(i.qty)}</td>
+								<td>${esc(__(e.reason || ""))}</td><td>${esc(e.user || e.owner)}</td>
+								<td><a href="${this.ui.form_url("Stock Entry", e.name)}" class="pos-ltr">${esc(e.name)}</a></td></tr>`
+							)
+							.join("")
+					)
+					.join("")}</tbody></table></div>`);
 		});
 	}
 

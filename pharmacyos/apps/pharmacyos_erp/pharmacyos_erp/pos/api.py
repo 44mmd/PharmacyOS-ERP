@@ -350,6 +350,9 @@ def get_context() -> dict:
 		"can_sell": cint(frappe.has_permission(doctype, "create")),
 		"can_open_shift": cint(frappe.has_permission("POS Opening Entry", "create")),
 		"can_close_shift": cint(frappe.has_permission("POS Closing Entry", "create")),
+		# voiding needs the right to cancel sales; without it the counter asks a manager to approve
+		"can_void": cint(frappe.has_permission(doctype, "cancel")),
+		"version": _version(),
 		"shift": shift,
 		"profile": profile,
 		"profiles": _user_profiles(user),
@@ -628,17 +631,36 @@ def submit_return(invoice: str, lines: list | str, request_id: str, mode_of_paym
 
 
 @frappe.whitelist()
-def recent_sales(limit: int = 20) -> list[dict]:
-	"""The signed-in user's latest counter sales and returns (for reprint and return)."""
+def recent_sales(limit: int = 20, search: str | None = None) -> list[dict]:
+	"""The signed-in user's latest counter sales, returns and voided sales (for reprint, return and void).
+	`search` matches the invoice number or the customer's name."""
 	_require_user()
 	doctype = invoice_doctype()
-	return frappe.get_list(
+	filters = {"owner": frappe.session.user, "docstatus": ["in", [1, 2]], "is_pos": 1}
+	or_filters = None
+	text = (search or "").strip()
+	if text:
+		like = f"%{text}%"
+		or_filters = {"name": ["like", like], "customer_name": ["like", like]}
+	rows = frappe.get_list(
 		doctype,
-		filters={"owner": frappe.session.user, "docstatus": 1, "is_pos": 1},
-		fields=["name", "customer_name", "grand_total", "rounded_total", "currency", "posting_date", "posting_time", "is_return", "return_against", "status"],
+		filters=filters,
+		or_filters=or_filters,
+		fields=["name", "customer_name", "grand_total", "rounded_total", "currency", "posting_date", "posting_time", "is_return", "return_against", "status", "docstatus"],
 		order_by="creation desc",
 		limit_page_length=min(max(cint(limit), 1), 100),
 	)
+	today = frappe.utils.nowdate()
+	for row in rows:
+		row["voided"] = row.docstatus == 2
+		row["can_void"] = row.docstatus == 1 and not row.is_return and str(row.posting_date) == today
+	return rows
+
+
+def _version() -> str:
+	from pharmacyos_erp import __version__
+
+	return __version__
 
 
 # ------------------------------------------------------------------ closing the shift at the counter
@@ -725,3 +747,135 @@ def close_shift(counted: list | str) -> dict:
 	closing.insert()
 	closing.submit()
 	return _closing_summary(closing)
+
+
+# ------------------------------------------------------------------ voiding a sale at the counter
+#
+# A void is ERPNext's cancel of the counter invoice: stock goes back to the batches it came from, the
+# ledger is reversed, and the invoice stays on record as Cancelled — nothing is deleted. Only a user with
+# the right to cancel sales (manager, owner, accountant) can void; a cashier asks one to approve at the
+# counter (the approver signs with their own password, and the cancel runs as the approver). Every void
+# writes a PharmacyOS Void Log: the sale, amount, reason, who asked, who approved and when.
+
+APPROVAL_FAILURES_KEY = "pharmacyos_pos_void_approval_failures"
+MAX_APPROVAL_FAILURES = 5  # per requesting user, per 10 minutes
+
+
+def _closing_reference(doctype: str, name: str) -> str | None:
+	"""The submitted POS Closing Entry that already counted this sale, if any (its shift is closed)."""
+	child, field = ("POS Invoice Reference", "pos_invoice") if doctype == "POS Invoice" else ("Sales Invoice Reference", "sales_invoice")
+	rows = frappe.get_all(child, filters={field: name, "parenttype": "POS Closing Entry"}, pluck="parent")
+	for parent in rows:
+		if frappe.db.get_value("POS Closing Entry", parent, "docstatus") == 1:
+			return parent
+	return None
+
+
+def _approver(user: str | None, password: str | None) -> str:
+	"""A second person's approval: their own sign-in password, checked like a login (with a failure limit)."""
+	from frappe.utils.password import check_password
+
+	requester = frappe.session.user
+	key = f"{APPROVAL_FAILURES_KEY}:{requester}"
+	if cint(frappe.cache.get_value(key)) >= MAX_APPROVAL_FAILURES:
+		frappe.throw(_("Too many failed approvals. Wait a few minutes and try again."), frappe.PermissionError)
+	if not user or not password:
+		frappe.throw(_("A manager must approve this void with their email and password."), frappe.PermissionError)
+	user = str(user).strip()
+	if user == requester:
+		frappe.throw(_("Another person must approve the void."), frappe.PermissionError)
+	try:
+		check_password(user, password)
+		if not frappe.db.get_value("User", {"name": user, "enabled": 1, "user_type": "System User"}):
+			raise frappe.AuthenticationError
+	except frappe.AuthenticationError:
+		frappe.cache.set_value(key, cint(frappe.cache.get_value(key)) + 1, expires_in_sec=600)
+		frappe.throw(_("The approval was refused: wrong email or password."), frappe.PermissionError)
+	return user
+
+
+@frappe.whitelist(methods=["POST"])
+def void_sale(invoice: str, reason: str, approver: str | None = None, approver_password: str | None = None) -> dict:
+	"""Void (cancel) a counter sale of today whose shift is still open. Idempotent: voiding a sale that is
+	already voided returns its void record."""
+	_require_user()
+	doctype = invoice_doctype()
+	reason = (reason or "").strip()
+	if len(reason) < 3:
+		frappe.throw(_("Enter the reason for the void."), POSRequestError)
+	if not frappe.db.exists(doctype, invoice):
+		frappe.throw(_("Sale {0} not found.").format(invoice), POSRequestError)
+
+	existing = frappe.db.get_value("PharmacyOS Void Log", {"invoice": invoice}, "name")
+	if existing and frappe.db.get_value(doctype, invoice, "docstatus") == 2:
+		return _void_summary(frappe.get_doc("PharmacyOS Void Log", existing))
+
+	# one void at a time per sale (a double click, two counters)
+	frappe.db.get_value(doctype, invoice, "name", for_update=True)
+	doc = frappe.get_doc(doctype, invoice)
+	requester = frappe.session.user
+	if not frappe.has_permission(doctype, "read", doc):
+		frappe.throw(_("Sale {0} not found.").format(invoice), POSRequestError)
+	if doc.docstatus != 1 or not cint(doc.is_pos):
+		frappe.throw(_("Only a completed counter sale can be voided."), POSRequestError)
+	if cint(doc.is_return):
+		frappe.throw(_("A return cannot be voided."), POSRequestError)
+	if frappe.db.exists(doctype, {"return_against": invoice, "docstatus": 1}):
+		frappe.throw(_("Items of this sale were returned; it can no longer be voided."), POSRequestError)
+	if str(doc.posting_date) != frappe.utils.nowdate():
+		frappe.throw(_("Only sales of today can be voided. Use a return for older sales."), POSRequestError)
+	closed_in = _closing_reference(doctype, invoice)
+	if closed_in:
+		frappe.throw(_("This sale belongs to a closed shift ({0}). Use a return instead.").format(closed_in), POSRequestError)
+
+	if frappe.has_permission(doctype, "cancel", doc):
+		approved_by = requester
+	else:
+		if doc.owner != requester:
+			frappe.throw(_("You can only ask to void your own sales."), frappe.PermissionError)
+		approved_by = _approver(approver, approver_password)
+		if not frappe.has_permission(doctype, "cancel", doc, user=approved_by):
+			frappe.throw(_("{0} is not allowed to void sales.").format(approved_by), frappe.PermissionError)
+
+	# the cancel runs as the approving user, so ERPNext's own rules and every PharmacyOS hook apply
+	try:
+		frappe.set_user(approved_by)
+		doc = frappe.get_doc(doctype, invoice)
+		doc.cancel()
+	finally:
+		frappe.set_user(requester)
+
+	log = frappe.get_doc(
+		{
+			"doctype": "PharmacyOS Void Log",
+			"invoice_doctype": doctype,
+			"invoice": invoice,
+			"amount": flt(doc.rounded_total or doc.grand_total),
+			"currency": doc.currency,
+			"voided_on": frappe.utils.now_datetime(),
+			"requested_by": requester,
+			"approved_by": approved_by,
+			"pos_profile": doc.pos_profile,
+			"sale_owner": doc.owner,
+			"reason": reason[:1000],
+		}
+	)
+	log.insert(ignore_permissions=True)  # written by this function only; read-only for everyone
+	doc.add_comment(
+		"Info",
+		_("Voided at the counter by {0}, approved by {1}: {2}").format(requester, approved_by, reason[:500]),
+	)
+	return _void_summary(log)
+
+
+def _void_summary(log) -> dict:
+	return {
+		"name": log.name,
+		"invoice": log.invoice,
+		"amount": flt(log.amount),
+		"reason": log.reason,
+		"requested_by": log.requested_by,
+		"approved_by": log.approved_by,
+		"voided_on": str(log.voided_on),
+		"status": "voided",
+	}

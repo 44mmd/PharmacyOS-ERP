@@ -290,6 +290,20 @@ CUSTOM_FIELDS = {
 	"Sales Invoice": [RETURN_LEDGER, POS_REQUEST_ID],
 	"POS Invoice": [RETURN_LEDGER, POS_REQUEST_ID],
 	"Delivery Note": [RETURN_LEDGER],
+	"Stock Entry": [
+		{
+			"fieldname": "pharmacyos_disposal_reason",
+			"fieldtype": "Select",
+			"label": "Disposal Reason",
+			"options": "\nExpired\nDamaged\nRecalled\nOther",
+			"insert_after": "stock_entry_type",
+			"depends_on": "eval:doc.stock_entry_type=='Expired Stock Disposal'",
+			"mandatory_depends_on": "eval:doc.stock_entry_type=='Expired Stock Disposal'",
+			"in_standard_filter": 1,
+			"no_copy": 1,
+			"allow_on_submit": 0,
+		},
+	],
 	"Customer": [
 		{
 			"fieldname": "pharmacyos_customer_id",

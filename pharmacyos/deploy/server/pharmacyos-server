@@ -1,20 +1,128 @@
 #!/usr/bin/env bash
 # PharmacyOS server control (inside the PharmacyOS Linux environment: WSL2 distro or LAN server).
-#   pharmacyos-server start|stop|status|health
-# Services are systemd units created by `bench setup production` (nginx + supervisor) plus MariaDB
-# and Redis; they also start automatically at boot. This script is what the desktop app and the
-# Windows boot task call.
-set -euo pipefail
-BENCH_USER="${PHARMACYOS_USER:-frappe}"
-BENCH_DIR="${PHARMACYOS_BENCH:-/home/$BENCH_USER/frappe-bench}"
+#
+#   pharmacyos-server start | stop | status | health | run | version
+#   pharmacyos-server backup | list-backups
+#   pharmacyos-server restore <backup-folder> [--with-files]
+#   pharmacyos-server update <bundle-folder>
+#
+# Services are systemd units created by `bench setup production` (nginx + supervisor) plus MariaDB and
+# Redis; they also start at boot. The Windows desktop app and the "PharmacyOS Server" boot task call
+# this script through `wsl -d PharmacyOS --user root --exec /opt/pharmacyos/bin/pharmacyos-server …`.
+# Machine-readable results are printed as a last line "##PHARMACYOS-RESULT <json>".
+set -Eeuo pipefail
+ENV_FILE=/etc/pharmacyos/server.env
+# shellcheck disable=SC1090
+[ -f "$ENV_FILE" ] && . "$ENV_FILE"
+BENCH_USER="${BENCH_USER:-${PHARMACYOS_USER:-frappe}}"
+BENCH_DIR="${BENCH_DIR:-${PHARMACYOS_BENCH:-/home/$BENCH_USER/frappe-bench}}"
+HTTP_PORT="${HTTP_PORT:-80}"
+OPT=/opt/pharmacyos
 SERVICES=(mariadb redis-server supervisor nginx)
+LOG_DIR=/var/log/pharmacyos
+mkdir -p "$LOG_DIR"
+
+as_bench() { su - "$BENCH_USER" -c "export PATH=\$HOME/.local/bin:\$PATH; cd '$BENCH_DIR' && $1"; }
+result() { echo "##PHARMACYOS-RESULT $1"; }
+web_ok() { curl -fsS -m 5 "http://127.0.0.1:$HTTP_PORT/api/method/ping" >/dev/null 2>&1; }
+wait_web() { for _ in $(seq 1 "${1:-60}"); do web_ok && return 0; sleep 2; done; return 1; }
+
+start() {
+	for s in "${SERVICES[@]}"; do systemctl start "$s"; done
+	supervisorctl start all >/dev/null || true
+}
+
+backup() {
+	# a verified PharmacyOS backup (database + files); prints its folder
+	local folder
+	folder="$(as_bench "bench --site '$SITE' execute pharmacyos_erp.backup.service.backup_folder_now" | tail -n 1 | tr -d '"')"
+	[ -n "$folder" ] && [ -f "$folder/metadata.json" ] || { echo "backup failed" >&2; return 1; }
+	echo "$folder"
+}
+
+update() {
+	# Update the PharmacyOS ERP app from a server bundle, keeping the pharmacy's data:
+	# safety backup → maintenance → new release → migrate + build → restart → health.
+	# Any failure: previous release back, the safety backup restored, services restarted.
+	local bundle new_version old_release new_release safety
+	bundle="$(cd "${1:?bundle folder}" && pwd)"
+	new_version="$(cat "$bundle/VERSION")"
+	old_release="$(readlink -f "$OPT/app")"
+	new_release="$OPT/releases/$new_version"
+	if [ "$old_release" = "$new_release" ]; then
+		result "{\"status\": \"current\", \"version\": \"$new_version\"}"
+		return 0
+	fi
+	echo "== Safety backup"
+	safety="$(backup)"
+	echo "   $safety"
+	rollback() {
+		echo "== Update failed — restoring the previous version"
+		ln -sfn "$old_release" "$OPT/app"
+		as_bench "uv pip install -q -e apps/pharmacyos_erp --python env/bin/python" || true
+		su "$BENCH_USER" -c "export PATH=\$HOME/.local/bin:\$PATH; DB_ROOT_PASSWORD='$DB_ROOT_PASSWORD' BENCH_DIR='$BENCH_DIR' '$OPT/bin/restore-backup.sh' '$SITE' '$safety' --yes" || true
+		as_bench "bench build --app pharmacyos_erp" || true
+		supervisorctl restart all >/dev/null || true
+		as_bench "bench --site '$SITE' set-maintenance-mode off" || true
+		basename "$old_release" > "$OPT/VERSION"
+		result "{\"status\": \"rolled_back\", \"version\": \"$(basename "$old_release")\", \"backup\": \"$safety\"}"
+		exit 1
+	}
+	trap rollback ERR
+	echo "== Maintenance mode on"
+	as_bench "bench --site '$SITE' set-maintenance-mode on"
+	echo "== Installing $new_version"
+	mkdir -p "$new_release"
+	rsync -a --delete --exclude '__pycache__' --exclude 'node_modules' --exclude 'public/dist' \
+		"$bundle/apps/pharmacyos_erp/" "$new_release/pharmacyos_erp/"
+	chown -R "$BENCH_USER" "$new_release"
+	ln -sfn "$new_release" "$OPT/app"
+	as_bench "uv pip install -q -e apps/pharmacyos_erp --python env/bin/python"
+	echo "== Migrating"
+	as_bench "bench --site '$SITE' migrate"
+	echo "== Building"
+	as_bench "bench build --app pharmacyos_erp"
+	install -m 0755 "$bundle/deploy/server/pharmacyos-server" "$OPT/bin/pharmacyos-server.new"
+	install -m 0755 "$bundle/deploy/restore-backup.sh" "$OPT/bin/restore-backup.sh"
+	supervisorctl restart all >/dev/null
+	as_bench "bench --site '$SITE' set-maintenance-mode off"
+	wait_web 60
+	as_bench "bench --site '$SITE' execute pharmacyos_erp.backup.service.health_check" >/dev/null
+	trap - ERR
+	echo "$new_version" > "$OPT/VERSION"
+	as_bench "bench --site '$SITE' set-config pharmacyos_server_version '$new_version'"
+	mv "$OPT/bin/pharmacyos-server.new" "$OPT/bin/pharmacyos-server"
+	# keep the previous release (rollback by hand) and drop older ones
+	find "$OPT/releases" -mindepth 1 -maxdepth 1 -type d ! -path "$new_release" ! -path "$old_release" -exec rm -rf {} +
+	result "{\"status\": \"updated\", \"version\": \"$new_version\", \"previous\": \"$(basename "$old_release")\", \"backup\": \"$safety\"}"
+}
 
 case "${1:-status}" in
-	start) for s in "${SERVICES[@]}"; do systemctl start "$s"; done; supervisorctl start all >/dev/null ;;
+	start) start ;;
 	stop) supervisorctl stop all >/dev/null || true; for s in nginx supervisor; do systemctl stop "$s"; done ;;
 	status) for s in "${SERVICES[@]}"; do printf '%-14s %s\n' "$s" "$(systemctl is-active "$s")"; done; supervisorctl status ;;
+	run)
+		# boot task: start everything, then stay in the foreground so Windows keeps the environment running
+		start
+		wait_web 90 || echo "web not answering yet" >&2
+		exec sleep infinity ;;
 	health)
-		curl -fsS -m 5 http://127.0.0.1/api/method/ping >/dev/null && echo "web ok" || { echo "web down"; exit 1; }
-		su - "$BENCH_USER" -c "PATH=\$HOME/.local/bin:\$PATH; cd $BENCH_DIR && bench --site all execute pharmacyos_erp.backup.service.health_check" ;;
-	*) echo "usage: pharmacyos-server start|stop|status|health" >&2; exit 2 ;;
+		web_ok && echo "web ok" || { echo "web down"; exit 1; }
+		as_bench "bench --site all execute pharmacyos_erp.backup.service.health_check" ;;
+	version) cat "$OPT/VERSION" 2>/dev/null || echo unknown ;;
+	backup)
+		folder="$(backup)"
+		result "{\"status\": \"ok\", \"folder\": \"$folder\"}" ;;
+	list-backups)
+		as_bench "bench --site '$SITE' execute pharmacyos_erp.backup.service.list_backups" | tail -n 1 ;;
+	restore)
+		folder="${2:?backup folder}"
+		shift 2
+		su "$BENCH_USER" -c "export PATH=\$HOME/.local/bin:\$PATH; DB_ROOT_PASSWORD='$DB_ROOT_PASSWORD' BENCH_DIR='$BENCH_DIR' '$OPT/bin/restore-backup.sh' '$SITE' '$folder' --yes $*" \
+			2>&1 | tee "$LOG_DIR/restore-$(date +%Y%m%d-%H%M%S).log"
+		supervisorctl restart all >/dev/null || true
+		wait_web 60
+		result "{\"status\": \"restored\", \"folder\": \"$folder\"}" ;;
+	update) update "${2:?bundle folder}" 2>&1 | tee "$LOG_DIR/update-$(date +%Y%m%d-%H%M%S).log"; exit "${PIPESTATUS[0]}" ;;
+	*) echo "usage: pharmacyos-server start|stop|status|health|run|version|backup|list-backups|restore <folder>|update <bundle>" >&2; exit 2 ;;
 esac

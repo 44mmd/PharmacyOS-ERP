@@ -77,6 +77,68 @@ def _restrict_owner_roles(email: str) -> None:
 		user.add_roles(*sorted(missing))
 
 
+WALK_IN_CUSTOMER = "زبون نقدي"  # the walk-in (cash) customer every counter sale starts with
+MAIN_COUNTER = "Main Counter"
+
+
+def ensure_counter(company: str | None = None, warehouse: str | None = None) -> str | None:
+	"""The pharmacy's first counter, so the POS works right after setup without visiting the ERP desk:
+	Cash on the company's cash account, the walk-in customer, and a POS Profile on the first branch's
+	warehouse with the PharmacyOS receipt. Every cashier may use it (no user list); managers can add
+	counters, card payments and user lists later. Idempotent: nothing happens once a counter exists."""
+	company = company or frappe.db.get_single_value("Global Defaults", "default_company")
+	if not company or frappe.db.exists("POS Profile", {"company": company}):
+		return None
+	if not warehouse:
+		branch_warehouses = frappe.get_all("Branch", filters={"pharmacyos_warehouse": ["is", "set"]}, pluck="pharmacyos_warehouse", order_by="creation asc")
+		warehouse = next((w for w in branch_warehouses if frappe.db.get_value("Warehouse", w, "company") == company), None)
+	if not warehouse:
+		return None
+	cash_account = frappe.get_cached_value("Company", company, "default_cash_account")
+	if not frappe.db.exists("Mode of Payment", "Cash"):
+		frappe.get_doc({"doctype": "Mode of Payment", "mode_of_payment": "Cash", "type": "Cash", "enabled": 1}).insert(ignore_permissions=True)
+	mop = frappe.get_doc("Mode of Payment", "Cash")
+	if cash_account and not any(a.company == company for a in mop.accounts):
+		mop.append("accounts", {"company": company, "default_account": cash_account})
+		mop.save(ignore_permissions=True)
+	walk_in = frappe.db.get_value("Customer", {"customer_name": WALK_IN_CUSTOMER}) or (
+		frappe.get_doc(
+			{
+				"doctype": "Customer",
+				"customer_name": WALK_IN_CUSTOMER,
+				"customer_type": "Individual",
+				"customer_group": frappe.db.get_single_value("Selling Settings", "customer_group")
+				or frappe.db.get_value("Customer Group", {"is_group": 0}, "name"),
+				"territory": frappe.db.get_single_value("Selling Settings", "territory")
+				or frappe.db.get_value("Territory", {"is_group": 0}, "name"),
+			}
+		)
+		.insert(ignore_permissions=True)
+		.name
+	)
+	cost_center = frappe.get_cached_value("Company", company, "cost_center")
+	profile = frappe.get_doc(
+		{
+			"doctype": "POS Profile",
+			"__newname": MAIN_COUNTER,
+			"company": company,
+			"warehouse": warehouse,
+			"currency": frappe.get_cached_value("Company", company, "default_currency"),
+			"customer": walk_in,
+			"selling_price_list": frappe.db.get_single_value("Selling Settings", "selling_price_list") or "Standard Selling",
+			"write_off_account": frappe.get_cached_value("Company", company, "write_off_account"),
+			"write_off_cost_center": cost_center,
+			"cost_center": cost_center,
+			"update_stock": 1,
+			"allow_discount_change": 1,
+			"allow_rate_change": 0,
+			"print_format": "PharmacyOS Receipt",
+			"payments": [{"mode_of_payment": "Cash", "default": 1}],
+		}
+	).insert(ignore_permissions=True)
+	return profile.name
+
+
 @frappe.whitelist(methods=["POST"])
 def setup_pharmacy(
 	pharmacy_name: str,
@@ -95,6 +157,7 @@ def setup_pharmacy(
 
 	if is_initialized():
 		ensure_structure()  # idempotent repair only (e.g. missing dimension columns)
+		ensure_counter()  # a pharmacy set up before counters were created at setup
 		frappe.db.commit()
 		return {
 			"status": "already_initialized",
@@ -183,6 +246,7 @@ def setup_pharmacy(
 		},
 	)
 	frappe.db.set_single_value("Stock Settings", "default_warehouse", warehouse)
+	ensure_counter(company, warehouse)
 
 	if not frappe.db.exists("User", owner_email):
 		first, _sep, last = owner_full_name.partition(" ")
@@ -214,4 +278,5 @@ def setup_pharmacy(
 		"abbr": abbr,
 		"branch": branch_name,
 		"warehouse": warehouse,
+		"counter": frappe.db.get_value("POS Profile", {"company": company}, "name"),
 	}

@@ -119,6 +119,16 @@ def run_backup(kind: str = "Hourly", with_files: bool = False) -> str | None:
 	return log.name
 
 
+def backup_folder_now(with_files: bool = True) -> str:
+	"""A verified manual backup taken right now (server operators: `pharmacyos-server backup`, used before
+	an update or a restore). Returns its folder; raises when the backup could not be verified."""
+	name = run_backup(kind="Manual", with_files=with_files)
+	log = frappe.db.get_value("PharmacyOS Backup Log", name, ["status", "backup_path", "error"], as_dict=True)
+	if not log or log.status != "Success":
+		raise frappe.ValidationError(_("Backup failed: {0}").format((log and log.error) or ""))
+	return log.backup_path
+
+
 def write_metadata(folder: str, log, kind: str) -> dict:
 	files = []
 	for name in (DB_FILE, FILES_FILE, PRIVATE_FILES_FILE):

@@ -24,7 +24,7 @@ MODULE = "PharmacyOS"
 APP = "pharmacyos_erp"
 CREATED = "2026-10-02 00:00:00.000000"
 # Bump MODIFIED whenever NAVIGATION changes: `bench migrate` only re-imports newer files.
-MODIFIED = "2026-10-03 01:00:00.000000"
+MODIFIED = "2026-10-07 01:00:00.000000"
 
 
 def link(label, link_type, link_to, icon=None, filters=None):
@@ -65,6 +65,7 @@ NAVIGATION = [
 		"layout-dashboard",
 		[
 			page("Dashboard", "pharmacy-dashboard", "layout-dashboard"),
+			page("Pharmacy Report", "pharmacy-report", "chart-column"),
 			section("Needs attention"),
 			page("Batches & Expiry", "batches-expiry", "calendar-clock"),
 			page("Inventory Health", "inventory-health", "activity"),
@@ -103,6 +104,7 @@ NAVIGATION = [
 			dt("Stock Transfers", "Stock Entry", "arrow-left-right", [["purpose", "=", "Material Transfer"]]),
 			dt("Stock Entries", "Stock Entry", "container"),
 			dt("Stock Counts", "Stock Reconciliation", "scale"),
+			dt("Disposals", "Stock Entry", "trash-2", [["stock_entry_type", "=", "Expired Stock Disposal"]]),
 			dt("Material Requests", "Material Request", "clipboard-list"),
 			section("Reports"),
 			report("Stock Balance", "Stock Balance", "chart-bar"),
@@ -167,6 +169,7 @@ NAVIGATION = [
 		"Reports",
 		"chart-bar",
 		[
+			page("Pharmacy Report", "pharmacy-report", "chart-column"),
 			section("Sales"),
 			report("Sales Register", "Sales Register", "receipt"),
 			report("Item-wise Sales", "Item-wise Sales Register", "pill"),
@@ -217,6 +220,7 @@ NAVIGATION = [
 			section("Integrations"),
 			dt("Sync Events", "PharmacyOS Sync Event", "plug"),
 			dt("Backups", "PharmacyOS Backup Log", "database-backup"),
+			dt("Voided Sales", "PharmacyOS Void Log", "ban"),
 			dt("Webhooks", "Webhook", "plug"),
 			section("Audit"),
 			dt("Document History", "Version", "history"),

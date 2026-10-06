@@ -23,6 +23,7 @@
 	var M_RECENT = "pharmacyos_erp.pos.api.recent_sales";
 	var M_SHIFT_SUMMARY = "pharmacyos_erp.pos.api.shift_summary";
 	var M_CLOSE_SHIFT = "pharmacyos_erp.pos.api.close_shift";
+	var M_VOID = "pharmacyos_erp.pos.api.void_sale";
 	// ERPNext's own (permission-scoped) POS and desk endpoints
 	var M_OPEN_SHIFT = "erpnext.selling.page.point_of_sale.point_of_sale.create_opening_voucher";
 	var M_SEARCH_LINK = "frappe.desk.search.search_link";
@@ -1080,27 +1081,77 @@
 
 	// ------------------------------------------------------------------ recent sales
 
+	// Sale history of this cashier: search by invoice number or customer; reprint, return or void.
 	function openRecent() {
 		var list = h("div", { class: "px-list" }, h("p", { class: "px-muted", text: M.loading }));
-		openDialog({ title: M.recent, wide: true, body: list });
-		call(M_RECENT, { limit: 30 }).then(function (rows) {
-			list.textContent = "";
-			if (!rows.length) list.appendChild(h("p", { class: "px-empty", text: "—" }));
-			rows.forEach(function (r) {
-				append(list, h("div", { class: "px-list-row px-recent" },
-					h("div", null,
-						h("strong", null, h("bdi", { dir: "ltr", text: r.name })),
-						r.is_return ? h("span", { class: "px-badge px-badge-warn", text: M.is_return }) : null,
-						h("div", { class: "px-muted" }, r.customer_name || "", " · ", h("bdi", { dir: "ltr", text: r.posting_date + " " + shortTime(r.posting_time) }))
-					),
-					h("strong", { text: money(Math.abs(r.rounded_total || r.grand_total)) }),
-					h("div", { class: "px-row-actions" },
-						h("button", { type: "button", class: "px-btn px-btn-sm", text: M.reprint, onclick: function () { showReceipt({ name: r.name, doctype: S.ctx.invoice_doctype }, false); } }),
-						r.is_return ? null : h("button", { type: "button", class: "px-btn px-btn-sm", text: M.return_short, onclick: function () { openReturns(r.name); } })
-					)
-				));
-			});
-		}).catch(function (e) { list.textContent = e.message; });
+		var search = h("input", { class: "px-input", type: "search", placeholder: M.search_sales, dir: "auto", autocomplete: "off", "data-autofocus": "" });
+		function load() {
+			call(M_RECENT, { limit: 50, search: search.value.trim() }).then(function (rows) {
+				list.textContent = "";
+				if (!rows.length) list.appendChild(h("p", { class: "px-empty", text: M.no_sales }));
+				rows.forEach(function (r) {
+					append(list, h("div", { class: "px-list-row px-recent" + (r.voided ? " px-voided" : "") },
+						h("div", null,
+							h("strong", null, h("bdi", { dir: "ltr", text: r.name })),
+							r.is_return ? h("span", { class: "px-badge px-badge-warn", text: M.is_return }) : null,
+							r.voided ? h("span", { class: "px-badge px-badge-danger", text: M.voided }) : null,
+							h("div", { class: "px-muted" }, r.customer_name || "", " · ", h("bdi", { dir: "ltr", text: r.posting_date + " " + shortTime(r.posting_time) }))
+						),
+						h("strong", { text: money(Math.abs(r.rounded_total || r.grand_total)) }),
+						h("div", { class: "px-row-actions" },
+							h("button", { type: "button", class: "px-btn px-btn-sm", text: M.reprint, onclick: function () { showReceipt({ name: r.name, doctype: S.ctx.invoice_doctype }, false); } }),
+							r.is_return || r.voided ? null : h("button", { type: "button", class: "px-btn px-btn-sm", text: M.return_short, onclick: function () { openReturns(r.name); } }),
+							r.can_void ? h("button", { type: "button", class: "px-btn px-btn-sm px-btn-danger", text: M.void, onclick: function () { openVoid(r); } }) : null
+						)
+					));
+				});
+			}).catch(function (e) { list.textContent = e.message; });
+		}
+		search.addEventListener("input", debounce(load, 250));
+		openDialog({ title: M.recent, wide: true, body: [search, list] });
+		load();
+	}
+
+	// Void = ERPNext's cancel of the sale (stock back to its batches, ledger reversed, sale kept as
+	// cancelled). A cashier needs a manager to approve with their own email and password.
+	function openVoid(sale) {
+		var reason = h("textarea", { class: "px-input", rows: "2", maxlength: "1000", placeholder: M.void_reason, "data-autofocus": "" });
+		var approver = h("input", { class: "px-input", type: "email", autocomplete: "off", dir: "ltr", placeholder: M.manager_email });
+		var password = h("input", { class: "px-input", type: "password", autocomplete: "off", placeholder: M.manager_password });
+		var error = h("p", { class: "px-error", role: "alert" });
+		var needsApproval = !S.ctx.can_void;
+		var confirm = h("button", {
+			type: "button",
+			class: "px-btn px-btn-danger",
+			text: M.void_confirm,
+			onclick: function () {
+				if (reason.value.trim().length < 3) { error.textContent = M.void_reason_required; reason.focus(); return; }
+				confirm.disabled = true;
+				error.textContent = "";
+				var args = { invoice: sale.name, reason: reason.value.trim() };
+				if (needsApproval) { args.approver = approver.value.trim(); args.approver_password = password.value; }
+				call(M_VOID, args, { post: true }).then(function (v) {
+					password.value = "";
+					closeDialog();
+					toast(fmt(M.voided_ok, v.invoice, v.approved_by), "success");
+					openRecent();
+				}).catch(function (e) { password.value = ""; error.textContent = e.message; confirm.disabled = false; });
+			},
+		});
+		openDialog({
+			title: fmt(M.void_title, sale.name),
+			body: [
+				h("p", { text: fmt(M.void_note, money(Math.abs(sale.rounded_total || sale.grand_total))) }),
+				h("label", { class: "px-field" }, h("span", { text: M.reason }), reason),
+				needsApproval ? h("fieldset", { class: "px-approval" },
+					h("legend", { text: M.manager_approval }),
+					h("label", { class: "px-field" }, h("span", { text: M.manager_email }), approver),
+					h("label", { class: "px-field" }, h("span", { text: M.manager_password }), password)
+				) : null,
+				error,
+			],
+			actions: [confirm, h("button", { type: "button", class: "px-btn", text: M.close, onclick: closeDialog })],
+		});
 	}
 
 	// ------------------------------------------------------------------ shift close, sign-out
@@ -1281,6 +1332,13 @@
 		focusScan();
 	});
 	$("#px-scan").addEventListener("input", function (e) { liveSearch(e.target.value.trim()); });
+	// scanners set to send Tab after the code (instead of Enter) complete the scan too
+	$("#px-scan").addEventListener("keydown", function (e) {
+		if (e.key === "Tab" && !e.shiftKey && e.target.value.trim()) {
+			e.preventDefault();
+			$("#px-scan-form").requestSubmit ? $("#px-scan-form").requestSubmit() : $("#px-scan-form").dispatchEvent(new Event("submit", { cancelable: true }));
+		}
+	});
 
 	document.addEventListener("click", function (e) {
 		var btn = e.target.closest ? e.target.closest("[data-action]") : null;
