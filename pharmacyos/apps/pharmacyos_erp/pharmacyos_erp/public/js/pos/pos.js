@@ -21,6 +21,8 @@
 	var M_PREVIEW_RETURN = "pharmacyos_erp.pos.api.preview_return";
 	var M_SUBMIT_RETURN = "pharmacyos_erp.pos.api.submit_return";
 	var M_RECENT = "pharmacyos_erp.pos.api.recent_sales";
+	var M_SHIFT_SUMMARY = "pharmacyos_erp.pos.api.shift_summary";
+	var M_CLOSE_SHIFT = "pharmacyos_erp.pos.api.close_shift";
 	// ERPNext's own (permission-scoped) POS and desk endpoints
 	var M_OPEN_SHIFT = "erpnext.selling.page.point_of_sale.point_of_sale.create_opening_voucher";
 	var M_SEARCH_LINK = "frappe.desk.search.search_link";
@@ -389,6 +391,7 @@
 			S.profile = ctx.profile;
 			renderShift();
 			restoreCart();
+			renderHeldCount();
 			render();
 			focusScan();
 		}).catch(function (e) {
@@ -1102,10 +1105,163 @@
 
 	// ------------------------------------------------------------------ shift close, sign-out
 
+	// The cashier counts the drawer here; ERPNext's POS Closing Entry is created and submitted by the
+	// server (`close_shift`) with the expected amounts it calculates. The full desk form stays available.
 	function closeShift() {
 		if (!S.ctx || !S.ctx.shift) return;
-		var q = new URLSearchParams({ pos_opening_entry: S.ctx.shift.name });
-		window.location.href = S.ctx.desk_base + "/pos-closing-entry/new?" + q.toString();
+		if (S.pending) return toast(M.hold_busy, "error");
+		var body = h("div", { class: "px-form-rows" }, h("p", { class: "px-muted", text: M.loading }));
+		var error = h("p", { class: "px-error", role: "alert" });
+		var confirm = h("button", { type: "button", class: "px-btn px-btn-primary", text: M.close_shift, disabled: true });
+		var fullForm = h("a", {
+			class: "px-btn",
+			href: S.ctx.desk_base + "/pos-closing-entry/new?" + new URLSearchParams({ pos_opening_entry: S.ctx.shift.name }).toString(),
+			text: M.full_closing_form,
+		});
+		openDialog({ title: M.close_shift, wide: true, body: [body, error], actions: [confirm, fullForm] });
+		call(M_SHIFT_SUMMARY).then(function (summary) {
+			body.textContent = "";
+			var inputs = [];
+			var rows = summary.payments.map(function (p) {
+				var diff = h("td", { class: "px-num" }, "—");
+				var input = h("input", { class: "px-input px-num", inputmode: "decimal", "data-mode": p.mode_of_payment, "aria-label": M.counted + " — " + p.label, "data-autofocus": inputs.length ? null : "" });
+				input.addEventListener("input", function () {
+					var n = parseNumber(input.value);
+					diff.textContent = isNaN(n) ? "—" : money(n - p.expected_amount);
+					diff.className = "px-num" + (!isNaN(n) && Math.abs(n - p.expected_amount) > 0.0005 ? " px-warn-text" : "");
+				});
+				inputs.push(input);
+				return h("tr", null,
+					h("th", { scope: "row", text: p.label }),
+					h("td", { class: "px-num", text: money(p.opening_amount) }),
+					h("td", { class: "px-num", text: money(p.expected_amount) }),
+					h("td", null, input),
+					diff
+				);
+			});
+			append(body,
+				h("p", { text: fmt(M.shift_sales, summary.sales, money(summary.grand_total)) }),
+				h("p", { class: "px-muted", text: M.close_shift_note }),
+				h("table", { class: "px-table" },
+					h("thead", null, h("tr", null, h("th", { text: "" }), h("th", { text: M.opening }), h("th", { text: M.expected }), h("th", { text: M.counted }), h("th", { text: M.difference }))),
+					h("tbody", null, rows)
+				)
+			);
+			if (inputs[0]) setTimeout(function () { inputs[0].focus(); }, 0);
+			confirm.disabled = false;
+			confirm.onclick = function () {
+				var counted = [];
+				for (var i = 0; i < inputs.length; i++) {
+					var n = parseNumber(inputs[i].value);
+					if (inputs[i].value.trim() === "" || isNaN(n) || n < 0) {
+						error.textContent = fmt(M.enter_counted, inputs[i].dataset.mode);
+						inputs[i].focus();
+						return;
+					}
+					counted.push({ mode_of_payment: inputs[i].dataset.mode, closing_amount: n });
+				}
+				confirm.disabled = true;
+				error.textContent = "";
+				call(M_CLOSE_SHIFT, { counted: counted }, { post: true }).then(function () {
+					store.set("cart", null);
+					S.profile = null;
+					S.cart = [];
+					closeDialog();
+					toast(M.shift_closed, "success");
+					start();
+				}).catch(function (e) { error.textContent = e.message; confirm.disabled = false; });
+			};
+		}).catch(function (e) { body.textContent = ""; error.textContent = e.message; });
+	}
+
+	// ------------------------------------------------------------------ held (parked) sales
+	// A held sale is the cart as it was, kept for this user on this computer (localStorage). Nothing is
+	// reserved on the server: resuming re-quotes prices and re-checks stock like any cart.
+
+	var MAX_HELD = 20;
+
+	function heldAll() {
+		var list = store.get("held");
+		return Array.isArray(list) ? list.filter(function (x) { return x && Array.isArray(x.cart); }) : [];
+	}
+
+	function heldHere() {
+		return heldAll().filter(function (x) { return S.profile && x.profile === S.profile.name; });
+	}
+
+	function renderHeldCount() {
+		var badge = $("#px-held-count");
+		if (!badge) return;
+		var n = heldHere().length;
+		badge.textContent = n ? String(n) : "";
+		badge.hidden = !n;
+	}
+
+	function holdCurrent(quiet) {
+		if (!S.profile) return false;
+		if (S.pending) { toast(M.hold_busy, "error"); return false; }
+		if (!S.cart.length) { if (!quiet) toast(M.nothing_to_hold, "info"); return false; }
+		var first = S.cart[0];
+		var list = heldAll();
+		list.unshift({
+			id: uuid(),
+			at: new Date().toISOString(),
+			profile: S.profile.name,
+			label: itemTitle(first) + (S.cart.length > 1 ? " +" + (S.cart.length - 1) : ""),
+			items: S.cart.reduce(function (n, l) { return n + Number(l.qty || 0); }, 0),
+			total: quoteReady() ? totalDue() : null,
+			customer: S.customer,
+			customerName: S.customerName,
+			discountPct: S.discountPct,
+			cart: S.cart,
+		});
+		store.set("held", list.slice(0, MAX_HELD));
+		clearSale();
+		renderHeldCount();
+		if (!quiet) toast(M.held_ok, "success");
+		return true;
+	}
+
+	function resumeHeld(id) {
+		if (S.pending) return toast(M.hold_busy, "error");
+		var entry = heldAll().filter(function (x) { return x.id === id; })[0];
+		if (!entry) return;
+		if (S.cart.length && !holdCurrent(true)) return; // the current sale is parked in its place
+		store.set("held", heldAll().filter(function (x) { return x.id !== id; }));
+		S.cart = entry.cart;
+		S.discountPct = Number(entry.discountPct) || 0;
+		if (entry.customer) { S.customer = entry.customer; S.customerName = entry.customerName || entry.customer; }
+		closeDialog();
+		cartChanged();
+		renderHeldCount();
+		toast(M.resumed, "success");
+	}
+
+	function openHeld() {
+		var list = h("div", { class: "px-list" });
+		function draw() {
+			list.textContent = "";
+			var rows = heldHere();
+			if (!rows.length) return append(list, h("p", { class: "px-muted", text: M.held_empty }));
+			rows.forEach(function (r) {
+				append(list, h("div", { class: "px-list-row" },
+					h("div", null,
+						h("strong", { text: r.label }),
+						h("div", { class: "px-muted" }, fmt(M.items_count, qtyText(r.items)), r.total !== null && r.total !== undefined ? " · " + money(r.total) : "", " · ", r.customerName || "", " · ", h("bdi", { dir: "ltr", text: shortTime(new Date(r.at).toTimeString()) }))
+					),
+					h("div", { class: "px-row-actions" },
+						h("button", { type: "button", class: "px-btn px-btn-sm px-btn-primary", text: M.resume, onclick: function () { resumeHeld(r.id); } }),
+						h("button", { type: "button", class: "px-btn px-btn-sm", text: M.discard, onclick: function () {
+							store.set("held", heldAll().filter(function (x) { return x.id !== r.id; }));
+							renderHeldCount();
+							draw();
+						} })
+					)
+				));
+			});
+		}
+		draw();
+		openDialog({ title: M.held, wide: true, body: [h("p", { class: "px-muted", text: M.held_note }), list] });
 	}
 
 	function logout() {
@@ -1136,6 +1292,8 @@
 		else if (action === "returns") openReturns("");
 		else if (action === "recent") openRecent();
 		else if (action === "close-shift") closeShift();
+		else if (action === "hold") holdCurrent(false);
+		else if (action === "held") openHeld();
 		else if (action === "logout") logout();
 	});
 
@@ -1145,6 +1303,7 @@
 		if (e.key === "F2") { e.preventDefault(); closeDialog(); focusScan(); return; }
 		if (S.dialog) return;
 		if (e.key === "F4") { e.preventDefault(); openCustomer(); return; }
+		if (e.key === "F8") { e.preventDefault(); holdCurrent(false); return; }
 		if (e.key === "F9" || (e.key === "Enter" && (e.ctrlKey || e.metaKey))) { e.preventDefault(); if (quoteReady()) openPayment(false); return; }
 		// a scanner (or typing) while nothing is focused goes to the scan field
 		var t = e.target;

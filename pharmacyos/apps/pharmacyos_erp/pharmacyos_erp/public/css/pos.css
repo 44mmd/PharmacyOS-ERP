@@ -272,3 +272,8 @@ select.px-input { appearance: auto; }
 @media print { .px-top, .px-main, .px-toasts { display: none !important; } }
 
 [hidden] { display: none !important; }
+
+/* held sales count, shift-closing differences */
+.px-count { display: inline-flex; min-width: 18px; height: 18px; padding: 0 5px; margin-inline-start: 4px; align-items: center; justify-content: center; border-radius: 9px; background: var(--pos-green); color: var(--pos-white); font-size: 11.5px; font-weight: 700; }
+.px-count[hidden] { display: none; }
+.px-warn-text { color: var(--pos-warning); font-weight: 600; }

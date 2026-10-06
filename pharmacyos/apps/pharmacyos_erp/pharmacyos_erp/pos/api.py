@@ -639,3 +639,89 @@ def recent_sales(limit: int = 20) -> list[dict]:
 		order_by="creation desc",
 		limit_page_length=min(max(cint(limit), 1), 100),
 	)
+
+
+# ------------------------------------------------------------------ closing the shift at the counter
+
+
+def _own_open_shift():
+	"""The signed-in user's open shift as a document they may read (never someone else's)."""
+	shift = _open_shift(frappe.session.user)
+	if not shift:
+		frappe.throw(_("You have no open shift."), POSRequestError)
+	opening = frappe.get_doc("POS Opening Entry", shift.name)
+	opening.check_permission("read")
+	return opening
+
+
+def _closing_for(opening):
+	"""ERPNext's own closing entry for the shift, unsaved: its sales, payments and expected cash."""
+	from erpnext.accounts.doctype.pos_closing_entry.pos_closing_entry import make_closing_entry_from_opening
+
+	return make_closing_entry_from_opening(opening)
+
+
+def _closing_summary(closing) -> dict:
+	return {
+		"name": closing.name if not closing.is_new() else None,
+		"shift": closing.pos_opening_entry,
+		"pos_profile": closing.pos_profile,
+		"sales": len(closing.get("sales_invoices") or closing.get("pos_transactions") or []),
+		"grand_total": flt(closing.grand_total),
+		"net_total": flt(closing.net_total),
+		"payments": [
+			{
+				"mode_of_payment": row.mode_of_payment,
+				"label": _(row.mode_of_payment),
+				"opening_amount": flt(row.opening_amount),
+				"expected_amount": flt(row.expected_amount),
+				"closing_amount": flt(row.closing_amount),
+				"difference": flt(row.difference),
+			}
+			for row in closing.payment_reconciliation
+		],
+	}
+
+
+@frappe.whitelist()
+def shift_summary() -> dict:
+	"""What the cashier's open shift took, per payment method (opening + takings = expected). Saves nothing."""
+	_require_user()
+	return _closing_summary(_closing_for(_own_open_shift()))
+
+
+@frappe.whitelist(methods=["POST"])
+def close_shift(counted: list | str) -> dict:
+	"""Close the cashier's own shift with the amounts counted in the drawer, as ERPNext's POS Closing Entry
+	(submitted as the signed-in user, so ERPNext's rules and permissions apply). Every payment method of
+	the shift must be counted; the difference to the expected amount is recorded, never corrected."""
+	_require_user()
+	if not frappe.has_permission("POS Closing Entry", "create"):
+		frappe.throw(_("You are not allowed to close a shift."), frappe.PermissionError)
+	counted = frappe.parse_json(counted) or []
+	if not isinstance(counted, list):
+		frappe.throw(_("Invalid counted amounts."), POSRequestError)
+	amounts = {}
+	for row in counted:
+		if not isinstance(row, dict) or not isinstance(row.get("mode_of_payment"), str):
+			frappe.throw(_("Invalid counted amounts."), POSRequestError)
+		value = row.get("closing_amount")
+		if value in (None, "") or flt(value) < 0:
+			frappe.throw(_("Enter the amount counted for {0}.").format(_(row["mode_of_payment"])), POSRequestError)
+		amounts[row["mode_of_payment"]] = flt(value)
+
+	opening = _own_open_shift()
+	# one closing per shift, even for a double click racing itself: lock the shift, then re-check it
+	status = frappe.db.get_value("POS Opening Entry", opening.name, "status", for_update=True)
+	if status != "Open":
+		frappe.throw(_("This shift is already closed."), POSRequestError)
+	closing = _closing_for(opening)
+	missing = [row.mode_of_payment for row in closing.payment_reconciliation if row.mode_of_payment not in amounts]
+	if missing:
+		frappe.throw(_("Enter the amount counted for {0}.").format(", ".join(_(m) for m in missing)), POSRequestError)
+	for row in closing.payment_reconciliation:
+		row.closing_amount = amounts[row.mode_of_payment]
+		row.difference = flt(row.closing_amount) - flt(row.expected_amount)
+	closing.insert()
+	closing.submit()
+	return _closing_summary(closing)

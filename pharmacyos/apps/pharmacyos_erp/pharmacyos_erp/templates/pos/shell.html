@@ -29,6 +29,8 @@
 		</div>
 		<div class="px-shift" id="px-shift" aria-live="polite"></div>
 		<nav class="px-actions" aria-label="{{ _('Point of Sale') }}">
+			<button type="button" class="px-btn px-btn-ghost" data-action="hold" title="F8">{{ _("Hold") }}</button>
+			<button type="button" class="px-btn px-btn-ghost" data-action="held">{{ _("Held sales") }} <span class="px-count" id="px-held-count" hidden></span></button>
 			<button type="button" class="px-btn px-btn-ghost" data-action="recent">{{ _("Recent sales") }}</button>
 			<button type="button" class="px-btn px-btn-ghost" data-action="returns">{{ _("Returns") }}</button>
 			<button type="button" class="px-btn px-btn-ghost" data-action="close-shift" hidden>{{ _("Close shift") }}</button>
@@ -48,7 +50,7 @@
 					placeholder="{{ _('Scan a barcode or search medicine name, Arabic name or generic') }}">
 				<button type="submit" class="px-btn px-btn-primary">{{ _("Find") }}</button>
 			</form>
-			<div class="px-hint" id="px-hint">{{ _("F2 search · F4 customer · F9 pay · Esc close") }}</div>
+			<div class="px-hint" id="px-hint">{{ _("F2 search · F4 customer · F8 hold · F9 pay · Esc close") }}</div>
 			<div class="px-results" id="px-results" role="list"></div>
 		</section>
 

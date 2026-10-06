@@ -2981,3 +2981,75 @@ msgstr "تحتاج نقطة البيع إلى JavaScript."
 
 msgid "⌘ Return pay · Esc close · scan or type at any time"
 msgstr "⌘ Return للدفع · Esc إغلاق · امسح أو اكتب في أي وقت"
+
+msgid "F2 search · F4 customer · F8 hold · F9 pay · Esc close"
+msgstr "F2 بحث · F4 الزبون · F8 تعليق · F9 دفع · Esc إغلاق"
+
+msgid "Held sales"
+msgstr "المبيعات المعلّقة"
+
+msgid "No held sales."
+msgstr "لا توجد مبيعات معلّقة."
+
+msgid "Sale held. Resume it from Held sales."
+msgstr "تم تعليق البيع. استأنفه من المبيعات المعلّقة."
+
+msgid "Held sales stay on this computer and do not reserve stock."
+msgstr "تبقى المبيعات المعلّقة على هذا الجهاز ولا تحجز المخزون."
+
+msgid "The cart is empty — nothing to hold."
+msgstr "السلة فارغة — لا شيء لتعليقه."
+
+msgid "This sale is being completed — it cannot be held now."
+msgstr "يجري إتمام هذا البيع — لا يمكن تعليقه الآن."
+
+msgid "Resume"
+msgstr "استئناف"
+
+msgid "Discard"
+msgstr "حذف"
+
+msgid "Sale resumed. Prices and stock are checked again."
+msgstr "تم استئناف البيع. يُعاد التحقق من الأسعار والمخزون."
+
+msgid "{0} items"
+msgstr "{0} مادة"
+
+msgid "Count the drawer and enter what is there for each payment method. The difference is recorded, not corrected."
+msgstr "عُدّ الدرج وأدخل الموجود لكل طريقة دفع. يُسجَّل الفرق ولا يُصحَّح."
+
+msgid "Opening"
+msgstr "الافتتاح"
+
+msgid "Expected"
+msgstr "المتوقع"
+
+msgid "Counted"
+msgstr "المعدود"
+
+msgid "Difference"
+msgstr "الفرق"
+
+msgid "{0} sales · {1}"
+msgstr "{0} عملية بيع · {1}"
+
+msgid "Shift closed."
+msgstr "تم إغلاق الوردية."
+
+msgid "Open the full closing form"
+msgstr "فتح نموذج الإغلاق الكامل"
+
+msgid "You have no open shift."
+msgstr "ليست لديك وردية مفتوحة."
+
+msgid "This shift is already closed."
+msgstr "هذه الوردية مغلقة بالفعل."
+
+msgid "You are not allowed to close a shift."
+msgstr "غير مسموح لك بإغلاق وردية."
+
+msgid "Invalid counted amounts."
+msgstr "مبالغ العدّ غير صالحة."
+
+msgid "Enter the amount counted for {0}."
+msgstr "أدخل المبلغ المعدود لـ {0}."

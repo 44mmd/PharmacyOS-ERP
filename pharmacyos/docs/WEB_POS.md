@@ -73,8 +73,11 @@ concurrency, cost privacy) was modified.
 
 Arabic first (RTL; English when the user's language is English), IQD, PharmacyOS tokens and Tajawal.
 
-* **Shift:** opens the cashier's own shift on their counter (ERPNext `create_opening_voucher`); closing
-  opens ERPNext's POS Closing Entry form for that shift.
+* **Shift:** opens the cashier's own shift on their counter (ERPNext `create_opening_voucher`). *Close shift*
+  shows ERPNext's expected amount per payment method (opening + takings, `shift_summary`); the cashier enters
+  what the drawer holds and `close_shift` submits ERPNext's POS Closing Entry as the cashier, recording the
+  difference (never correcting it). The shift row is locked, so a double click never closes it twice. The full
+  desk form stays one click away.
 * **Search / scan:** one always-focused field. A scanner (keyboard wedge, Enter suffix) or typed code →
   ERPNext's scan (barcode, batch, serial) → added to the cart; scans are queued, so fast consecutive
   scans all land; the field is cleared synchronously and keeps focus. Typing searches by name, Arabic
@@ -83,6 +86,10 @@ Arabic first (RTL; English when the user's language is English), IQD, PharmacyOS
   accepted), line discount % only on counters that allow it, server prices and amounts, warning above
   the sellable stock.
 * **Customer:** walk-in by default; search; quick new customer (name + mobile).
+* **Hold (F8) / Held sales:** parks the current cart (customer and discount included) to serve another
+  customer; *Held sales* lists them with *Resume* / *Discard*. Resuming while a cart is open parks that one in
+  its place. Held carts are kept per user on that computer (localStorage, at most 20), never reserve stock, and
+  are re-quoted by the server when resumed. A cart whose checkout is in flight cannot be held.
 * **Payment (F9 / ⌘↵ / Ctrl+Enter):** the counter's payment methods, quick cash notes, change aid;
   the receipt shows ERPNext's change.
 * **Receipt:** the ERP's `PharmacyOS Receipt` print view in a preview; Print (browser dialog / native).
