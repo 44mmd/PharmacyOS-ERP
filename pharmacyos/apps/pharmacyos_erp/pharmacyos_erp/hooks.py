@@ -123,6 +123,8 @@ after_request = [f"{_cost}.scrub_response"]
 doc_events = {
 	# counter staff keep customers' names and phones up to date, not their commercial terms
 	"Customer": {"validate": "pharmacyos_erp.pharmacy.counter_sales.guard_customer_terms"},
+	# stored scheduler times follow the site's time zone: a change must not leave jobs waiting
+	"System Settings": {"on_update": "pharmacyos_erp.backup.service.repair_job_clock_after_settings"},
 	"Item": {
 		"validate": "pharmacyos_erp.pharmacy.medicine.validate_item",
 		"on_update": f"{_outbox}.on_item",

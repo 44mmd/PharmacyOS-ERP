@@ -278,10 +278,18 @@ def repair_job_clock(margin_minutes: int = 5) -> int:
 	"""Scheduled jobs whose last run lies in the future start running again now.
 
 	Frappe runs a job when its next time after the last run (or, never run, after its creation) has come.
-	When the computer's clock was ahead and is put back (a flat CMOS battery, a manual correction, a
-	restored backup from a machine with a wrong clock), every job waits until that future time: the hourly
-	backups would stop without an error. Run at every start of the server and after every migrate."""
-	now = now_datetime()
+	Those times are stored in the site's time zone. A new site starts in Asia/Kolkata (+5:30) and the
+	pharmacy's first run switches it to Asia/Baghdad (+3): every job created at installation then lies
+	2½ hours ahead and nothing runs — hourly backups included — until that time comes, with no error.
+	The same happens when the computer's clock is put back or a database from such a machine is
+	restored. Run after the time zone is set, at every server start and after every migrate."""
+	from datetime import datetime, timezone
+
+	from frappe.utils import convert_utc_to_timezone
+
+	# the time zone as stored now (a cached value may still be the one before a change)
+	tz = frappe.db.get_single_value("System Settings", "time_zone") or "Asia/Kolkata"
+	now = convert_utc_to_timezone(datetime.now(timezone.utc), tz).replace(tzinfo=None)
 	ahead = now + timedelta(minutes=margin_minutes)
 	names = frappe.db.sql_list(
 		"select name from `tabScheduled Job Type` where coalesce(last_execution, creation) > %s", (ahead,)
@@ -291,8 +299,14 @@ def repair_job_clock(margin_minutes: int = 5) -> int:
 			"update `tabScheduled Job Type` set last_execution = %s where name in %s", (now, tuple(names))
 		)
 		frappe.db.commit()
-		frappe.logger("pharmacyos").warning(f"{len(names)} scheduled jobs were set in the future (clock put back): reset to now")
+		frappe.logger("pharmacyos").warning(f"{len(names)} scheduled jobs were set in the future: reset to now")
 	return len(names)
+
+
+def repair_job_clock_after_settings(doc, method=None):
+	"""doc_event (on_update) for System Settings: a time-zone change moves every stored job time."""
+	if doc.has_value_changed("time_zone"):
+		repair_job_clock()
 
 
 def hourly():

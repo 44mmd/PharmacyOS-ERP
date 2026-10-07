@@ -557,6 +557,9 @@ def configure_locale():
 	if frappe.db.get_single_value("System Settings", "country") != "Iraq":
 		return
 	frappe.db.set_single_value("System Settings", "time_zone", "Asia/Baghdad")
+	from pharmacyos_erp.backup.service import repair_job_clock
+
+	repair_job_clock()  # the jobs created with the new site's Asia/Kolkata clock would otherwise wait 2½ hours
 	if frappe.db.exists("Language", "ar"):
 		frappe.db.set_single_value("System Settings", "language", "ar")
 		frappe.db.set_default("lang", "ar")

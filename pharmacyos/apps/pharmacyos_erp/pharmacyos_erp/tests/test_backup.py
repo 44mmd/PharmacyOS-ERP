@@ -157,3 +157,19 @@ class TestSchedulerClock(IntegrationTestCase):
 		# due again within the hour, as an hourly job should be
 		self.assertTrue(doc.is_event_due(frappe.utils.add_to_date(now_datetime(), hours=1, minutes=1)))
 		self.assertEqual(service.repair_job_clock(), 0)  # nothing left to repair
+
+	def test_a_time_zone_change_does_not_leave_jobs_waiting(self):
+		# a new site runs in Asia/Kolkata (+5:30); the pharmacy's first run switches to Asia/Baghdad (+3):
+		# the jobs created at installation would lie 2½ hours ahead. The System Settings hook repairs them.
+		from frappe.utils import add_to_date, now_datetime
+
+		job = frappe.db.get_value("Scheduled Job Type", {"method": "pharmacyos_erp.backup.service.hourly"}, "name")
+		frappe.db.set_value("Scheduled Job Type", job, {"last_execution": None, "creation": add_to_date(now_datetime(), hours=2, minutes=30)}, update_modified=False)
+
+		class TimeZoneChanged:
+			def has_value_changed(self, field):
+				return field == "time_zone"
+
+		service.repair_job_clock_after_settings(TimeZoneChanged())
+		doc = frappe.get_doc("Scheduled Job Type", job)
+		self.assertLessEqual(frappe.utils.get_datetime(doc.last_execution), now_datetime())

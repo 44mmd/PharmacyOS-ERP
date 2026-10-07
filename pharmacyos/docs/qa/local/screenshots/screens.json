@@ -1,0 +1,261 @@
+[
+ {
+  "screen": "05-login",
+  "url": "http://127.0.0.1/login",
+  "note": "Frappe sign-in page, PharmacyOS branded",
+  "visible_text": "PharmacyOS ERP نظام تشغيل الصيدلية نظام التشغيل لصيدليتك. الأدوية والوجبات والصلاحية والفروع والمشتريات والمبيعات — في مساحة عمل واحدة هادئة وموثوقة. توجيه «الأقرب انتهاءً يُصرف أولاً» في كل عملية بيع مخزون لكل فرع مع تت",
+  "page_errors": []
+ },
+ {
+  "screen": "19-shift-open",
+  "url": "http://127.0.0.1/pos",
+  "note": "opening float 25,000 IQD typed before opening the shift",
+  "visible_text": "صيدلية الاختبار (QA) نقطة البيع تعليق المبيعات المعلّقة آخر المبيعات المرتجعات QA Sara تسجيل الخروج امسح الباركود أو ابحث باسم الدواء أو الاسم العربي أو الاسم العلمي بحث F2 بحث · F4 الزبون · F8 تعليق · F9 دفع · Esc إغلاق",
+  "page_errors": []
+ },
+ {
+  "screen": "07-pos",
+  "url": "http://127.0.0.1/pos",
+  "note": "the counter screen, shift open, empty cart",
+  "visible_text": "صيدلية الاختبار (QA) نقطة البيع الكاونتر: Main Counter الوردية POS-OPE-2026-00007 تعليق المبيعات المعلّقة آخر المبيعات المرتجعات إغلاق الوردية QA Sara تسجيل الخروج امسح الباركود أو ابحث باسم الدواء أو الاسم العربي أو الا",
+  "page_errors": []
+ },
+ {
+  "screen": "08b-pos-arabic-search",
+  "url": "http://127.0.0.1/pos",
+  "note": "Arabic name search (فولتارين) with results",
+  "visible_text": "صيدلية الاختبار (QA) نقطة البيع الكاونتر: Main Counter الوردية POS-OPE-2026-00007 تعليق المبيعات المعلّقة آخر المبيعات المرتجعات إغلاق الوردية QA Sara تسجيل الخروج امسح الباركود أو ابحث باسم الدواء أو الاسم العربي أو الا",
+  "page_errors": []
+ },
+ {
+  "screen": "08-populated-cart",
+  "url": "http://127.0.0.1/pos",
+  "note": "two scans of one medicine (qty 2), a Tab-suffixed scan, an Arabic search pick, 10 % line discount",
+  "visible_text": "صيدلية الاختبار (QA) نقطة البيع الكاونتر: Main Counter الوردية POS-OPE-2026-00007 تعليق المبيعات المعلّقة آخر المبيعات المرتجعات إغلاق الوردية QA Sara تسجيل الخروج امسح الباركود أو ابحث باسم الدواء أو الاسم العربي أو الا",
+  "page_errors": []
+ },
+ {
+  "screen": "09-payment",
+  "url": "http://127.0.0.1/pos",
+  "note": "cash payment of 20,000 with the change shown",
+  "visible_text": "صيدلية الاختبار (QA) نقطة البيع الكاونتر: Main Counter الوردية POS-OPE-2026-00007 تعليق المبيعات المعلّقة آخر المبيعات المرتجعات إغلاق الوردية QA Sara تسجيل الخروج امسح الباركود أو ابحث باسم الدواء أو الاسم العربي أو الا",
+  "page_errors": []
+ },
+ {
+  "screen": "10-receipt-80mm-pos",
+  "url": "http://127.0.0.1/pos",
+  "note": "sale completed: the receipt shown at the counter (80 mm)",
+  "visible_text": "صيدلية الاختبار (QA) نقطة البيع الكاونتر: Main Counter الوردية POS-OPE-2026-00007 تعليق المبيعات المعلّقة آخر المبيعات المرتجعات إغلاق الوردية QA Sara تسجيل الخروج امسح الباركود أو ابحث باسم الدواء أو الاسم العربي أو الا",
+  "page_errors": []
+ },
+ {
+  "screen": "12-hold",
+  "url": "http://127.0.0.1/pos",
+  "note": "the cart parked (held-sales badge shows 1), counter free for the next customer",
+  "visible_text": "صيدلية الاختبار (QA) نقطة البيع الكاونتر: Main Counter الوردية POS-OPE-2026-00007 تعليق المبيعات المعلّقة 1 آخر المبيعات المرتجعات إغلاق الوردية QA Sara تسجيل الخروج امسح الباركود أو ابحث باسم الدواء أو الاسم العربي أو ا",
+  "page_errors": []
+ },
+ {
+  "screen": "13-resume-list",
+  "url": "http://127.0.0.1/pos",
+  "note": "held sales of this counter, with Resume / Discard",
+  "visible_text": "صيدلية الاختبار (QA) نقطة البيع الكاونتر: Main Counter الوردية POS-OPE-2026-00007 تعليق المبيعات المعلّقة 1 آخر المبيعات المرتجعات إغلاق الوردية QA Sara تسجيل الخروج امسح الباركود أو ابحث باسم الدواء أو الاسم العربي أو ا",
+  "page_errors": []
+ },
+ {
+  "screen": "13b-resumed-cart",
+  "url": "http://127.0.0.1/pos",
+  "note": "the held cart back in the counter, re-priced",
+  "visible_text": "صيدلية الاختبار (QA) نقطة البيع الكاونتر: Main Counter الوردية POS-OPE-2026-00007 تعليق المبيعات المعلّقة آخر المبيعات المرتجعات إغلاق الوردية QA Sara تسجيل الخروج امسح الباركود أو ابحث باسم الدواء أو الاسم العربي أو الا",
+  "page_errors": []
+ },
+ {
+  "screen": "14-sales-history",
+  "url": "http://127.0.0.1/pos",
+  "note": "this counter's recent sales with Reprint / Return / Void",
+  "visible_text": "صيدلية الاختبار (QA) نقطة البيع الكاونتر: Main Counter الوردية POS-OPE-2026-00007 تعليق المبيعات المعلّقة آخر المبيعات المرتجعات إغلاق الوردية QA Sara تسجيل الخروج امسح الباركود أو ابحث باسم الدواء أو الاسم العربي أو الا",
+  "page_errors": []
+ },
+ {
+  "screen": "16-return",
+  "url": "http://127.0.0.1/pos",
+  "note": "return of one unit against the original sale (bounded by what was sold)",
+  "visible_text": "صيدلية الاختبار (QA) نقطة البيع الكاونتر: Main Counter الوردية POS-OPE-2026-00007 تعليق المبيعات المعلّقة آخر المبيعات المرتجعات إغلاق الوردية QA Sara تسجيل الخروج امسح الباركود أو ابحث باسم الدواء أو الاسم العربي أو الا",
+  "page_errors": []
+ },
+ {
+  "screen": "16b-return-receipt",
+  "url": "http://127.0.0.1/pos",
+  "note": "return completed, refund receipt",
+  "visible_text": "صيدلية الاختبار (QA) نقطة البيع الكاونتر: Main Counter الوردية POS-OPE-2026-00007 تعليق المبيعات المعلّقة آخر المبيعات المرتجعات إغلاق الوردية QA Sara تسجيل الخروج امسح الباركود أو ابحث باسم الدواء أو الاسم العربي أو الا",
+  "page_errors": []
+ },
+ {
+  "screen": "17-void-approval",
+  "url": "http://127.0.0.1/pos",
+  "note": "void requested by the cashier; the manager approves with their own password on this screen",
+  "visible_text": "صيدلية الاختبار (QA) نقطة البيع الكاونتر: Main Counter الوردية POS-OPE-2026-00007 تعليق المبيعات المعلّقة آخر المبيعات المرتجعات إغلاق الوردية QA Sara تسجيل الخروج امسح الباركود أو ابحث باسم الدواء أو الاسم العربي أو الا",
+  "page_errors": []
+ },
+ {
+  "screen": "18-void-result",
+  "url": "http://127.0.0.1/pos",
+  "note": "the sale shows as voided; the cashier is still the signed-in user",
+  "visible_text": "صيدلية الاختبار (QA) نقطة البيع الكاونتر: Main Counter الوردية POS-OPE-2026-00007 تعليق المبيعات المعلّقة آخر المبيعات المرتجعات إغلاق الوردية QA Sara تسجيل الخروج امسح الباركود أو ابحث باسم الدواء أو الاسم العربي أو الا",
+  "page_errors": []
+ },
+ {
+  "screen": "06-dashboard",
+  "url": "http://127.0.0.1/desk/pharmacy-dashboard",
+  "note": "Pharmacy Dashboard (owner)",
+  "visible_text": "نظرة عامة PharmacyOS بحث Ctrl+K الإشعارات لوحة التحكم تقرير الصيدلية يحتاج انتباهك الوجبات وتواريخ الانتهاء صحة المخزون اقتراحات إعادة الطلب QO QA Owner owner@qa-pharmacy.test لوحة التحكم إضافة دواء استلام مخزون فتح نقطة",
+  "page_errors": []
+ },
+ {
+  "screen": "15-sale-detail",
+  "url": "http://127.0.0.1/desk/sales-invoice/ACC-SINV-2026-00093",
+  "note": "the voided sale in the ERP: items, batch, payments, status Cancelled",
+  "visible_text": "الصفحة الرئيسية ERPNext بحث Ctrl+K الإشعارات الصنف الصفحة الرئيسية الزبون المورد فاتورة بيع QO QA Owner owner@qa-pharmacy.test الصفحة الرئيسية فاتورة بيع زبون نقدي ملغى عرض تعديل التفاصيل المدفوعات معلومات الاتصال والعنو",
+  "page_errors": []
+ },
+ {
+  "screen": "10-receipt-80mm",
+  "url": "http://127.0.0.1/printview?doctype=Sales%20Invoice&name=ACC-SINV-2026-00093&format=PharmacyOS%20Receipt&no_letterhead=1",
+  "note": "PharmacyOS Receipt print format, 80 mm paper (Arabic + English names, discount, change)",
+  "visible_text": "لا يسمح لا يسمح لطباعة الوثائق الملغاة دخول",
+  "page_errors": []
+ },
+ {
+  "screen": "11-receipt-58mm",
+  "url": "http://127.0.0.1/printview?doctype=Sales%20Invoice&name=ACC-SINV-2026-00093&format=PharmacyOS%20Receipt&no_letterhead=1",
+  "note": "the same receipt on 58 mm paper (PharmacyOS Settings → Receipt Paper Width)",
+  "visible_text": "لا يسمح لا يسمح لطباعة الوثائق الملغاة دخول",
+  "page_errors": []
+ },
+ {
+  "screen": "21-medicines",
+  "url": "http://127.0.0.1/desk/item?item_group=Analgesics",
+  "note": "Medicines (Item list)",
+  "visible_text": "المخزون ERPNext بحث Ctrl+K الإشعارات الصفحة الرئيسية لوحة التحكم حركة مخزون استلام مشتريات وصل تسليم طلب مواد قائمة الانتقاء الأدوات الإعدادات الصنف الفئة موصفات الصنف العلامة التجارية المخزن وحدة القياس عامل تحويل وحدة ",
+  "page_errors": []
+ },
+ {
+  "screen": "21b-medicine-form",
+  "url": "http://127.0.0.1/desk/item/QA-PAN500#details",
+  "note": "a medicine: Arabic name, generic, barcodes, batches and expiry",
+  "visible_text": "المخزون ERPNext بحث Ctrl+K الإشعارات الصفحة الرئيسية لوحة التحكم حركة مخزون استلام مشتريات وصل تسليم طلب مواد قائمة الانتقاء الأدوات الإعدادات الصنف الفئة موصفات الصنف العلامة التجارية المخزن وحدة القياس عامل تحويل وحدة ",
+  "page_errors": []
+ },
+ {
+  "screen": "22-inventory",
+  "url": "http://127.0.0.1/desk/inventory-health",
+  "note": "Inventory Health: low stock, out of stock, stock value",
+  "visible_text": "نظرة عامة PharmacyOS بحث Ctrl+K الإشعارات لوحة التحكم تقرير الصيدلية يحتاج انتباهك الوجبات وتواريخ الانتهاء صحة المخزون اقتراحات إعادة الطلب QO QA Owner owner@qa-pharmacy.test صحة المخزون تقرير رصيد المخزون تحديث الكل140",
+  "page_errors": []
+ },
+ {
+  "screen": "23-batches",
+  "url": "http://127.0.0.1/desk/batches-expiry",
+  "note": "Batches & Expiry: every batch with its expiry and quantity (FEFO order)",
+  "visible_text": "نظرة عامة PharmacyOS بحث Ctrl+K الإشعارات لوحة التحكم تقرير الصيدلية يحتاج انتباهك الوجبات وتواريخ الانتهاء صحة المخزون اقتراحات إعادة الطلب QO QA Owner owner@qa-pharmacy.test الوجبات وتواريخ الانتهاء قائمة الوجبات سجل ا",
+  "page_errors": []
+ },
+ {
+  "screen": "24-expiry",
+  "url": "http://127.0.0.1/desk/expiry-intelligence",
+  "note": "Expiry Intelligence: expired and near-expiry stock",
+  "visible_text": "التحليلات PharmacyOS بحث Ctrl+K الإشعارات مراقبة الصلاحية صحة المخزون اقتراحات إعادة الطلب التحليلات تحليل المبيعات تحليلات المشتريات QO QA Owner owner@qa-pharmacy.test مراقبة الصلاحية الوجبات وتواريخ الانتهاء تحديث اليو",
+  "page_errors": []
+ },
+ {
+  "screen": "25-expired-disposal",
+  "url": "http://127.0.0.1/desk/batches-expiry",
+  "note": "disposing of an expired batch: quantity and reason, recorded as a stock write-off",
+  "visible_text": "نظرة عامة PharmacyOS بحث Ctrl+K الإشعارات لوحة التحكم تقرير الصيدلية يحتاج انتباهك الوجبات وتواريخ الانتهاء صحة المخزون اقتراحات إعادة الطلب QO QA Owner owner@qa-pharmacy.test الوجبات وتواريخ الانتهاء قائمة الوجبات سجل ا",
+  "page_errors": []
+ },
+ {
+  "screen": "26-suppliers",
+  "url": "http://127.0.0.1/desk/supplier",
+  "note": "Suppliers",
+  "visible_text": "المشتريات ERPNext بحث Ctrl+K الإشعارات الصفحة الرئيسية لوحة التحكم طلب مواد طلب للحصول على الاقتباس التسعيرة من المورد أمر شراء فاتورة شراء الإعدادات المورد فئة المورد الصنف قائمة الأسعار العنوان جهات الاتصال بطاقة أداء ",
+  "page_errors": []
+ },
+ {
+  "screen": "27-purchase-order",
+  "url": "http://127.0.0.1/desk/purchase-order/PUR-ORD-2026-00002",
+  "note": "a submitted purchase order",
+  "visible_text": "المشتريات ERPNext بحث Ctrl+K الإشعارات الصفحة الرئيسية لوحة التحكم طلب مواد طلب للحصول على الاقتباس التسعيرة من المورد أمر شراء فاتورة شراء الإعدادات التقارير الإعدادات QO QA Owner owner@qa-pharmacy.test المشتريات أمر شر",
+  "page_errors": []
+ },
+ {
+  "screen": "28-receiving",
+  "url": "http://127.0.0.1/desk/purchase-receipt/MAT-PRE-2026-00011",
+  "note": "receiving: purchase receipt with batch numbers, expiry and cost",
+  "visible_text": "المخزون ERPNext بحث Ctrl+K الإشعارات الصفحة الرئيسية لوحة التحكم حركة مخزون استلام مشتريات وصل تسليم طلب مواد قائمة الانتقاء الأدوات الإعدادات التقارير الإعدادات QO QA Owner owner@qa-pharmacy.test المخزون استلام مشتريات ",
+  "page_errors": []
+ },
+ {
+  "screen": "29-purchase-return",
+  "url": "http://127.0.0.1/desk/purchase-receipt/MAT-PRE-2026-00006",
+  "note": "purchase return to the supplier (negative quantities, against the original receipt)",
+  "visible_text": "المخزون ERPNext بحث Ctrl+K الإشعارات الصفحة الرئيسية لوحة التحكم حركة مخزون استلام مشتريات وصل تسليم طلب مواد قائمة الانتقاء الأدوات الإعدادات التقارير الإعدادات QO QA Owner owner@qa-pharmacy.test المخزون استلام مشتريات ",
+  "page_errors": []
+ },
+ {
+  "screen": "30-reports",
+  "url": "http://127.0.0.1/desk/pharmacy-report",
+  "note": "Pharmacy Report: sales, returns, voids, shifts, margins (owner sees costs)",
+  "visible_text": "التقارير PharmacyOS بحث Ctrl+K الإشعارات تقرير الصيدلية المبيعات سجل مبيعات المبيعات حسب المادة الربح الإجمالي المخزون رصيد المخزون التبويب التاريخي للمخزن حالة صلاحية الوجبات المخزون المتوقع المشتريات سجل شراء QO QA Own",
+  "page_errors": []
+ },
+ {
+  "screen": "31-employees",
+  "url": "http://127.0.0.1/desk/employee?status=Active",
+  "note": "Employees (staff directory)",
+  "visible_text": "الإعدادات ERPNext بحث Ctrl+K الإشعارات الصفحة الرئيسية إعدادات النظام الفرع تعيين QO QA Owner owner@qa-pharmacy.test الموظف عرض القائمة حفظ الفلاتر أضِف الموظف الاسم employee_name Begin typing for results. department الف",
+  "page_errors": []
+ },
+ {
+  "screen": "32-roles-permissions",
+  "url": "http://127.0.0.1/desk/user/cashier@qa-pharmacy.test#user_details_tab",
+  "note": "a staff account: role profile Cashier and its roles",
+  "visible_text": "المستخدمون Frappe Framework بحث Ctrl+K الإشعارات الصفحة الرئيسية المستخدم صلاحية الصلاحيات إذن المستخدم مدير الصلاحيّات مفتش التراخيص عمليات التدقيق سجل النشاط سجل الأذونات سجل الوصول QO QA Owner owner@qa-pharmacy.test ا",
+  "page_errors": []
+ },
+ {
+  "screen": "33-settings",
+  "url": "http://127.0.0.1/desk/pharmacyos-settings#identity_tab",
+  "note": "PharmacyOS Settings (grouped tabs: pharmacy, receipt, sales & counter, stock, backups, Cloud)",
+  "visible_text": "النظام PharmacyOS بحث Ctrl+K الإشعارات حالة النظام إعدادات PharmacyOS إعدادات المخزون الشركة التكاملات أحداث المزامنة النسخ الاحتياطية Voided Sales Webhooks سجل النشاط سجل التعديلات سجل النشاط QO QA Owner owner@qa-pharma",
+  "page_errors": []
+ },
+ {
+  "screen": "33b-system-status",
+  "url": "http://127.0.0.1/desk/system-status",
+  "note": "System Status: version, backups, services",
+  "visible_text": "النظام PharmacyOS بحث Ctrl+K الإشعارات حالة النظام إعدادات PharmacyOS إعدادات المخزون الشركة التكاملات أحداث المزامنة النسخ الاحتياطية Voided Sales Webhooks سجل النشاط سجل التعديلات سجل النشاط QO QA Owner owner@qa-pharma",
+  "page_errors": []
+ },
+ {
+  "screen": "40-permission-denied",
+  "url": "http://127.0.0.1/desk/pharmacy-report",
+  "note": "a cashier opening the Pharmacy Report: refused by the server",
+  "visible_text": "البدء QC QA Cashier Sara cashier@qa-pharmacy.test غير مسموح ليس لديك الأذونات الكافية للوصول إلى هذا المورد. الرجاء الاتصال بالمدير للحصول علي الوصول.",
+  "page_errors": []
+ },
+ {
+  "screen": "20-shift-close",
+  "url": "http://127.0.0.1/pos",
+  "note": "closing count 28500 against 29000 expected: −500 shown before closing",
+  "visible_text": "صيدلية الاختبار (QA) نقطة البيع الكاونتر: Main Counter الوردية POS-OPE-2026-00007 تعليق المبيعات المعلّقة آخر المبيعات المرتجعات إغلاق الوردية QA Sara تسجيل الخروج امسح الباركود أو ابحث باسم الدواء أو الاسم العربي أو الا",
+  "page_errors": []
+ },
+ {
+  "screen": "20b-shift-closed",
+  "url": "http://127.0.0.1/pos",
+  "note": "shift closed; the next sign-in asks for a new opening float",
+  "visible_text": "صيدلية الاختبار (QA) نقطة البيع الكاونتر: Main Counter الوردية POS-OPE-2026-00007 تعليق المبيعات المعلّقة آخر المبيعات المرتجعات إغلاق الوردية QA Sara تسجيل الخروج امسح الباركود أو ابحث باسم الدواء أو الاسم العربي أو الا",
+  "page_errors": []
+ }
+]

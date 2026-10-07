@@ -49,6 +49,7 @@ def fresh():
 		" 'scheduler': not frappe.utils.scheduler.is_scheduler_disabled(verbose=False),\n"
 		" 'time_zone': ss.time_zone, 'language': ss.language, 'currency': frappe.db.get_default('currency'),\n"
 		" 'setup_complete': frappe.is_setup_complete(),\n"
+		" 'jobs_in_future': frappe.db.sql_list(\"select method from `tabScheduled Job Type` where coalesce(last_execution, creation) > %s\", (frappe.utils.add_to_date(frappe.utils.now_datetime(), minutes=5),)),\n"
 		" 'max_counter_discount': frappe.db.sql(\"select value from tabSingles where doctype='PharmacyOS Settings' and field='max_counter_discount'\"),\n"
 		"}\n"
 		"print('OUT=' + json.dumps(out, default=str))"
@@ -61,6 +62,7 @@ def fresh():
 	R.add(A, "first counter ready (Main Counter, cash, receipt format)", "POS Profile with warehouse, price list, PharmacyOS Receipt", s["pos_profiles"], any(p["name"] == "Main Counter" and p["warehouse"] and p["print_format"] == "PharmacyOS Receipt" for p in s["pos_profiles"]))
 	R.add(A, "password policy on, sign-up off", "policy enabled, sign-up disabled", {k: s[k] for k in ("enable_password_policy", "minimum_password_score", "disable_signup")}, bool(s["enable_password_policy"]) and bool(s["disable_signup"]))
 	R.add(A, "scheduler on (hourly backups)", "enabled", s["scheduler"], bool(s["scheduler"]))
+	R.add(A, "no scheduled job waits in the future (time zone set at first run)", "none", s["jobs_in_future"][:5] or "none", not s["jobs_in_future"])
 	R.add(A, "Arabic, Iraq time zone, IQD", "ar / Asia/Baghdad / IQD", {k: s[k] for k in ("language", "time_zone", "currency")}, s["language"] == "ar" and s["time_zone"] == "Asia/Baghdad" and s["currency"] == "IQD")
 	R.add(A, "counter discount ceiling stored (10 %)", "10", s["max_counter_discount"], bool(s["max_counter_discount"]) and float(s["max_counter_discount"][0][0]) == 10)
 	owner = Session("owner").login(*OWNER)

@@ -139,6 +139,9 @@ const cashier = await session("cashier@qa-pharmacy.test", PWD);
 	await p.waitForTimeout(1300);
 	await p.keyboard.press("Enter");
 	await p.waitForTimeout(4000);
+	// this sale stays valid (the first one is voided below): its receipt is printed from the ERP later
+	globalThis.keptSale = await p.evaluate(() => (document.querySelector(".px-dialog iframe")?.src || "").match(/name=([^&]+)/)?.[1]);
+	console.log("kept sale", globalThis.keptSale);
 	await p.keyboard.press("Escape");
 	await p.waitForTimeout(800);
 	// history
@@ -201,12 +204,14 @@ const owner = await session(...OWNER);
 	if (globalThis.saleName) {
 		await desk(p, "sales-invoice/" + globalThis.saleName, 3500);
 		await shot(p, "15-sale-detail", "the voided sale in the ERP: items, batch, payments, status Cancelled");
-		await p.goto(B + `/printview?doctype=Sales%20Invoice&name=${globalThis.saleName}&format=PharmacyOS%20Receipt&no_letterhead=1`);
+	}
+	if (globalThis.keptSale) {
+		await p.goto(B + `/printview?doctype=Sales%20Invoice&name=${globalThis.keptSale}&format=PharmacyOS%20Receipt&no_letterhead=1`);
 		await p.waitForTimeout(2000);
-		await shot(p, "10-receipt-80mm", "PharmacyOS Receipt print format, 80 mm paper (Arabic + English names, discount, change)");
+		await shot(p, "10-receipt-80mm", "PharmacyOS Receipt print format, 80 mm paper (Arabic + English names, cash and change)");
 		// 58 mm: the owner switches the paper width in PharmacyOS Settings; the same receipt again
 		await api(p, "frappe.client.set_value", { doctype: "PharmacyOS Settings", name: "PharmacyOS Settings", fieldname: "receipt_paper_width", value: "58mm" });
-		await p.goto(B + `/printview?doctype=Sales%20Invoice&name=${globalThis.saleName}&format=PharmacyOS%20Receipt&no_letterhead=1`);
+		await p.goto(B + `/printview?doctype=Sales%20Invoice&name=${globalThis.keptSale}&format=PharmacyOS%20Receipt&no_letterhead=1`);
 		await p.waitForTimeout(2000);
 		await shot(p, "11-receipt-58mm", "the same receipt on 58 mm paper (PharmacyOS Settings → Receipt Paper Width)");
 		await api(p, "frappe.client.set_value", { doctype: "PharmacyOS Settings", name: "PharmacyOS Settings", fieldname: "receipt_paper_width", value: "80mm" });
@@ -222,16 +227,17 @@ const owner = await session(...OWNER);
 	await desk(p, "expiry-intelligence", 4000);
 	await shot(p, "24-expiry", "Expiry Intelligence: expired and near-expiry stock");
 	await desk(p, "batches-expiry", 3500);
-	const expiredTab = await p.$("text=منتهية الصلاحية");
+	const expiredTab = await p.$('[data-slot="buckets"] [data-value="expired"]');
 	if (expiredTab) {
 		await expiredTab.click().catch(() => {});
-		await p.waitForTimeout(2000);
+		await p.waitForTimeout(2500);
+		await shot(p, "24b-expired-batches", "expired batches: never sellable, value at risk, Dispose");
 	}
 	const dbtn = await p.$("[data-dispose]");
 	if (dbtn) {
 		await dbtn.click();
 		await p.waitForTimeout(1500);
-		await shot(p, "25-expired-disposal", "disposing of an expired batch: quantity and reason, recorded as a stock write-off");
+		await shot(p, "25-expired-disposal", "disposing of an expired batch: quantity and reason, recorded as a stock write-off (the A12 test disposes of it for real)");
 		await p.keyboard.press("Escape");
 	}
 	await desk(p, "supplier");
