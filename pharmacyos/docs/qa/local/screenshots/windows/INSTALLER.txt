@@ -1,6 +1,6 @@
-Built and checked on Windows by https://github.com/44mmd/PharmacyOS-ERP/actions/runs/37646433977
-commit: aac6fbebfb613897b519ae772a00bbf12d3d65a0
+Built and checked on Windows by https://github.com/44mmd/PharmacyOS-ERP/actions/runs/37660110979
+commit: 05a68fa14c85851a3fc3a88c754259d5107ee533
 file: PharmacyOS-Setup-1.0.0-rc.2.exe
-bytes: 111601229
-sha256: 4f815c5104066574d50ee2ef7efdbb7a2fff167a4ec967cf8fc760773d91ab8d
+bytes: 111603085
+sha256: e933d8ce23864d449ffde3b31bf42f036ccde50ae60121726a7a969d8070f3fd
 signed: no
