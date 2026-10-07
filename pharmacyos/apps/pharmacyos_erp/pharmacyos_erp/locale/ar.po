@@ -3386,3 +3386,15 @@ msgstr "أقصى خصم على الكاونتر (%)"
 
 msgid "The largest discount a cashier or pharmacist may give, per line and for the whole sale, on counters that allow discounts. A pharmacy manager or the owner can give more. Enforced on the server for every sale."
 msgstr "أكبر خصم يمكن للكاشير أو الصيدلاني منحه، لكل سطر وللبيع كاملًا، على الكاونترات التي تسمح بالخصم. يمكن لمدير الصيدلية أو المالك منح أكثر. يُطبَّق على الخادم في كل عملية بيع."
+
+msgid "Counter staff sell through the point of sale, in their own shift."
+msgstr "يبيع موظفو الكاونتر من خلال نقطة البيع، ضمن ورديتهم."
+
+msgid "Counter sales and returns are recorded with today's date."
+msgstr "تُسجَّل مبيعات ومرتجعات الكاونتر بتاريخ اليوم."
+
+msgid "Open your shift on {0} before selling or refunding there."
+msgstr "افتح ورديتك على {0} قبل البيع أو الإرجاع عليه."
+
+msgid "Counter sales use the counter's price list ({0})."
+msgstr "تستخدم مبيعات الكاونتر قائمة أسعار الكاونتر ({0})."

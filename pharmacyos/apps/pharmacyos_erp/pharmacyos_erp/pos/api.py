@@ -212,6 +212,7 @@ def _build_invoice(pos_profile: str, items, customer: str | None, additional_dis
 			row.update({"batch_no": line["batch_no"], "use_serial_batch_fields": 1})
 		doc.append("items", row)
 
+	doc.selling_price_list = profile.selling_price_list
 	doc.set_missing_values()  # ERPNext: POS profile, price list, item prices, taxes, accounts, payments
 	for row, line in zip(doc.items, lines, strict=True):
 		if "rate" in line:
@@ -224,7 +225,7 @@ def _build_invoice(pos_profile: str, items, customer: str | None, additional_dis
 	doc.calculate_taxes_and_totals()
 	# priced by ERPNext here, with the counter's switches checked above: the invoice guard only re-checks
 	# the discount ceiling (an in-memory flag; a request cannot set it)
-	from pharmacyos_erp.pharmacy.counter_pricing import PRICED_FLAG
+	from pharmacyos_erp.pharmacy.counter_sales import PRICED_FLAG
 
 	doc.flags[PRICED_FLAG] = True
 	return doc, profile
@@ -474,7 +475,7 @@ def quote(pos_profile: str, items: list | str, customer: str | None = None, addi
 	Nothing is saved."""
 	_require_user()
 	doc, _profile = _build_invoice(pos_profile, items, customer, flt(additional_discount_percentage))
-	from pharmacyos_erp.pharmacy.counter_pricing import check_discount_ceiling
+	from pharmacyos_erp.pharmacy.counter_sales import check_discount_ceiling
 
 	check_discount_ceiling(doc)  # the same limit checkout applies, shown before payment
 	return _summary(doc)
@@ -685,7 +686,7 @@ def _closed_shift_sales(doctype: str, names: list[str]) -> set[str]:
 
 
 def _max_discount() -> float:
-	from pharmacyos_erp.pharmacy.counter_pricing import is_counter_only, max_counter_discount
+	from pharmacyos_erp.pharmacy.counter_sales import is_counter_only, max_counter_discount
 
 	return max_counter_discount() if is_counter_only() else 100.0
 
@@ -832,26 +833,36 @@ def _acting_as(user: str):
 		frappe.local.form_dict = form
 
 
+def _approval_failed(*keys: str) -> None:
+	"""Count a refused approval (atomically) for the requester and for the targeted approver."""
+	for key in keys:
+		raw = frappe.cache.make_key(key)
+		if frappe.cache.incrby(raw, 1) == 1:
+			frappe.cache.expire(raw, 600)
+	frappe.throw(_("The approval was refused: wrong email or password."), frappe.PermissionError)
+
+
 def _approver(user: str | None, password: str | None) -> str:
-	"""A second person's approval: their own sign-in password, checked like a login (with a failure limit)."""
+	"""A second person's approval: their own sign-in password, checked like a login, with a failure limit
+	per requesting user AND per approver (10 minutes) — a guessed manager password is never confirmed."""
 	from frappe.utils.password import check_password
 
 	requester = frappe.session.user
-	key = f"{APPROVAL_FAILURES_KEY}:{requester}"
-	if cint(frappe.cache.get_value(key)) >= MAX_APPROVAL_FAILURES:
-		frappe.throw(_("Too many failed approvals. Wait a few minutes and try again."), frappe.PermissionError)
 	if not user or not password:
 		frappe.throw(_("A manager must approve this void with their email and password."), frappe.PermissionError)
 	user = str(user).strip()
 	if user == requester:
 		frappe.throw(_("Another person must approve the void."), frappe.PermissionError)
+	keys = (f"{APPROVAL_FAILURES_KEY}:{requester}", f"{APPROVAL_FAILURES_KEY}:approver:{user.lower()}")
+	if any(cint(frappe.cache.get(frappe.cache.make_key(key))) >= MAX_APPROVAL_FAILURES for key in keys):
+		frappe.throw(_("Too many failed approvals. Wait a few minutes and try again."), frappe.PermissionError)
 	try:
 		check_password(user, password)
-		if not frappe.db.get_value("User", {"name": user, "enabled": 1, "user_type": "System User"}):
-			raise frappe.AuthenticationError
 	except frappe.AuthenticationError:
-		frappe.cache.set_value(key, cint(frappe.cache.get_value(key)) + 1, expires_in_sec=600)
-		frappe.throw(_("The approval was refused: wrong email or password."), frappe.PermissionError)
+		_approval_failed(*keys)
+	enabled = frappe.db.get_value("User", {"name": user, "enabled": 1, "user_type": "System User"})
+	if not enabled or not frappe.has_permission(invoice_doctype(), "cancel", user=user):
+		_approval_failed(*keys)  # the same answer: no hint whether the password was right
 	return user
 
 
@@ -867,6 +878,8 @@ def void_sale(invoice: str, reason: str, approver: str | None = None, approver_p
 	if not frappe.db.exists(doctype, invoice):
 		frappe.throw(_("Sale {0} not found.").format(invoice), POSRequestError)
 
+	if not frappe.has_permission(doctype, "read", invoice):
+		frappe.throw(_("Sale {0} not found.").format(invoice), POSRequestError)
 	existing = frappe.db.get_value("PharmacyOS Void Log", {"invoice": invoice}, "name")
 	if existing and frappe.db.get_value(doctype, invoice, "docstatus") == 2:
 		return _void_summary(frappe.get_doc("PharmacyOS Void Log", existing))
@@ -896,7 +909,7 @@ def void_sale(invoice: str, reason: str, approver: str | None = None, approver_p
 			frappe.throw(_("You can only ask to void your own sales."), frappe.PermissionError)
 		approved_by = _approver(approver, approver_password)
 		if not frappe.has_permission(doctype, "cancel", doc, user=approved_by):
-			frappe.throw(_("{0} is not allowed to void sales.").format(approved_by), frappe.PermissionError)
+			frappe.throw(_("The approval was refused: wrong email or password."), frappe.PermissionError)
 
 	# the cancel runs as the approving user, so ERPNext's own rules and every PharmacyOS hook apply
 	with _acting_as(approved_by):

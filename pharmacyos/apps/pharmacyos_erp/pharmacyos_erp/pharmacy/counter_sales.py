@@ -1,11 +1,19 @@
-"""Counter staff sell at the pharmacy's prices — enforced on the invoice itself, whatever made it.
+"""Counter staff sell at the counter: their own shift, today's date and the pharmacy's prices — enforced on
+the invoice itself, whatever made it (the POS screen, the desk form or the document API).
 
-The PharmacyOS POS (`pos/api.py`) builds every sale with ERPNext's pricing and checks the counter's
-switches. But a cashier also holds the right to create and submit Sales Invoices, so the same sale could
-be sent through the document API or the desk form with any rate or discount. This guard closes that:
-for users whose only selling authority is the counter (Cashier, Pharmacist — no manager/owner role), a
-sale (not a return: returns are bound to the original sale by `returns.py`) is checked against a priced
-copy made by ERPNext itself (`set_missing_values` + `calculate_taxes_and_totals`, the POS screen's path):
+A cashier holds the right to create and submit Sales Invoices (the POS needs it), so without these rules a
+sale could be sent through the document API with any date, outside any shift, or at any price. For users
+whose only selling authority is the counter (Cashier, Pharmacist — no manager/owner role), every sale and
+counter return (`validate_counter_sale`, Sales Invoice / POS Invoice validate):
+
+* is a counter (POS) invoice of the user's OWN open shift on that counter — so every sale and refund is in
+  a shift the user counts at close (ERPNext only checks that *someone's* shift is open on the profile);
+* is dated today — no back-dated sale (ERPNext checks batch expiry against the posting date, so a back-dated
+  sale could dispense a batch that has since expired) and no post-dated one;
+
+and every sale (not a return: returns are bound to the original sale by `returns.py`) is checked against a
+priced copy made by ERPNext itself (`set_missing_values` + `calculate_taxes_and_totals`, the POS screen's
+path):
 
 * the list price of every line must be the price list's price (no invented list price);
 * the rate may only be lower than the list price through a discount, and only on a counter that allows
@@ -22,7 +30,7 @@ ceiling is re-checked for it.
 
 import frappe
 from frappe import _
-from frappe.utils import cint, flt
+from frappe.utils import cint, flt, getdate, nowdate
 
 PRICE_AUTHORITY_ROLES = ("Pharmacy Owner", "Pharmacy Manager", "Sales Manager", "Accounts Manager", "System Manager")
 COUNTER_ROLES = ("Cashier", "Pharmacist")
@@ -32,6 +40,28 @@ PRICED_FLAG = "pharmacyos_priced"
 
 class CounterPriceError(frappe.PermissionError):
 	pass
+
+
+class CounterShiftError(frappe.PermissionError):
+	pass
+
+
+def validate_counter_sale(doc, method=None):
+	"""doc_event (validate) for Sales Invoice and POS Invoice."""
+	if cint(doc.get("is_consolidated")) or frappe.flags.in_install or frappe.flags.in_migrate or frappe.flags.in_patch:
+		return
+	if not is_counter_only():
+		return
+	user = frappe.session.user
+	if not cint(doc.get("is_pos")) or not doc.get("pos_profile"):
+		frappe.throw(_("Counter staff sell through the point of sale, in their own shift."), CounterShiftError)
+	if getdate(doc.posting_date) != getdate(nowdate()):
+		frappe.throw(_("Counter sales and returns are recorded with today's date."), CounterShiftError)
+	if not frappe.db.exists("POS Opening Entry", {"user": user, "pos_profile": doc.pos_profile, "status": "Open", "docstatus": 1}):
+		frappe.throw(
+			_("Open your shift on {0} before selling or refunding there.").format(frappe.bold(doc.pos_profile)), CounterShiftError
+		)
+	guard_counter_pricing(doc)
 
 
 def is_counter_only(user: str | None = None) -> bool:
@@ -53,6 +83,12 @@ def guard_counter_pricing(doc, method=None):
 	profile = frappe.get_cached_doc("POS Profile", doc.pos_profile) if cint(doc.get("is_pos")) and doc.get("pos_profile") else None
 	allow_discount = bool(profile and cint(profile.allow_discount_change))
 	allow_rate = bool(profile and cint(profile.allow_rate_change))
+	# the counter's own price list: a customer's (or customer group's) default list is not a way around it
+	if profile and profile.selling_price_list and doc.selling_price_list != profile.selling_price_list:
+		frappe.throw(
+			_("Counter sales use the counter's price list ({0}).").format(frappe.bold(profile.selling_price_list)),
+			CounterPriceError,
+		)
 
 	if not doc.flags.get(PRICED_FLAG):
 		reference = _priced_copy(doc)

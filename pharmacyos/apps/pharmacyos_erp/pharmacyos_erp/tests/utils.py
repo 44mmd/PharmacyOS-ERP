@@ -139,3 +139,24 @@ def make_user(email, roles):
 	if roles:
 		user.add_roles(*roles)
 	return email
+
+
+def own_counter(user: str) -> str:
+	"""A counter (POS Profile) of the user's own, with the user's shift open on it: counter staff sell and
+	refund only in their own open shift (pharmacy/counter_sales.py). Idempotent; restores Administrator."""
+	from pharmacyos_erp.tests.test_pos_shift import ensure_pos_profile
+	from pharmacyos_erp.tests.test_web_pos import open_shift
+
+	name = ensure_pos_profile(f"Own Counter {user}"[:140], [user])
+	open_shift(user, name)
+	frappe.set_user("Administrator")
+	return name
+
+
+def as_counter_sale(doc: dict, user: str) -> dict:
+	"""The same document as the user's own counter sale (only counter staff need it)."""
+	from pharmacyos_erp.pharmacy.counter_sales import is_counter_only
+
+	if doc.get("is_pos") and is_counter_only(user):
+		return {**doc, "pos_profile": own_counter(user)}
+	return doc

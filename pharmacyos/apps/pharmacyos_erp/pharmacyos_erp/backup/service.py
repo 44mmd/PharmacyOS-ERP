@@ -13,6 +13,7 @@ import gzip
 import hashlib
 import json
 import os
+import re
 import shutil
 from datetime import timedelta
 
@@ -183,6 +184,16 @@ def verify_backup(folder: str) -> dict:
 	return {"ok": not errors, "errors": errors, "metadata": metadata}
 
 
+DAY_NAME = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+SLOT_NAME = re.compile(r"^\d{2}-\d{2}(-\d{2})?$")
+
+
+def is_backup_folder_name(day: str, slot: str) -> bool:
+	"""Only folders this module creates (<YYYY-MM-DD>/<HH-MM[-SS]>) are backups: anything else under the
+	Backups folder is ignored, so a planted folder name never reaches a restore command."""
+	return bool(DAY_NAME.match(day or "") and SLOT_NAME.match(slot or ""))
+
+
 def list_backups() -> list[dict]:
 	"""Backup folders on disk, newest first, with their metadata (None when unreadable)."""
 	root = os.path.join(data_dir(), BACKUPS)
@@ -191,9 +202,11 @@ def list_backups() -> list[dict]:
 		return out
 	for day in sorted(os.listdir(root), reverse=True):
 		day_path = os.path.join(root, day)
-		if not os.path.isdir(day_path):
+		if not DAY_NAME.match(day) or not os.path.isdir(day_path):
 			continue
 		for slot in sorted(os.listdir(day_path), reverse=True):
+			if not SLOT_NAME.match(slot):
+				continue
 			folder = os.path.join(day_path, slot)
 			meta = None
 			try:

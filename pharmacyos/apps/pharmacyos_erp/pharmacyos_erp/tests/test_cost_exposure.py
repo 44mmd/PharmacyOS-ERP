@@ -101,7 +101,9 @@ class TestCostExposure(IntegrationTestCase):
 		item = make_medicine(f"COST-SALE-{frappe.generate_hash(length=5).upper()}").name
 		batch = make_batch(item, f"CSA-{item}", 300)
 		receive(item, batch, 5, rate=2468)
-		doc = submitted_doc(item, 2, batch)
+		from pharmacyos_erp.tests.utils import as_counter_sale
+
+		doc = as_counter_sale(submitted_doc(item, 2, batch), self.users["Cashier"])
 		doc["docstatus"] = 0
 		frappe.set_user(self.users["Cashier"])
 		try:

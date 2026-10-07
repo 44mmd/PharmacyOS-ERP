@@ -80,6 +80,9 @@ class TestCreditNoteAuthority(IntegrationTestCase):
 		receive(self.medicine, self.batch, 20)
 
 	def as_user(self, user, doc):
+		from pharmacyos_erp.tests.utils import as_counter_sale
+
+		doc = as_counter_sale(doc, user)
 		frappe.set_user(user)
 		try:
 			return frappe.get_doc(doc).insert()

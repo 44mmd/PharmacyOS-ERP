@@ -15,6 +15,10 @@ SEARCH_KEY_LENGTH = 1000
 
 # Cumulative quantities returned against a sale: one entry per submitted return, written in the return's
 # own transaction and read with a locking read of the (locked) original row — see pharmacy/returns.py.
+# Written only by the server (a direct column update). Permission level 8 is granted to no role, so Frappe
+# resets any value a client sends on insert or save (a read-only flag alone is enforced only in the UI):
+# a counter user cannot empty the ledger of a sale and return its goods a second time.
+LEDGER_PERMLEVEL = 8
 RETURN_LEDGER = {
 	"fieldname": "pharma_return_ledger",
 	"fieldtype": "Long Text",
@@ -25,7 +29,8 @@ RETURN_LEDGER = {
 	"no_copy": 1,
 	"print_hide": 1,
 	"report_hide": 1,
-	"allow_on_submit": 1,
+	"allow_on_submit": 0,
+	"permlevel": LEDGER_PERMLEVEL,
 	"description": "Maintained by PharmacyOS: quantities already returned against this document.",
 }
 

@@ -28,6 +28,11 @@ TEST_SITE="${TEST_SITE:-test.localhost}"
 DB_ROOT_USER="${DB_ROOT_USER:-root}"
 DB_ROOT_PASSWORD="${DB_ROOT_PASSWORD:?set DB_ROOT_PASSWORD (local MariaDB root password)}"
 ADMIN_PASSWORD="${ADMIN_PASSWORD:-admin}" # local dev only
+# PRODUCTION=1 (the pharmacy server installer): no developer mode, no test extras, no development notes
+PRODUCTION="${PRODUCTION:-0}"
+# optional exact commits for the branches/tags above: a tag that is moved upstream is refused
+FRAPPE_COMMIT="${FRAPPE_COMMIT:-}"
+ERPNEXT_COMMIT="${ERPNEXT_COMMIT:-}"
 
 if [ "$(id -u)" -eq 0 ]; then
 	echo "Run as a non-root user; bench refuses to run as root." >&2
@@ -52,6 +57,12 @@ fi
 cd "$BENCH_DIR"
 
 [ -d apps/erpnext ] || bench get-app erpnext "$ERPNEXT_REPO" --branch "$ERPNEXT_BRANCH"
+for pin in "frappe:$FRAPPE_COMMIT" "erpnext:$ERPNEXT_COMMIT"; do
+	app="${pin%%:*}"; want="${pin#*:}"
+	[ -z "$want" ] && continue
+	have="$(git -C "apps/$app" rev-parse HEAD)"
+	[ "$have" = "$want" ] || { echo "$app is at $have, expected the pinned commit $want — refusing to continue." >&2; exit 1; }
+done
 
 # `bench new-site` needs redis; run the bench's own redis instances if not already up.
 if ! redis-cli -p "$(python3 -c 'import json;print(json.load(open("sites/common_site_config.json"))["redis_cache"].rsplit(":",1)[1])')" ping >/dev/null 2>&1; then
@@ -62,7 +73,7 @@ fi
 if [ ! -d "sites/$DEV_SITE" ]; then
 	bench new-site "$DEV_SITE" --db-root-username "$DB_ROOT_USER" --db-root-password "$DB_ROOT_PASSWORD" \
 		--admin-password "$ADMIN_PASSWORD" --install-app erpnext
-	bench --site "$DEV_SITE" set-config developer_mode 1
+	[ "$PRODUCTION" = 1 ] || bench --site "$DEV_SITE" set-config developer_mode 1
 	bench use "$DEV_SITE"
 fi
 
@@ -83,7 +94,11 @@ fi
 # PharmacyOS ERP custom app (lives in this repository until it moves to its own).
 if [ ! -e apps/pharmacyos_erp ]; then
 	ln -sfn "$APP_SRC" apps/pharmacyos_erp
-	uv pip install -e "apps/pharmacyos_erp[test]" --python env/bin/python  # [test]: freezegun for the suite
+	if [ "$PRODUCTION" = 1 ]; then
+		uv pip install -e "apps/pharmacyos_erp" --python env/bin/python
+	else
+		uv pip install -e "apps/pharmacyos_erp[test]" --python env/bin/python  # [test]: freezegun for the suite
+	fi
 	grep -qx pharmacyos_erp sites/apps.txt || { [ -n "$(tail -c1 sites/apps.txt)" ] && echo >> sites/apps.txt; echo pharmacyos_erp >> sites/apps.txt; }
 fi
 SITES=("$DEV_SITE"); [ "${SKIP_TEST_SITE:-0}" = 1 ] || SITES+=("$TEST_SITE")
@@ -93,6 +108,7 @@ done
 
 bench build
 
+[ "$PRODUCTION" = 1 ] && { echo "Bench ready at $BENCH_DIR"; exit 0; }
 cat <<EOF
 
 Bench ready at $BENCH_DIR

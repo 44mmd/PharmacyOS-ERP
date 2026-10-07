@@ -3,7 +3,7 @@
 """LOCAL ERP v1 certification fixes (QA pass, October 2026), each proven on the server:
 
 * counter staff sell at the pharmacy's prices — also through the document API, not only the POS screen
-  (`pharmacy/counter_pricing.py`): no invented price, no discount where the counter allows none, and no
+  (`pharmacy/counter_sales.py`): no invented price, no discount where the counter allows none, and no
   discount above PharmacyOS Settings → Maximum Counter Discount; managers are not limited;
 * the Purchasing Officer receives medicines (creates the supplier's batch on receipt);
 * the owner keeps the staff directory (Employee records), which ERPNext reserves for HR roles.
@@ -13,13 +13,14 @@ import frappe
 from frappe.tests import IntegrationTestCase
 from frappe.utils import add_days, nowdate
 
-from pharmacyos_erp.pharmacy.counter_pricing import CounterPriceError
+from pharmacyos_erp.pharmacy.counter_sales import CounterPriceError, CounterShiftError
 from pharmacyos_erp.pos import api
 from pharmacyos_erp.tests.test_pos_shift import ensure_pos_profile
 from pharmacyos_erp.tests.test_web_pos import CASHIER_ROLES, ensure_price, open_shift, rid
 from pharmacyos_erp.tests.utils import COMPANY, WAREHOUSE, make_batch, make_medicine, make_user, profile_roles, receive
 
 CASHIER = "cert-cashier@example.com"
+CASHIER2 = "cert-cashier2@example.com"  # works the strict counter (one open shift per counter)
 MANAGER = "cert-manager@example.com"
 BUYER = "cert-buyer@example.com"
 OWNER = "cert-owner@example.com"
@@ -33,10 +34,11 @@ class TestCounterPricing(IntegrationTestCase):
 	def setUpClass(cls):
 		super().setUpClass()
 		make_user(CASHIER, CASHIER_ROLES)
+		make_user(CASHIER2, CASHIER_ROLES)
 		make_user(MANAGER, profile_roles("Pharmacy Manager"))
 		ensure_pos_profile(COUNTER, [CASHIER])
 		ensure_pos_profile(MANAGER_COUNTER, [MANAGER])
-		ensure_pos_profile(STRICT_COUNTER, [CASHIER])
+		ensure_pos_profile(STRICT_COUNTER, [CASHIER2])
 		for name in (COUNTER, MANAGER_COUNTER):
 			frappe.db.set_value("POS Profile", name, "allow_discount_change", 1)
 		frappe.db.set_value("POS Profile", STRICT_COUNTER, {"allow_discount_change": 0, "allow_rate_change": 0})
@@ -46,13 +48,14 @@ class TestCounterPricing(IntegrationTestCase):
 		cls.batch = make_batch(cls.item.name, "CERT-B1", 400)
 		receive(cls.item.name, cls.batch, 200)
 		open_shift(CASHIER, COUNTER)
+		open_shift(CASHIER2, STRICT_COUNTER)
 		open_shift(MANAGER, MANAGER_COUNTER)
 		frappe.db.commit()
 
 	def tearDown(self):
 		frappe.set_user("Administrator")
 
-	def invoice(self, profile=COUNTER, rate=None, discount=None, sale_discount=None, is_pos=1):
+	def invoice(self, profile=COUNTER, rate=None, discount=None, sale_discount=None, is_pos=1, posting_date=None):
 		row = {"item_code": self.item.name, "qty": 1, "warehouse": WAREHOUSE, "batch_no": self.batch, "use_serial_batch_fields": 1}
 		if rate is not None:
 			row.update({"rate": rate, "price_list_rate": rate})
@@ -70,6 +73,7 @@ class TestCounterPricing(IntegrationTestCase):
 				"selling_price_list": "Standard Selling",
 				"items": [row],
 				"additional_discount_percentage": sale_discount or 0,
+				**({"set_posting_time": 1, "posting_date": posting_date} if posting_date else {}),
 			}
 		)
 		if is_pos:
@@ -80,8 +84,9 @@ class TestCounterPricing(IntegrationTestCase):
 		frappe.set_user(CASHIER)
 		with self.assertRaises(CounterPriceError):
 			self.invoice(rate=1).insert()  # the 1-dinar sale QA found
-		with self.assertRaises(CounterPriceError):
-			self.invoice(rate=1, is_pos=0).insert()  # a plain (credit) invoice too
+		with self.assertRaises(CounterShiftError):
+			self.invoice(rate=1, is_pos=0).insert()  # counter staff sell only through the POS (no credit invoice)
+		frappe.set_user(CASHIER2)
 		with self.assertRaises(CounterPriceError):
 			self.invoice(profile=STRICT_COUNTER, discount=5).insert()  # no discounts on this counter
 
@@ -107,6 +112,64 @@ class TestCounterPricing(IntegrationTestCase):
 		doc = self.invoice(discount=5)
 		doc.insert()
 		self.assertEqual(doc.grand_total, 950)
+
+	def test_counter_sales_are_in_the_users_own_shift_and_dated_today(self):
+		frappe.set_user(CASHIER)
+		with self.assertRaises(CounterShiftError):  # CASHIER2's counter: not CASHIER's shift
+			self.invoice(profile=STRICT_COUNTER).insert()
+		with self.assertRaises(CounterShiftError):  # back-dated: ERPNext would check expiry against that date
+			self.invoice(posting_date=add_days(nowdate(), -1)).insert()
+		with self.assertRaises(CounterShiftError):
+			self.invoice(posting_date=add_days(nowdate(), 1)).insert()
+		doc = self.invoice()
+		doc.insert()  # own shift, today, list price
+		self.assertEqual(doc.grand_total, 1000)
+
+	def test_the_return_ledger_cannot_be_rewritten_by_counter_staff(self):
+		frappe.set_user(CASHIER)
+		sale = api.checkout(pos_profile=COUNTER, items=[{"item_code": self.item.name, "qty": 2}], payments=[{"mode_of_payment": "Cash", "amount": 2000}], request_id=rid())
+		line = api.get_return_candidate(sale["name"])["lines"][0]
+		api.submit_return(sale["name"], [{"row": line["row"], "qty": 2}], request_id=rid())
+		frappe.set_user("Administrator")
+		ledger = frappe.db.get_value("Sales Invoice", sale["name"], "pharma_return_ledger")
+		self.assertTrue(ledger)
+		# the cashier tries to empty the ledger (the first step of returning the same goods twice)
+		frappe.set_user(CASHIER)
+		doc = frappe.get_doc("Sales Invoice", sale["name"])
+		doc.pharma_return_ledger = '{"returns": {}}'
+		try:
+			doc.save()
+		except frappe.ValidationError:
+			pass  # refused outright is fine too
+		frappe.set_user("Administrator")
+		self.assertEqual(frappe.db.get_value("Sales Invoice", sale["name"], "pharma_return_ledger"), ledger)
+		frappe.set_user(CASHIER)
+		with self.assertRaises(frappe.ValidationError):  # nothing left to return
+			api.submit_return(sale["name"], [{"row": line["row"], "qty": 1}], request_id=rid())
+
+	def test_counter_staff_use_the_counters_price_list(self):
+		"""A customer whose default price list is cheaper (set by anyone who may edit customers) is no way
+		around the counter's prices: the sale is refused or sold at the counter's price — never cheaper."""
+		cheap = "Cert Cheap List"
+		currency = frappe.db.get_value("Price List", "Standard Selling", "currency")
+		if not frappe.db.exists("Price List", cheap):
+			frappe.get_doc({"doctype": "Price List", "price_list_name": cheap, "selling": 1, "currency": currency}).insert()
+		if not frappe.db.exists("Item Price", {"item_code": self.item.name, "price_list": cheap}):
+			frappe.get_doc({"doctype": "Item Price", "item_code": self.item.name, "price_list": cheap, "price_list_rate": 500}).insert()
+		customer = frappe.get_doc(
+			{"doctype": "Customer", "customer_name": f"Cert Cheap {frappe.generate_hash(length=4)}", "default_price_list": cheap,
+			 "customer_group": frappe.db.get_value("Customer Group", {"is_group": 0}), "territory": frappe.db.get_value("Territory", {"is_group": 0})}
+		).insert().name
+		frappe.set_user(CASHIER)
+		doc = self.invoice()
+		doc.customer = customer
+		try:
+			doc.insert()
+		except CounterPriceError:
+			return
+		self.assertEqual((doc.selling_price_list, doc.items[0].price_list_rate, doc.grand_total), ("Standard Selling", 1000, 1000))
+		with self.assertRaises(CounterPriceError):  # and through the POS screen's checkout
+			api.checkout(pos_profile=COUNTER, items=[{"item_code": self.item.name, "qty": 1}], payments=[{"mode_of_payment": "Cash", "amount": 500}], request_id=rid(), customer=customer)
 
 	def test_managers_are_not_limited(self):
 		frappe.set_user(MANAGER)

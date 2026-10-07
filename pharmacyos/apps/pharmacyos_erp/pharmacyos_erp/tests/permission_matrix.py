@@ -286,10 +286,25 @@ class Matrix:
 				return result
 		return result
 
+	def own_shift(self, c, profile):
+		"""The seller's own counter with their shift open (counter staff sell and refund only in their own
+		open shift); None for profiles without a counter. Opening is tried as that user (it may be refused)."""
+		counter = self.pos_profiles.get(profile)
+		if not counter:
+			return None
+		status, body = c.post("pharmacyos_erp.pos.api.get_context", {})
+		if status == 200 and not body["message"].get("shift"):
+			c.post(
+				"erpnext.selling.page.point_of_sale.point_of_sale.create_opening_voucher",
+				{"pos_profile": counter[0], "company": self.ctx["company"], "balance_details": [{"mode_of_payment": "Cash", "opening_amount": 0}]},
+			)
+		return counter[0]
+
 	def op_sales_invoice_sell(self, c, profile):
 		code, batch = self.medicine()
+		pos_profile = self.own_shift(c, profile)
 		return self._chain(
-			lambda _r: c.post("frappe.client.insert", {"doc": self.sale_doc(code, batch, 1)}),
+			lambda _r: c.post("frappe.client.insert", {"doc": self.sale_doc(code, batch, 1, pos_profile=pos_profile)}),
 			lambda r: c.post("frappe.client.submit", {"doc": r[1]["message"]}),
 		)
 
@@ -307,9 +322,10 @@ class Matrix:
 	def op_sales_invoice_return(self, c, profile):
 		code, batch = self.medicine(stock=5)
 		sale = self.ok("frappe.client.insert", doc=self.sale_doc(code, batch, 2, docstatus=1))["name"]
+		pos_profile = self.own_shift(c, profile)
 		return self._chain(
 			lambda _r: c.post(
-				"frappe.client.insert", {"doc": self.sale_doc(code, batch, 1, return_against=sale)}
+				"frappe.client.insert", {"doc": self.sale_doc(code, batch, 1, return_against=sale, pos_profile=pos_profile)}
 			),
 			lambda r: c.post("frappe.client.submit", {"doc": r[1]["message"]}),
 		)
@@ -426,16 +442,7 @@ class Matrix:
 					"search_term": code,
 				},
 			),
-			lambda _r: opened(
-				c.post(
-					base + "create_opening_voucher",
-					{
-						"pos_profile": pos_profile,
-						"company": self.ctx["company"],
-						"balance_details": [{"mode_of_payment": "Cash", "opening_amount": 0}],
-					},
-				)
-			),
+			lambda _r: opened(self._open_or_current(c, base, pos_profile)),
 			lambda _r: c.post(
 				"frappe.client.insert", {"doc": self.sale_doc(code, batch, 1, pos_profile=pos_profile)}
 			),
@@ -456,6 +463,22 @@ class Matrix:
 			lambda r: c.post("frappe.client.submit", {"doc": r[1]["message"]}),
 		)
 		return result
+
+	def _open_or_current(self, c, base, pos_profile):
+		"""Open the shift — or take the user's shift already open on this counter (another operation of
+		the matrix may have opened it: counter staff sell only in their own open shift)."""
+		status, body = c.post("pharmacyos_erp.pos.api.get_context", {})
+		shift = status == 200 and body["message"].get("shift")
+		if shift and shift.get("pos_profile") == pos_profile:
+			return 200, {"message": shift}
+		return c.post(
+			base + "create_opening_voucher",
+			{
+				"pos_profile": pos_profile,
+				"company": self.ctx["company"],
+				"balance_details": [{"mode_of_payment": "Cash", "opening_amount": 0}],
+			},
+		)
 
 	@staticmethod
 	def _with_end(result, end):

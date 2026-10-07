@@ -29,10 +29,14 @@ set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 BUNDLE="$(cd "$HERE/../.." && pwd)"   # the PharmacyOS server bundle (or the repository's pharmacyos/ folder)
 VERSION="$(cat "$BUNDLE/VERSION" 2>/dev/null || python3 -c "import re,sys;print(re.search(r'__version__\s*=\s*\"([^\"]+)\"',open(sys.argv[1]).read()).group(1))" "$BUNDLE/apps/pharmacyos_erp/pharmacyos_erp/__init__.py")"
+BUILD_ID="$(cat "$BUNDLE/BUILD_ID" 2>/dev/null || true)"   # content identity of this bundle (desktop/scripts/prepare-server-bundle.js)
 BENCH_USER="${BENCH_USER:-frappe}"
 ERPNEXT_REPO="${ERPNEXT_REPO:-https://github.com/frappe/erpnext}"
 FRAPPE_BRANCH="${FRAPPE_BRANCH:-v16.36.1}"
 ERPNEXT_BRANCH="${ERPNEXT_BRANCH:-v16.37.0}"
+# the exact commits of those tags (verified after cloning: a tag moved upstream is refused)
+FRAPPE_COMMIT="${FRAPPE_COMMIT:-97a5dd93ca5883bcc9c4ef9834120c5cba397b67}"
+ERPNEXT_COMMIT="${ERPNEXT_COMMIT:-af63cde4941570ec7b9e12422c68302762cfcf91}"
 NODE_VERSION="${NODE_VERSION:-24.21.0}"  # pinned (Frappe 16 needs Node 24)
 PYTHON_VERSION="${PYTHON_VERSION:-3.14.6}"
 BENCH_CLI_VERSION="${BENCH_CLI_VERSION:-5.31.0}"
@@ -133,17 +137,21 @@ database() {
 	mariadb -uroot -e "ALTER USER 'root'@'localhost' IDENTIFIED VIA unix_socket OR mysql_native_password USING PASSWORD('${DB_ROOT_PASSWORD}'); FLUSH PRIVILEGES;" \
 		|| mariadb -uroot "-p${DB_ROOT_PASSWORD}" -e "SELECT 1" >/dev/null
 	mkdir -p "$DATA_DIR" && chown "$BENCH_USER" "$DATA_DIR" || true
+	# backups and sales spreadsheets: the pharmacy server's account only (on Windows the folder is on the
+	# C: drive and protected by its Windows permissions, set by install-server.ps1)
+	chmod 750 "$DATA_DIR" 2>/dev/null || true
 }
 
 app_release() {
 	# the PharmacyOS ERP app from this bundle, as the active release
-	local dest="$OPT/releases/$VERSION"
+	local dest="$OPT/releases/$VERSION${BUILD_ID:+-${BUILD_ID:0:12}}"
 	mkdir -p "$dest"
 	rsync -a --delete --exclude '__pycache__' --exclude 'node_modules' --exclude 'public/dist' \
 		"$BUNDLE/apps/pharmacyos_erp/" "$dest/pharmacyos_erp/"
 	chown -R "$BENCH_USER" "$dest"
 	ln -sfn "$dest" "$OPT/app"
 	echo "$VERSION" > "$OPT/VERSION"
+	printf '%s' "$BUILD_ID" > "$OPT/BUILD_ID"
 }
 
 bench_and_apps() {
@@ -157,7 +165,8 @@ bench_and_apps() {
 	if [ -d "$BENCH_DIR/sites/$SITE" ] && ! as_bench "cd '$BENCH_DIR' && bench --site '$SITE' list-apps" >/dev/null 2>&1; then
 		as_bench "cd '$BENCH_DIR' && bench drop-site '$SITE' --db-root-password '$DB_ROOT_PASSWORD' --force --no-backup" || rm -rf "$BENCH_DIR/sites/$SITE"
 	fi
-	as_bench "FRAPPE_BRANCH='$FRAPPE_BRANCH' ERPNEXT_REPO='$ERPNEXT_REPO' ERPNEXT_BRANCH='$ERPNEXT_BRANCH' \
+	as_bench "PRODUCTION=1 FRAPPE_COMMIT='$FRAPPE_COMMIT' ERPNEXT_COMMIT='$ERPNEXT_COMMIT' \
+		FRAPPE_BRANCH='$FRAPPE_BRANCH' ERPNEXT_REPO='$ERPNEXT_REPO' ERPNEXT_BRANCH='$ERPNEXT_BRANCH' \
 		PYTHON_VERSION='$PYTHON_VERSION' BENCH_CLI_VERSION='$BENCH_CLI_VERSION' \
 		DB_ROOT_PASSWORD='$DB_ROOT_PASSWORD' ADMIN_PASSWORD='$ADMIN_PASSWORD' DEV_SITE='$SITE' SKIP_TEST_SITE=1 \
 		APP_SRC='$OPT/app/pharmacyos_erp' bash '$BUNDLE/dev/setup-dev-bench.sh'"
@@ -206,7 +215,7 @@ production() {
 	fi
 	# the bench's Redis instances started for the installation give their ports back to supervisor
 	for port in $(python3 -c "import json;c=json.load(open('$BENCH_DIR/sites/common_site_config.json'));print(' '.join(v.rsplit(':',1)[1] for k,v in c.items() if k.startswith('redis_')))"); do
-		redis-cli -p "$port" shutdown nosave >/dev/null 2>&1 || true
+		REDISCLI_AUTH="${REDIS_PASSWORD:-}" redis-cli -p "$port" shutdown nosave >/dev/null 2>&1 || true
 	done
 	# a kernel without IPv6 (some WSL/VM setups) cannot open [::] sockets: listen on IPv4 only there
 	[ -e /proc/net/if_inet6 ] || sed -i '/listen \[::\]/d' "$BENCH_DIR/config/nginx.conf"
@@ -223,6 +232,8 @@ production() {
 	supervisorctl update >/dev/null || true
 	install -m 0755 "$HERE/pharmacyos-server" "$OPT/bin/pharmacyos-server"
 	install -m 0755 "$BUNDLE/deploy/restore-backup.sh" "$OPT/bin/restore-backup.sh"
+	# password on the bench's Redis (reachable from every Windows account through WSL's localhost)
+	"$OPT/bin/pharmacyos-server" secure-redis
 }
 
 finish() {

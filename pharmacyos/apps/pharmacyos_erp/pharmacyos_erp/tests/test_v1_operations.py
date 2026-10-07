@@ -57,6 +57,7 @@ class TestV1Operations(IntegrationTestCase):
 	def tearDown(self):
 		frappe.set_user("Administrator")
 		frappe.cache.delete_value(f"{api.APPROVAL_FAILURES_KEY}:{CASHIER}")
+		frappe.cache.delete_value(f"{api.APPROVAL_FAILURES_KEY}:approver:{MANAGER}")
 
 	def sell(self, qty=2, user=CASHIER):
 		frappe.set_user(user)
@@ -191,7 +192,7 @@ class TestV1Operations(IntegrationTestCase):
 			doc.save()
 		# a batch that has not expired yet: only the owner may correct a mistyped date later, and the
 		# correction is kept in the batch's history
-		fresh = make_batch(item.name, "V1-RD-02", 20)
+		fresh = make_batch(item.name, f"V1-RD-{frappe.generate_hash(length=6)}", 20)
 		frappe.set_user(INVENTORY)
 		doc = frappe.get_doc("Batch", fresh)
 		doc.expiry_date = add_days(nowdate(), 400)
@@ -200,7 +201,7 @@ class TestV1Operations(IntegrationTestCase):
 		frappe.set_user(OWNER)
 		doc = frappe.get_doc("Batch", fresh)
 		doc.expiry_date = add_days(nowdate(), 400)
-		doc.save()
+		doc.save(ignore_version=False)  # (Frappe skips version history in tests unless asked)
 		frappe.set_user("Administrator")
 		self.assertTrue(frappe.db.exists("Version", {"ref_doctype": "Batch", "docname": fresh}), "expiry correction recorded")
 

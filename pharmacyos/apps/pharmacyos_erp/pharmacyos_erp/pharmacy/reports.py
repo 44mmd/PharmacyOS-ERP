@@ -95,22 +95,35 @@ def _by_cashier(names: list[str]) -> list[dict]:
 	return sorted(({**v, "total": flt(v["total"], 2)} for v in out.values()), key=lambda x: -x["total"])
 
 
-def _voids(from_date: str, to_date: str) -> dict:
-	rows = frappe.get_all(
+def _counters(warehouses) -> list[str] | None:
+	"""The counters (POS Profiles) of the branch scope; None = every counter."""
+	if warehouses is None:
+		return None
+	return frappe.get_all("POS Profile", filters={"warehouse": ["in", warehouses or [""]]}, pluck="name")
+
+
+def _voids(from_date: str, to_date: str, counters=None) -> dict:
+	filters = {"voided_on": ["between", [f"{from_date} 00:00:00", f"{to_date} 23:59:59"]]}
+	if counters is not None:
+		filters["pos_profile"] = ["in", counters or [""]]
+	rows = frappe.get_list(
 		"PharmacyOS Void Log",
-		filters={"voided_on": ["between", [f"{from_date} 00:00:00", f"{to_date} 23:59:59"]]},
+		filters=filters,
 		fields=["name", "invoice", "amount", "reason", "requested_by", "approved_by", "voided_on"],
 		order_by="voided_on desc",
 	)
 	return {"count": len(rows), "amount": flt(sum(flt(r.amount) for r in rows), 2), "rows": rows[:50]}
 
 
-def _shifts(from_date: str, to_date: str) -> list[dict]:
+def _shifts(from_date: str, to_date: str, counters=None) -> list[dict]:
 	if not frappe.has_permission("POS Opening Entry", "read"):
 		return None
+	filters = {"docstatus": 1, "posting_date": ["between", [from_date, to_date]]}
+	if counters is not None:
+		filters["pos_profile"] = ["in", counters or [""]]
 	openings = frappe.get_list(
 		"POS Opening Entry",
-		filters={"docstatus": 1, "posting_date": ["between", [from_date, to_date]]},
+		filters=filters,
 		fields=["name", "user", "pos_profile", "period_start_date", "status"],
 		order_by="period_start_date desc",
 		limit_page_length=200,
@@ -217,11 +230,11 @@ def get_sales_report(from_date: str | None = None, to_date: str | None = None, b
 				"average": flt(sales_amount / transactions, 2) if transactions else 0.0,
 			},
 			"discounts": _discounts(names),
-			"voids": _voids(from_date, to_date),
+			"voids": _voids(from_date, to_date, _counters(warehouses)),
 			"payments": _payment_breakdown(names),
 			"top_items": top_sellers(names, summary["pos_names"], limit=10),
 			"cashiers": _by_cashier(names),
-			"shifts": _shifts(from_date, to_date),
+			"shifts": _shifts(from_date, to_date, _counters(warehouses)),
 			"purchases": _purchases(from_date, to_date, warehouses),
 			"stock_value": _stock_value(warehouses),
 			"gross_profit": gross_profit(names, summary["pos_names"]) if can_see_costs() else None,

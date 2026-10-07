@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # PharmacyOS server control (inside the PharmacyOS Linux environment: WSL2 distro or LAN server).
 #
-#   pharmacyos-server start | stop | status | health | run | version
+#   pharmacyos-server start | stop | status | health | run | version | build-id
 #   pharmacyos-server backup | list-backups
 #   pharmacyos-server restore <backup-folder> [--with-files]
 #   pharmacyos-server update <bundle-folder>
@@ -23,6 +23,59 @@ LOG_DIR=/var/log/pharmacyos
 mkdir -p "$LOG_DIR"
 
 as_bench() { su - "$BENCH_USER" -c "export PATH=\$HOME/.local/bin:\$PATH; cd '$BENCH_DIR' && $1"; }
+# one update / restore / backup at a time (a second run — another window, a reload — waits, then gives up)
+LOCK_FILE=/run/pharmacyos.lock
+take_lock() {
+	exec 9>"$LOCK_FILE"
+	flock -w "${1:-5}" 9 || { echo "Another PharmacyOS update, restore or backup is running. Try again when it has finished." >&2; result '{"status": "busy"}'; exit 75; }
+}
+# The bench's Redis (cache, queues) gets a password: in WSL every program of every Windows account on this
+# PC can reach 127.0.0.1, and Redis holds sessions and job payloads. Idempotent; run at install and update.
+secure_redis() {
+	local conf="$BENCH_DIR/config" common="$BENCH_DIR/sites/common_site_config.json"
+	[ -f "$common" ] || return 0
+	if [ -z "${REDIS_PASSWORD:-}" ]; then
+		REDIS_PASSWORD="$(python3 -c 'import secrets; print(secrets.token_hex(24))')"
+		( umask 077; echo "REDIS_PASSWORD='$REDIS_PASSWORD'" >> "$ENV_FILE" )
+	fi
+	for f in "$conf/redis_cache.conf" "$conf/redis_queue.conf"; do
+		[ -f "$f" ] || continue
+		sed -i '/^requirepass /d' "$f"
+		echo "requirepass $REDIS_PASSWORD" >> "$f"
+		chmod 600 "$f"; chown "$BENCH_USER" "$f"
+	done
+	REDIS_PASSWORD="$REDIS_PASSWORD" python3 - "$common" <<'PY'
+import json, os, re, sys
+path = sys.argv[1]
+conf = json.load(open(path))
+password = os.environ["REDIS_PASSWORD"]
+for key in ("redis_cache", "redis_queue", "redis_socketio"):
+	url = conf.get(key)
+	if url:
+		host = re.sub(r"^redis://([^@]*@)?", "", url)
+		conf[key] = f"redis://:{password}@{host}"
+tmp = path + ".tmp"
+with open(tmp, "w") as f:
+	json.dump(conf, f, indent=1, sort_keys=True)
+os.chmod(tmp, 0o600)
+os.replace(tmp, path)
+PY
+	chown "$BENCH_USER" "$common"
+}
+
+# a backup folder this server made: <data>/Backups/<YYYY-MM-DD>/<HH-MM[-SS]> (never a planted path)
+valid_backup_folder() {
+	local real backups
+	backups="$(readlink -f "${DATA_DIR:-/mnt/c/ProgramData/PharmacyOS}/Backups")"
+	real="$(readlink -f "$1" 2>/dev/null)" || return 1
+	[[ "$real" =~ ^"$backups"/[0-9]{4}-[0-9]{2}-[0-9]{2}/[0-9]{2}-[0-9]{2}(-[0-9]{2})?$ ]] && [ -f "$real/metadata.json" ] && echo "$real"
+}
+# restore-backup.sh as the bench user: arguments passed as arguments (no shell parse), the database
+# password through the environment (never on a command line)
+run_restore() {
+	DB_ROOT_PASSWORD="$DB_ROOT_PASSWORD" BENCH_DIR="$BENCH_DIR" runuser -u "$BENCH_USER" -m -- \
+		env PATH="/home/$BENCH_USER/.local/bin:$PATH" HOME="/home/$BENCH_USER" "$OPT/bin/restore-backup.sh" "$@"
+}
 result() { echo "##PHARMACYOS-RESULT $1"; }
 web_ok() { curl -fsS -m 5 "http://127.0.0.1:$HTTP_PORT/api/method/ping" >/dev/null 2>&1; }
 wait_web() { for _ in $(seq 1 "${1:-60}"); do web_ok && return 0; sleep 2; done; return 1; }
@@ -42,36 +95,51 @@ backup() {
 
 update() {
 	# Update the PharmacyOS ERP app from a server bundle, keeping the pharmacy's data:
-	# safety backup → maintenance → new release → migrate + build → restart → health.
-	# Any failure: previous release back, the safety backup restored, services restarted.
-	local bundle new_version old_release new_release safety
+	# maintenance (no new sales) → safety backup → new release → migrate + build → restart → health.
+	# Any failure: previous release back, the safety backup restored, services restarted — and the
+	# result says exactly whether that rollback itself succeeded.
+	local bundle new_version new_build old_release new_release safety
 	bundle="$(cd "${1:?bundle folder}" && pwd)"
 	new_version="$(cat "$bundle/VERSION")"
+	new_build="$(cat "$bundle/BUILD_ID" 2>/dev/null || true)"
 	old_release="$(readlink -f "$OPT/app")"
-	new_release="$OPT/releases/$new_version"
+	# one release folder per build: an installer with corrected code but the same version is still installed
+	new_release="$OPT/releases/$new_version${new_build:+-${new_build:0:12}}"
 	if [ "$old_release" = "$new_release" ]; then
 		result "{\"status\": \"current\", \"version\": \"$new_version\"}"
 		return 0
 	fi
+	take_lock 5
+	echo "== Maintenance mode on"
+	as_bench "bench --site '$SITE' set-maintenance-mode on"
 	echo "== Safety backup"
-	safety="$(backup)"
+	if ! safety="$(backup)"; then
+		as_bench "bench --site '$SITE' set-maintenance-mode off" || true
+		result "{\"status\": \"failed\", \"step\": \"backup\", \"version\": \"$(basename "$old_release")\"}"
+		exit 1
+	fi
 	echo "   $safety"
 	rollback() {
+		trap - ERR
 		echo "== Update failed — restoring the previous version"
 		ln -sfn "$old_release" "$OPT/app"
 		as_bench "uv pip install -q -e apps/pharmacyos_erp --python env/bin/python" || true
-		su "$BENCH_USER" -c "export PATH=\$HOME/.local/bin:\$PATH; DB_ROOT_PASSWORD='$DB_ROOT_PASSWORD' BENCH_DIR='$BENCH_DIR' '$OPT/bin/restore-backup.sh' '$SITE' '$safety' --yes" || true
+		local restored=0
+		run_restore "$SITE" "$safety" --yes --keep-maintenance && restored=1
 		as_bench "bench build --app pharmacyos_erp" || true
 		supervisorctl restart all >/dev/null || true
-		as_bench "bench --site '$SITE' set-maintenance-mode off" || true
 		basename "$old_release" > "$OPT/VERSION"
-		result "{\"status\": \"rolled_back\", \"version\": \"$(basename "$old_release")\", \"backup\": \"$safety\"}"
+		if [ "$restored" = 1 ]; then
+			as_bench "bench --site '$SITE' set-maintenance-mode off" || true
+			result "{\"status\": \"rolled_back\", \"version\": \"$(basename "$old_release")\", \"backup\": \"$safety\"}"
+		else
+			# the data could not be put back automatically: stay in maintenance (no sales on a half state)
+			result "{\"status\": \"rollback_failed\", \"version\": \"$(basename "$old_release")\", \"backup\": \"$safety\"}"
+		fi
 		exit 1
 	}
 	trap rollback ERR
-	echo "== Maintenance mode on"
-	as_bench "bench --site '$SITE' set-maintenance-mode on"
-	echo "== Installing $new_version"
+	echo "== Installing $new_version${new_build:+ (build ${new_build:0:12})}"
 	mkdir -p "$new_release"
 	rsync -a --delete --exclude '__pycache__' --exclude 'node_modules' --exclude 'public/dist' \
 		"$bundle/apps/pharmacyos_erp/" "$new_release/pharmacyos_erp/"
@@ -84,7 +152,9 @@ update() {
 	as_bench "bench build --app pharmacyos_erp"
 	install -m 0755 "$bundle/deploy/server/pharmacyos-server" "$OPT/bin/pharmacyos-server.new"
 	install -m 0755 "$bundle/deploy/restore-backup.sh" "$OPT/bin/restore-backup.sh"
+	secure_redis
 	echo "== Restarting"
+	supervisorctl update >/dev/null || true
 	supervisorctl restart all >/dev/null
 	as_bench "bench --site '$SITE' set-maintenance-mode off"
 	echo "== Health check"
@@ -92,6 +162,7 @@ update() {
 	as_bench "bench --site '$SITE' execute pharmacyos_erp.backup.service.health_check" >/dev/null
 	trap - ERR
 	echo "$new_version" > "$OPT/VERSION"
+	printf '%s' "$new_build" > "$OPT/BUILD_ID"
 	as_bench "bench --site '$SITE' set-config pharmacyos_server_version '$new_version'"
 	mv "$OPT/bin/pharmacyos-server.new" "$OPT/bin/pharmacyos-server"
 	# keep the previous release (rollback by hand) and drop older ones
@@ -112,19 +183,31 @@ case "${1:-status}" in
 		web_ok && echo "web ok" || { echo "web down"; exit 1; }
 		as_bench "bench --site all execute pharmacyos_erp.backup.service.health_check" ;;
 	version) cat "$OPT/VERSION" 2>/dev/null || echo unknown ;;
+	build-id) cat "$OPT/BUILD_ID" 2>/dev/null || echo unknown ;;
+	secure-redis) secure_redis; supervisorctl restart all >/dev/null; wait_web 60 ;;
 	backup)
+		take_lock 600
 		folder="$(backup)"
 		result "{\"status\": \"ok\", \"folder\": \"$folder\"}" ;;
 	list-backups)
 		as_bench "bench --site '$SITE' execute pharmacyos_erp.backup.service.list_backups" | tail -n 1 ;;
 	restore)
-		folder="${2:?backup folder}"
-		shift 2
-		su "$BENCH_USER" -c "export PATH=\$HOME/.local/bin:\$PATH; DB_ROOT_PASSWORD='$DB_ROOT_PASSWORD' BENCH_DIR='$BENCH_DIR' '$OPT/bin/restore-backup.sh' '$SITE' '$folder' --yes $*" \
-			2>&1 | tee "$LOG_DIR/restore-$(date +%Y%m%d-%H%M%S).log"
+		folder="$(valid_backup_folder "${2:?backup folder}")" || { echo "Not a PharmacyOS backup folder of this server: $2" >&2; result '{"status": "invalid_folder"}'; exit 2; }
+		extra=()
+		[ "${3:-}" = "--with-files" ] && extra=(--with-files)
+		take_lock 5
+		set +e
+		run_restore "$SITE" "$folder" --yes "${extra[@]}" 2>&1 | tee "$LOG_DIR/restore-$(date +%Y%m%d-%H%M%S).log"
+		code="${PIPESTATUS[0]}"
+		set -e
 		supervisorctl restart all >/dev/null || true
-		wait_web 60
-		result "{\"status\": \"restored\", \"folder\": \"$folder\"}" ;;
+		wait_web 60 || true
+		case "$code" in
+			0) result "{\"status\": \"restored\", \"folder\": \"$folder\"}" ;;
+			3) result "{\"status\": \"failed_unchanged\", \"folder\": \"$folder\"}"; exit 1 ;;
+			4) result "{\"status\": \"failed_reverted\", \"folder\": \"$folder\"}"; exit 1 ;;
+			*) result "{\"status\": \"failed_maintenance\", \"folder\": \"$folder\"}"; exit 1 ;;
+		esac ;;
 	update) update "${2:?bundle folder}" 2>&1 | tee "$LOG_DIR/update-$(date +%Y%m%d-%H%M%S).log"; exit "${PIPESTATUS[0]}" ;;
-	*) echo "usage: pharmacyos-server start|stop|status|health|run|version|backup|list-backups|restore <folder>|update <bundle>" >&2; exit 2 ;;
+	*) echo "usage: pharmacyos-server start|stop|status|health|run|version|build-id|backup|list-backups|restore <folder>|update <bundle>" >&2; exit 2 ;;
 esac

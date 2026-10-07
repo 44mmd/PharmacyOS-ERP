@@ -317,8 +317,12 @@ class TestLeastPrivilegeOverHTTP(IntegrationTestCase):
 		frappe.db.commit()
 
 	def test_pharmacist_sells_and_reads_stock_but_cannot_create_stock_or_accounting(self):
+		from pharmacyos_erp.tests.utils import as_counter_sale
+
 		pharmacist = self.client("pharmacist")
-		status, draft = self.insert(pharmacist, sale_doc(self.item.name, 1, self.batch))
+		doc = as_counter_sale(sale_doc(self.item.name, 1, self.batch), self.users["pharmacist"])
+		frappe.db.commit()  # the request runs on its own connection
+		status, draft = self.insert(pharmacist, doc)
 		self.assertEqual(status, 200, draft)
 		status, body = self.call(pharmacist, "frappe.client.submit", doc=draft["message"])
 		self.assertEqual(status, 200, body)

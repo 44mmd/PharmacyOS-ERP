@@ -77,8 +77,9 @@ _sales_validate = [
 	"pharmacyos_erp.pharmacy.returns.validate_return",
 	"pharmacyos_erp.pharmacy.stock_guard.protect_reservations",
 ]
-# counter staff sell at the pharmacy's prices, whatever made the invoice (pharmacy/counter_pricing.py)
-_invoice_validate = [*_sales_validate, "pharmacyos_erp.pharmacy.counter_pricing.guard_counter_pricing"]
+# counter staff sell in their own shift, today, at the pharmacy's prices — whatever made the invoice
+# (pharmacy/counter_sales.py)
+_invoice_validate = [*_sales_validate, "pharmacyos_erp.pharmacy.counter_sales.validate_counter_sale"]
 _receipt_validate = [_branch, "pharmacyos_erp.pharmacy.receiving.validate_receipt"]
 # cumulative returned quantities on the original sale (read under its row lock; see pharmacy/returns.py)
 _record_return = "pharmacyos_erp.pharmacy.returns.record_return"
