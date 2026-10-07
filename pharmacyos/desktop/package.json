@@ -1,8 +1,8 @@
 {
   "name": "pharmacyos-erp-desktop",
   "productName": "PharmacyOS ERP",
-  "version": "0.1.0",
-  "description": "PharmacyOS ERP — Pharmacy Operating System. Designed & Developed by HALF.",
+  "version": "1.0.0-rc.1",
+  "description": "PharmacyOS ERP — the LOCAL ERP (Pharmacy Operating System) for Windows. Designed & Developed by HALF.",
   "author": "HALF",
   "license": "GPL-3.0-only",
   "private": true,
@@ -10,7 +10,9 @@
   "scripts": {
     "start": "electron .",
     "test": "node --test test/*.test.js",
-    "dist:win": "electron-builder --win nsis --x64"
+    "bundle": "node scripts/prepare-server-bundle.js",
+    "predist:win": "npm run bundle",
+    "dist:win": "electron-builder --win nsis --x64 --publish never"
   },
   "devDependencies": {
     "electron": "44.5.1",
@@ -20,11 +22,37 @@
     "appId": "com.half.pharmacyos.erp",
     "productName": "PharmacyOS ERP",
     "copyright": "© 2026 HALF",
-    "directories": { "output": "dist", "buildResources": "build" },
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
     "publish": null,
-    "files": ["src/**/*", "package.json"],
-    "extraResources": [{ "from": "../LICENSE-NOTICES.txt", "to": "LICENSE-NOTICES.txt" }],
-    "win": { "target": "nsis", "icon": "build/icon.png", "artifactName": "PharmacyOS-ERP-Setup-${version}.${ext}" },
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "../LICENSE-NOTICES.txt",
+        "to": "LICENSE-NOTICES.txt"
+      },
+      {
+        "from": "server-bundle",
+        "to": "server"
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.png",
+      "artifactName": "PharmacyOS-Setup-${version}.${ext}",
+      "requestedExecutionLevel": "asInvoker",
+      "signtoolOptions": {
+        "signingHashAlgorithms": [
+          "sha256"
+        ],
+        "rfc3161TimeStampServer": "http://timestamp.digicert.com"
+      }
+    },
     "nsis": {
       "oneClick": false,
       "perMachine": true,
@@ -33,7 +61,10 @@
       "createStartMenuShortcut": true,
       "shortcutName": "PharmacyOS ERP",
       "deleteAppDataOnUninstall": false,
-      "include": "build/installer.nsh"
+      "include": "build/installer.nsh",
+      "uninstallDisplayName": "PharmacyOS ERP",
+      "runAfterFinish": true,
+      "artifactName": "PharmacyOS-Setup-${version}.${ext}"
     }
   }
 }

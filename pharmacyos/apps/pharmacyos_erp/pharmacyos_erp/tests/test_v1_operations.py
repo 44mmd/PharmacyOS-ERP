@@ -134,9 +134,10 @@ class TestV1Operations(IntegrationTestCase):
 	# ------------------------------------------------------------------ expired stock
 
 	def test_expired_stock_is_disposed_with_an_audit_trail(self):
-		item = make_medicine("V1-EXPIRED", item_name="V1 Expired Medicine")
-		expired = make_batch(item.name, "V1-EXP-01", -10)
-		receive(item.name, expired, 10)
+		suffix = frappe.generate_hash(length=6).upper()  # committed stock from an earlier run never mixes in
+		item = make_medicine(f"V1-EXPIRED-{suffix}", item_name="V1 Expired Medicine")
+		expired = make_batch(item.name, f"V1-EXP-{suffix}", -10)
+		receive(item.name, expired, 10, posting_date=add_days(nowdate(), -30))  # received while still valid
 		frappe.db.commit()
 		self.assertEqual(batch_qty(item.name, expired), 10)
 

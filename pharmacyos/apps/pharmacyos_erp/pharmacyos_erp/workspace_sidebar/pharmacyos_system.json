@@ -91,6 +91,18 @@
   {
    "child": 1,
    "collapsible": 1,
+   "icon": "ban",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Voided Sales",
+   "link_to": "PharmacyOS Void Log",
+   "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 1,
+   "collapsible": 1,
    "icon": "plug",
    "indent": 0,
    "keep_closed": 0,
@@ -135,7 +147,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-10-03 01:00:00.000000",
+ "modified": "2026-10-07 01:00:00.000000",
  "modified_by": "Administrator",
  "module": "PharmacyOS",
  "name": "PharmacyOS System",

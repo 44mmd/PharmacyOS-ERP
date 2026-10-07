@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; font-src 'self'">
+<title>PharmacyOS — test receipt</title>
+<style>
+/* Thermal receipt check: 80 mm roll (72 mm printable). If the text is cut on the right or left, set the
+   printer's paper size to 80 mm (or 58 mm) in Windows printer preferences; PharmacyOS receipts use the
+   same width. */
+@font-face { font-family: "Tajawal"; src: url(assets/tajawal-arabic-400.woff2) format("woff2"); font-weight: 400; }
+@font-face { font-family: "Tajawal"; src: url(assets/tajawal-arabic-700.woff2) format("woff2"); font-weight: 700; }
+@page { size: 80mm auto; margin: 3mm 4mm; }
+body { width: 72mm; margin: 0; font: 12px/1.45 Tajawal, Arial, sans-serif; color: #000; }
+h1 { font-size: 16px; text-align: center; margin: 0 0 2mm; }
+p { margin: 0; }
+.c { text-align: center; }
+.row { display: flex; justify-content: space-between; }
+hr { border: 0; border-top: 1px dashed #000; margin: 2mm 0; }
+.big { font-size: 15px; font-weight: 700; }
+.ltr { direction: ltr; unicode-bidi: isolate; }
+.ruler { font: 10px monospace; direction: ltr; white-space: nowrap; overflow: hidden; }
+</style>
+</head>
+<body>
+<h1>PharmacyOS</h1>
+<p class="c">وصل تجريبي · Test receipt</p>
+<hr>
+<div class="row"><span>باراسيتامول 500 ملغ</span><span class="ltr">2 × 2,500</span></div>
+<div class="row"><span class="ltr">Panadol 500 mg</span><span class="ltr">5,000</span></div>
+<div class="row"><span>أموكسيسيلين 1 غم · الوجبة A12</span><span class="ltr">9,000</span></div>
+<hr>
+<div class="row big"><span>المجموع · Total</span><span class="ltr">14,000 د.ع</span></div>
+<div class="row"><span>نقدًا · Cash</span><span class="ltr">20,000</span></div>
+<div class="row"><span>الباقي · Change</span><span class="ltr">6,000</span></div>
+<hr>
+<p class="c">إذا ظهر هذا السطر كاملًا فعرض الورق صحيح</p>
+<p class="c ltr">If this line prints in full, the paper width is right</p>
+<p class="ruler">|----|----|----|----|----|----|----|--|</p>
+<p class="c">شكرًا لزيارتكم · Thank you</p>
+</body>
+</html>

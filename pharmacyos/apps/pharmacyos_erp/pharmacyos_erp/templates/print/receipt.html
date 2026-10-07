@@ -1,7 +1,9 @@
-{#- PharmacyOS thermal receipt (80 mm). Pharmacy identity first; PharmacyOS only as an optional small line. -#}
+{#- PharmacyOS thermal receipt (80 mm, or 58 mm per PharmacyOS Settings → Receipt Paper Width). Pharmacy identity first; PharmacyOS only as an optional small line. -#}
 {%- set id = get_print_identity(doc) -%}
 {%- set ar = (frappe.local.lang == "ar") -%}
-<div class="pos-receipt" dir="{{ 'rtl' if ar else 'ltr' }}">
+{%- set narrow = (id.receipt_paper_width == "58mm") -%}
+{%- if narrow %}<style>.print-format { max-width: 58mm; } .pos-receipt { width: 50mm; font-size: 10.5px; } @media print { @page { size: 58mm auto; margin: 2mm; } }</style>{% endif %}
+<div class="pos-receipt{{ ' pos-receipt--58' if narrow else '' }}" dir="{{ 'rtl' if ar else 'ltr' }}">
 	<header class="r-head">
 		{%- if id.pharmacy_logo %}<img class="r-logo" src="{{ id.pharmacy_logo }}" alt="">{% endif %}
 		<div class="r-name">{{ (id.pharmacy_name_ar if ar and id.pharmacy_name_ar else id.pharmacy_name)|e }}</div>

@@ -4,13 +4,35 @@ const { contextBridge, ipcRenderer } = require("electron");
 contextBridge.exposeInMainWorld("pharmacyosDesktop", {
 	isDesktop: true,
 	info: () => ipcRenderer.invoke("app:info"),
-	// connect/settings screen only (the main process ignores these calls from other pages)
+	// the app's own local screens only (the main process ignores these calls from any other page)
 	getConfig: () => ipcRenderer.invoke("config:get"),
 	testServer: (url) => ipcRenderer.invoke("config:test", url),
 	saveConfig: (values) => ipcRenderer.invoke("config:save", values),
 	retry: () => ipcRenderer.invoke("connect:retry"),
+	openApp: () => ipcRenderer.invoke("app:open"),
 	listPrinters: () => ipcRenderer.invoke("printers:list"),
-	onProgress: (cb) => ipcRenderer.on("connect:progress", (_e, p) => cb(p)),
+	testPrinter: () => ipcRenderer.invoke("printers:test"),
+	onStartup: (cb) => ipcRenderer.on("startup:progress", (_e, p) => cb(p)),
+	setup: {
+		check: () => ipcRenderer.invoke("setup:check"),
+		start: (values) => ipcRenderer.invoke("setup:start", values),
+		resume: () => ipcRenderer.invoke("setup:resume"),
+		state: () => ipcRenderer.invoke("setup:state"),
+		reboot: () => ipcRenderer.invoke("setup:reboot"),
+		finish: (serverUrl) => ipcRenderer.invoke("setup:finish", serverUrl),
+	},
+	server: {
+		start: () => ipcRenderer.invoke("server:start"),
+		update: () => ipcRenderer.invoke("server:update"),
+		continue: () => ipcRenderer.invoke("server:continue"),
+		onLine: (cb) => ipcRenderer.on("server:line", (_e, line) => cb(line)),
+	},
+	backups: {
+		list: () => ipcRenderer.invoke("backups:list"),
+		create: () => ipcRenderer.invoke("backups:create"),
+		restore: (folder, withFiles) => ipcRenderer.invoke("backups:restore", folder, Boolean(withFiles)),
+		open: () => ipcRenderer.invoke("backups:open"),
+	},
 	// PharmacyOS POS (/pos): native receipt printing — silently to the receipt printer chosen in
 	// Settings, or with the system print dialog. The main process accepts only the server's own
 	// print view, from the server's own pages.

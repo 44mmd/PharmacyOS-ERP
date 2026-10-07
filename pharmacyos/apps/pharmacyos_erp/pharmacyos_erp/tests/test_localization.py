@@ -258,6 +258,9 @@ class TestRound4MessagesAreTranslated(IntegrationTestCase):
 		# the POS screen and its server API (web browser and Windows desktop)
 		"www/pos.py",
 		"pos/api.py",
+		# LOCAL ERP v1: voids, disposal, the pharmacy report
+		"pharmacy/disposal.py",
+		"pharmacy/reports.py",
 	)
 
 	def test_user_facing_strings_have_arabic_entries(self):

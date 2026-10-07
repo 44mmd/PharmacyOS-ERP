@@ -66,6 +66,7 @@ def get_pharmacy_identity() -> dict:
 		"address": settings.address,
 		"show_powered_by": settings.show_powered_by,
 		"receipt_footer": settings.receipt_footer,
+		"receipt_paper_width": settings.get("receipt_paper_width") or "80mm",
 	}
 
 

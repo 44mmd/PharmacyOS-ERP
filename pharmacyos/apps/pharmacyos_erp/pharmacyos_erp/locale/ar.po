@@ -3053,3 +3053,303 @@ msgstr "مبالغ العدّ غير صالحة."
 
 msgid "Enter the amount counted for {0}."
 msgstr "أدخل المبلغ المعدود لـ {0}."
+
+msgid "Invoice number or customer"
+msgstr "رقم الفاتورة أو الزبون"
+
+msgid "No sales found."
+msgstr "لم يُعثر على مبيعات."
+
+msgid "Voided"
+msgstr "ملغاة"
+
+msgid "Void"
+msgstr "إلغاء"
+
+msgid "Void sale {0}"
+msgstr "إلغاء البيع {0}"
+
+msgid "The whole sale ({0}) is cancelled: stock goes back to its batches and the payment is reversed. The sale stays on record as voided."
+msgstr "يُلغى البيع كاملًا ({0}): تعود الكميات إلى وجباتها ويُعكس الدفع. يبقى البيع في السجل بحالة ملغاة."
+
+msgid "Why is this sale voided?"
+msgstr "لماذا يُلغى هذا البيع؟"
+
+msgid "Enter the reason for the void."
+msgstr "أدخل سبب الإلغاء."
+
+msgid "Reason"
+msgstr "السبب"
+
+msgid "Manager approval"
+msgstr "موافقة المدير"
+
+msgid "Manager email"
+msgstr "بريد المدير"
+
+msgid "Manager password"
+msgstr "كلمة مرور المدير"
+
+msgid "Void sale"
+msgstr "إلغاء البيع"
+
+msgid "Sale {0} voided (approved by {1})."
+msgstr "أُلغي البيع {0} (بموافقة {1})."
+
+msgid "Too many failed approvals. Wait a few minutes and try again."
+msgstr "محاولات موافقة فاشلة كثيرة. انتظر بضع دقائق ثم أعد المحاولة."
+
+msgid "A manager must approve this void with their email and password."
+msgstr "يجب أن يوافق مدير على هذا الإلغاء ببريده وكلمة مروره."
+
+msgid "Another person must approve the void."
+msgstr "يجب أن يوافق شخص آخر على الإلغاء."
+
+msgid "The approval was refused: wrong email or password."
+msgstr "رُفضت الموافقة: البريد أو كلمة المرور غير صحيحة."
+
+msgid "Sale {0} not found."
+msgstr "البيع {0} غير موجود."
+
+msgid "Only a completed counter sale can be voided."
+msgstr "يمكن إلغاء بيع مكتمل من الكاونتر فقط."
+
+msgid "A return cannot be voided."
+msgstr "لا يمكن إلغاء مرتجع."
+
+msgid "Items of this sale were returned; it can no longer be voided."
+msgstr "أُرجعت مواد من هذا البيع، فلم يعد بالإمكان إلغاؤه."
+
+msgid "Only sales of today can be voided. Use a return for older sales."
+msgstr "يمكن إلغاء مبيعات اليوم فقط. استخدم الإرجاع للمبيعات الأقدم."
+
+msgid "This sale belongs to a closed shift ({0}). Use a return instead."
+msgstr "هذا البيع ضمن وردية مغلقة ({0}). استخدم الإرجاع بدلًا من ذلك."
+
+msgid "You can only ask to void your own sales."
+msgstr "يمكنك طلب إلغاء مبيعاتك فقط."
+
+msgid "{0} is not allowed to void sales."
+msgstr "غير مسموح لـ {0} بإلغاء المبيعات."
+
+msgid "Voided at the counter by {0}, approved by {1}: {2}"
+msgstr "أُلغي في الكاونتر بواسطة {0}، بموافقة {1}: {2}"
+
+msgid "You are not allowed to dispose of stock."
+msgstr "غير مسموح لك بإتلاف المخزون."
+
+msgid "Choose a reason for the disposal."
+msgstr "اختر سبب الإتلاف."
+
+msgid "Describe why the stock is disposed of."
+msgstr "اذكر سبب إتلاف المخزون."
+
+msgid "Batch {0} is not a batch of {1}."
+msgstr "الوجبة {0} ليست من {1}."
+
+msgid "Batch {0} has not expired yet. Choose another reason if it must be disposed of."
+msgstr "الوجبة {0} لم تنتهِ صلاحيتها بعد. اختر سببًا آخر إذا وجب إتلافها."
+
+msgid "Only {0} of batch {1} are in {2}."
+msgstr "يوجد {0} فقط من الوجبة {1} في {2}."
+
+msgid "Disposal ({0}) of batch {1}, expiry {2}."
+msgstr "إتلاف ({0}) للوجبة {1}، انتهاء الصلاحية {2}."
+
+msgid "Only the pharmacy owner can move a batch's expiry date later. Expired stock is disposed of, not re-dated."
+msgstr "صاحب الصيدلية فقط يمكنه تأخير تاريخ انتهاء صلاحية وجبة. المخزون منتهي الصلاحية يُتلف ولا يُعاد تأريخه."
+
+msgid "The pharmacy report is for the owner, managers and the accountant."
+msgstr "تقرير الصيدلية لصاحب الصيدلية والمدراء والمحاسب."
+
+msgid "The start date is after the end date."
+msgstr "تاريخ البداية بعد تاريخ النهاية."
+
+msgid "Choose a period of at most one year."
+msgstr "اختر فترة لا تتجاوز سنة واحدة."
+
+msgid "You do not have permission to view sales."
+msgstr "ليست لديك صلاحية عرض المبيعات."
+
+msgid "Backup failed: {0}"
+msgstr "فشل النسخ الاحتياطي: {0}"
+
+msgid "Refresh"
+msgstr "تحديث"
+
+msgid "Disposal history"
+msgstr "سجل الإتلاف"
+
+msgid "Dispose"
+msgstr "إتلاف"
+
+msgid "Dispose of stock"
+msgstr "إتلاف مخزون"
+
+msgid "batch"
+msgstr "الوجبة"
+
+msgid "expiry"
+msgstr "انتهاء الصلاحية"
+
+msgid "Quantity to dispose of"
+msgstr "الكمية المراد إتلافها"
+
+msgid "Damaged"
+msgstr "تالف"
+
+msgid "Recalled"
+msgstr "مسحوب من السوق"
+
+msgid "Other"
+msgstr "آخر"
+
+msgid "The units leave stock now and are recorded as a loss. The disposal stays in the history with your name; only a stock manager can cancel it."
+msgstr "تخرج الكميات من المخزون الآن وتُسجَّل خسارة. يبقى الإتلاف في السجل باسمك، ولا يلغيه إلا مدير المخزون."
+
+msgid "Enter a quantity between 0 and {0}."
+msgstr "أدخل كمية بين 0 و{0}."
+
+msgid "Disposed of {0} of batch {1} ({2})."
+msgstr "أُتلف {0} من الوجبة {1} ({2})."
+
+msgid "No disposals yet"
+msgstr "لا توجد عمليات إتلاف بعد"
+
+msgid "By"
+msgstr "بواسطة"
+
+msgid "Previous"
+msgstr "السابق"
+
+msgid "Next"
+msgstr "التالي"
+
+msgid "Pharmacy Report"
+msgstr "تقرير الصيدلية"
+
+msgid "Print"
+msgstr "طباعة"
+
+msgid "Today"
+msgstr "اليوم"
+
+msgid "Yesterday"
+msgstr "أمس"
+
+msgid "Last 7 days"
+msgstr "آخر 7 أيام"
+
+msgid "This month"
+msgstr "هذا الشهر"
+
+msgid "Period"
+msgstr "الفترة"
+
+msgid "Net sales"
+msgstr "صافي المبيعات"
+
+msgid "{0} sales · average {1}"
+msgstr "{0} عملية بيع · المتوسط {1}"
+
+msgid "{0} returns"
+msgstr "{0} مرتجع"
+
+msgid "Discounts given"
+msgstr "الخصومات الممنوحة"
+
+msgid "on {0} sales"
+msgstr "على {0} عملية بيع"
+
+msgid "Voided sales"
+msgstr "المبيعات الملغاة"
+
+msgid "{0} voids"
+msgstr "{0} إلغاء"
+
+msgid "Gross profit"
+msgstr "إجمالي الربح"
+
+msgid "margin {0}%"
+msgstr "هامش {0}%"
+
+msgid "Stock value"
+msgstr "قيمة المخزون"
+
+msgid "now"
+msgstr "الآن"
+
+msgid "Purchases received"
+msgstr "المشتريات المستلمة"
+
+msgid "{0} receipts · {1} supplier returns"
+msgstr "{0} استلام · {1} مرتجع للمورد"
+
+msgid "Payment methods"
+msgstr "طرق الدفع"
+
+msgid "Method"
+msgstr "الطريقة"
+
+msgid "No payments in this period"
+msgstr "لا مدفوعات في هذه الفترة"
+
+msgid "Sales by cashier"
+msgstr "المبيعات حسب الكاشير"
+
+msgid "No sales in this period"
+msgstr "لا مبيعات في هذه الفترة"
+
+msgid "Top medicines"
+msgstr "الأدوية الأكثر مبيعًا"
+
+msgid "Shifts"
+msgstr "الورديات"
+
+msgid "Counter"
+msgstr "الكاونتر"
+
+msgid "Opened"
+msgstr "فُتحت"
+
+msgid "Closed"
+msgstr "أُغلقت"
+
+msgid "Open"
+msgstr "مفتوحة"
+
+msgid "No shifts in this period"
+msgstr "لا ورديات في هذه الفترة"
+
+msgid "Requested by"
+msgstr "بطلب من"
+
+msgid "Approved by"
+msgstr "بموافقة"
+
+msgid "No voided sales"
+msgstr "لا مبيعات ملغاة"
+
+msgid "Net sales = sales less returns; voided sales are excluded (they are cancelled). Cash is counted after the change given back."
+msgstr "صافي المبيعات = المبيعات ناقص المرتجعات؛ المبيعات الملغاة مستبعدة. يُحسب النقد بعد طرح الباقي المُعاد للزبون."
+
+msgid "Receipt Paper Width"
+msgstr "عرض ورق الوصل"
+
+msgid "Width of the receipt printer's paper roll. Most counter printers use 80 mm; small ones 58 mm."
+msgstr "عرض لفة ورق طابعة الوصل. معظم طابعات الكاونتر 80 ملم، والصغيرة 58 ملم."
+
+msgid "Disposal Reason"
+msgstr "سبب الإتلاف"
+
+msgid "Expired Stock Disposal"
+msgstr "إتلاف مخزون منتهي الصلاحية"
+
+msgid "PharmacyOS Void Log"
+msgstr "سجل إلغاء المبيعات"
+
+msgid "Voided On"
+msgstr "تاريخ الإلغاء"
+
+msgid "Sold By"
+msgstr "البائع"

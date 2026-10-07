@@ -1,22 +1,32 @@
-// PharmacyOS ERP — Windows desktop shell (Electron).
+// PharmacyOS ERP — Windows desktop app (Electron): the LOCAL ERP's window, setup and caretaker.
 //
-// One PharmacyOS window onto the pharmacy's own server (this PC or the pharmacy LAN server). The
-// server holds the authoritative database; this app stores no pharmacy data and no passwords.
+// * One window onto the pharmacy's own server (this PC's PharmacyOS environment or the pharmacy LAN
+//   server). The server holds the database; this app stores no pharmacy data and no passwords.
+// * First run on a single-PC pharmacy: a setup screen collects the pharmacy's details and installs the
+//   server (setup.js → install-server.ps1, one administrator prompt, continues by itself after a restart).
+// * Every start: a branded startup screen until the server answers (starting it if needed), a recovery
+//   screen if it does not, and — when this app brings a newer server — a guided server update (backup
+//   first, automatic rollback). Backups can be taken, found and restored from the app's menu.
 // Security: context isolation + sandbox, no Node in pages, navigation locked to the server origin,
-// external links open in the system browser.
+// external links open in the system browser; privileged calls are accepted only from the local screens.
 const { app, BrowserWindow, Menu, ipcMain, shell, dialog, session } = require("electron");
 const path = require("path");
 const config = require("./config");
 const server = require("./server");
 const pos = require("./pos");
+const setup = require("./setup");
+const localserver = require("./localserver");
 
 const CONNECT_PAGE = path.join(__dirname, "connect.html");
+const TEST_RECEIPT = path.join(__dirname, "test-receipt.html");
 const PING_EVERY_MS = 30000; // quiet health check; only a failure is shown
+const START_ATTEMPTS = Number(process.env.PHARMACYOS_START_ATTEMPTS) || 90; // × 2 s: a cold Windows boot can take a few minutes to bring the server up
 let win = null;
 let cfg = null;
 let online = null;
 let lastAppUrl = null;
 let monitor = null;
+let busy = false; // an update/restore is running: no navigation away from the local screen
 
 if (!app.requestSingleInstanceLock()) {
 	app.quit(); // a second launch focuses the existing window instead of opening another
@@ -24,6 +34,7 @@ if (!app.requestSingleInstanceLock()) {
 	app.on("second-instance", () => {
 		if (win) {
 			if (win.isMinimized()) win.restore();
+			win.show();
 			win.focus();
 		}
 	});
@@ -40,8 +51,9 @@ function isServerUrl(url) {
 	}
 }
 
-function isConnectPage(contents) {
-	return contents.getURL().startsWith("file://") && contents.getURL().includes("connect.html");
+function isLocalScreen(contents) {
+	const url = contents.getURL();
+	return url.startsWith("file://") && url.includes("connect.html");
 }
 
 function webPreferences() {
@@ -77,9 +89,18 @@ function createWindow() {
 		if (isServerUrl(url)) lastAppUrl = url;
 	});
 	win.webContents.on("did-fail-load", (_e, code, _desc, url, isMainFrame) => {
-		if (isMainFrame && code !== -3 && isServerUrl(url)) showConnect("offline");
+		if (isMainFrame && code !== -3 && isServerUrl(url)) showScreen("recovery");
 	});
 	win.on("page-title-updated", (e) => e.preventDefault()); // the window is always "PharmacyOS ERP"
+	win.on("close", (e) => {
+		if (!busy) return;
+		e.preventDefault(); // never interrupt an update or a restore
+		dialog.showMessageBox(win, {
+			type: "warning",
+			title: "PharmacyOS ERP",
+			message: "PharmacyOS is updating or restoring the pharmacy server. Please wait until it finishes.\nيجري تحديث خادم الصيدلية أو استعادته. يرجى الانتظار حتى ينتهي.",
+		});
+	});
 }
 
 // Lock navigation to the PharmacyOS server; print previews open as in-app windows.
@@ -117,12 +138,12 @@ function maybeSilentPrint(child) {
 	});
 }
 
-// Prints a receipt from a hidden window that shares the signed-in session (same partition), so the
+// Prints a page from a hidden window that shares the signed-in session (same partition), so the
 // server renders it with the cashier's own permissions — exactly what the browser preview shows.
-function printReceipt(url) {
+function printPage(url, { local = false } = {}) {
 	return new Promise((resolve) => {
 		const printer = new BrowserWindow({ show: false, webPreferences: webPreferences() });
-		guard(printer.webContents);
+		if (!local) guard(printer.webContents);
 		const done = (result) => {
 			if (!printer.isDestroyed()) printer.close();
 			resolve(result);
@@ -130,43 +151,60 @@ function printReceipt(url) {
 		printer.webContents.once("did-fail-load", (_e, _code, description) => done({ ok: false, error: description }));
 		printer.webContents.once("did-finish-load", () => {
 			const options = pos.printOptions(cfg);
-			printer.webContents.print(options, (ok, reason) =>
-				done({ ok, silent: options.silent, error: ok ? null : reason })
-			);
+			printer.webContents.print(options, (ok, reason) => done({ ok, silent: options.silent, error: ok ? null : reason }));
 		});
-		printer.loadURL(url);
+		if (local) printer.loadFile(url);
+		else printer.loadURL(url);
 	});
 }
 
 function openPath(pathname) {
-	if (!cfg || !config.isConfigured(cfg) || !online) return;
+	if (!cfg || !config.isConfigured(cfg) || !online || busy) return;
 	win.loadURL(new URL(pathname, cfg.serverUrl).href);
 }
 
-function showConnect(state) {
-	online = false;
-	win.loadFile(CONNECT_PAGE, { query: { state } });
+function showScreen(view, query = {}) {
+	if (["recovery", "starting", "update", "install", "welcome"].includes(view)) online = false;
+	win.loadFile(CONNECT_PAGE, { query: { view, ...query } });
 }
 
+function isThisPc() {
+	return cfg && cfg.mode === "this-pc";
+}
+
+// Brings the server up (single-PC: starts it if needed), then opens the app — or the recovery screen.
 async function openApp() {
-	showConnect("connecting");
+	showScreen("starting");
 	let ok = await server.ping(cfg.serverUrl);
-	if (!ok && cfg.mode === "this-pc") {
-		await server.startLocalServer(cfg.wslDistro);
+	if (!ok && isThisPc()) {
+		await localserver.startKeepAlive();
 		ok = await server.waitFor(cfg.serverUrl, {
-			attempts: 45,
-			onAttempt: (i, n) => win.webContents.send("connect:progress", { attempt: i, of: n }),
+			attempts: START_ATTEMPTS,
+			onAttempt: (i, n) => win.webContents.send("startup:progress", { attempt: i, of: n }),
 		});
 	}
-	if (!ok) return showConnect("offline");
+	if (!ok) return showScreen("recovery");
 	online = true;
+	if (isThisPc()) {
+		const pending = await serverUpdateAvailable();
+		if (pending) return showScreen("update", pending);
+	}
 	win.loadURL(lastAppUrl && isServerUrl(lastAppUrl) ? lastAppUrl : new URL(pos.startPath(cfg), cfg.serverUrl).href);
+}
+
+// A newer PharmacyOS ERP bundled with this app than the one installed on this PC's server.
+async function serverUpdateAvailable() {
+	const bundled = localserver.bundleVersion(app);
+	if (!bundled) return null;
+	const installed = await localserver.installedVersion();
+	if (!installed) return null;
+	return localserver.compareVersions(bundled, installed) > 0 ? { installed, bundled } : null;
 }
 
 function startMonitor() {
 	clearInterval(monitor);
 	monitor = setInterval(async () => {
-		if (!cfg || !config.isConfigured(cfg) || isConnectPage(win.webContents)) return;
+		if (!cfg || !config.isConfigured(cfg) || isLocalScreen(win.webContents)) return;
 		const ok = await server.ping(cfg.serverUrl);
 		if (ok !== online) {
 			online = ok;
@@ -174,6 +212,22 @@ function startMonitor() {
 			win.webContents.send("connection:changed", { online: ok });
 		}
 	}, PING_EVERY_MS);
+}
+
+async function showAbout() {
+	const installed = isThisPc() ? await localserver.installedVersion() : null;
+	dialog.showMessageBox(win, {
+		type: "info",
+		title: "PharmacyOS ERP",
+		message: `PharmacyOS ERP ${app.getVersion()}`,
+		detail: [
+			"Pharmacy Operating System — LOCAL ERP",
+			`Desktop app: ${app.getVersion()}`,
+			`Server bundled with this app: ${localserver.bundleVersion(app) || "—"}`,
+			isThisPc() ? `Server on this PC: ${installed || "not running"}` : `Pharmacy server: ${cfg ? cfg.serverUrl : "—"}`,
+			"Built on ERPNext and the Frappe Framework (GPL-3.0). Designed & developed by HALF.",
+		].join("\n"),
+	});
 }
 
 function buildMenu() {
@@ -184,7 +238,11 @@ function buildMenu() {
 				{ label: "Point of Sale", accelerator: "CmdOrCtrl+Shift+P", click: () => openPath(pos.START_PATHS.pos) },
 				{ label: "ERP", click: () => openPath(pos.START_PATHS.desk) },
 				{ type: "separator" },
-				{ label: "Connection & Printer…", click: () => showConnect("settings") },
+				{ label: "Backups…", click: () => !busy && showScreen("backups") },
+				{ label: "Connection & Printer…", click: () => !busy && showScreen("settings") },
+				{ label: "Print a test receipt", click: () => printPage(TEST_RECEIPT, { local: true }) },
+				{ type: "separator" },
+				{ label: "About PharmacyOS ERP", click: showAbout },
 				{ type: "separator" },
 				{ role: "reload" },
 				{ role: "togglefullscreen" },
@@ -201,34 +259,112 @@ function buildMenu() {
 	Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
 
+// WSL paths of the server (/mnt/c/ProgramData/…) as Windows paths for people (C:\ProgramData\…)
+function windowsPath(p) {
+	const m = /^\/mnt\/([a-z])\/(.*)$/.exec(String(p || ""));
+	return m && process.platform === "win32" ? `${m[1].toUpperCase()}:\\${m[2].replace(/\//g, "\\")}` : p;
+}
+
 function registerIpc() {
-	const fromConnectPage = (event) => isConnectPage(event.sender);
-	ipcMain.handle("config:get", (event) => (fromConnectPage(event) ? cfg : null));
-	ipcMain.handle("config:test", async (event, url) => {
-		if (!fromConnectPage(event)) return false;
+	const local = (handler) => (event, ...args) => (isLocalScreen(event.sender) ? handler(...args) : null);
+
+	// connection and printer settings
+	ipcMain.handle("config:get", local(() => cfg));
+	ipcMain.handle("config:test", local(async (url) => {
 		try {
 			return await server.ping(config.normaliseUrl(url));
 		} catch {
 			return false;
 		}
-	});
-	ipcMain.handle("config:save", async (event, values) => {
-		if (!fromConnectPage(event)) return null;
+	}));
+	ipcMain.handle("config:save", local(async (values) => {
 		cfg = config.save(app.getPath("userData"), { ...cfg, ...values });
 		openApp();
 		return cfg;
-	});
-	ipcMain.handle("connect:retry", (event) => (fromConnectPage(event) ? openApp() : null));
+	}));
+	ipcMain.handle("connect:retry", local(() => openApp()));
 	ipcMain.handle("printers:list", async (event) =>
-		fromConnectPage(event) ? (await event.sender.getPrintersAsync()).map((p) => p.name) : []
+		isLocalScreen(event.sender) ? (await event.sender.getPrintersAsync()).map((p) => p.name) : []
 	);
-	ipcMain.handle("app:info", () => ({ version: app.getVersion(), platform: process.platform }));
+	ipcMain.handle("printers:test", local(() => printPage(TEST_RECEIPT, { local: true })));
+	ipcMain.handle("app:info", () => ({
+		version: app.getVersion(),
+		platform: process.platform,
+		serverVersion: localserver.bundleVersion(app),
+		mode: cfg && cfg.mode,
+	}));
+
+	// first-run setup of this PC as the pharmacy server
+	ipcMain.handle("setup:check", local(() => setup.systemCheck(app)));
+	ipcMain.handle("setup:start", local((values) => setup.start(app, values)));
+	ipcMain.handle("setup:resume", local(() => setup.resume(app)));
+	ipcMain.handle("setup:state", local(() => ({ state: setup.readState(), log: setup.logTail(30) })));
+	ipcMain.handle("setup:reboot", local(() => {
+		require("child_process").spawn("shutdown.exe", ["/r", "/t", "10", "/c", "PharmacyOS setup continues after the restart."], { windowsHide: true, detached: true }).unref();
+		return true;
+	}));
+	ipcMain.handle("setup:finish", local((serverUrl) => {
+		cfg = config.save(app.getPath("userData"), { ...cfg, mode: "this-pc", serverUrl: serverUrl || "http://127.0.0.1" });
+		openApp();
+		return cfg;
+	}));
+
+	// server on this PC: start, update, back up, restore
+	ipcMain.handle("server:start", local(async () => {
+		await localserver.run(["start"], { timeoutMs: 180000 });
+		openApp();
+	}));
+	ipcMain.handle("server:update", local(async () => {
+		busy = true;
+		try {
+			const bundle = localserver.toWslPath(localserver.bundleDir(app));
+			return await localserver.run(["update", bundle], { onLine: (line) => win.webContents.send("server:line", line) });
+		} finally {
+			busy = false;
+		}
+	}));
+	ipcMain.handle("server:continue", local(() => {
+		online = true;
+		win.loadURL(new URL(pos.startPath(cfg), cfg.serverUrl).href);
+	}));
+	ipcMain.handle("backups:list", local(async () => {
+		const r = await localserver.run(["list-backups"], { timeoutMs: 120000 });
+		try {
+			const rows = JSON.parse(r.output.trim().split("\n").pop());
+			return { ok: true, rows: rows.map((b) => ({ ...b, display: windowsPath(b.folder) })) };
+		} catch {
+			return { ok: false, error: r.output.slice(-400) };
+		}
+	}));
+	ipcMain.handle("backups:create", local(async () => {
+		busy = true;
+		try {
+			const r = await localserver.run(["backup"], { timeoutMs: 900000 });
+			return { ok: r.code === 0, folder: r.result && windowsPath(r.result.folder), error: r.code === 0 ? null : r.output.slice(-400) };
+		} finally {
+			busy = false;
+		}
+	}));
+	ipcMain.handle("backups:restore", local(async (folder, withFiles) => {
+		busy = true;
+		try {
+			const args = ["restore", String(folder)];
+			if (withFiles) args.push("--with-files");
+			const r = await localserver.run(args, { onLine: (line) => win.webContents.send("server:line", line) });
+			return { ok: r.code === 0 && r.result && r.result.status === "restored", error: r.code === 0 ? null : r.output.slice(-600) };
+		} finally {
+			busy = false;
+		}
+	}));
+	ipcMain.handle("backups:open", local(() => shell.openPath(path.join(process.env.ProgramData || "C:\\ProgramData", "PharmacyOS", "Backups"))));
+	ipcMain.handle("app:open", local(() => openApp()));
+
 	// the POS screen's native printing (platform adapter): the server's print view only
 	ipcMain.handle("pos:print-receipt", (event, url) => {
 		if (!cfg || !isServerUrl(event.sender.getURL()) || !pos.isReceiptUrl(url, cfg.serverUrl)) {
 			return { ok: false, error: "not allowed" };
 		}
-		return printReceipt(url);
+		return printPage(url);
 	});
 }
 
@@ -241,7 +377,7 @@ function smokeTest() {
 		setTimeout(async () => {
 			const image = await win.webContents.capturePage();
 			fs.writeFileSync(out, image.toPNG());
-			console.log(JSON.stringify({ url: win.webContents.getURL(), title: win.getTitle(), online }));
+			console.log(JSON.stringify({ url: win.webContents.getURL(), title: win.getTitle(), online, version: app.getVersion() }));
 			app.quit();
 		}, Number(process.env.PHARMACYOS_SMOKE_DELAY || 4000));
 	});
@@ -260,6 +396,12 @@ async function start() {
 	createWindow();
 	smokeTest();
 	startMonitor();
-	if (config.isConfigured(cfg)) openApp();
-	else showConnect("setup");
+	const state = setup.readState();
+	if (process.argv.includes("--resume-setup") || (!config.isConfigured(cfg) && setup.inProgress(state))) {
+		showScreen("install");
+	} else if (config.isConfigured(cfg)) {
+		openApp();
+	} else {
+		showScreen("welcome");
+	}
 }

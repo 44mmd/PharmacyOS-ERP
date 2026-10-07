@@ -65,7 +65,7 @@ def _discounts(names: list[str]) -> dict:
 	lines = frappe.get_all(
 		"Sales Invoice Item",
 		filters={"parent": ["in", names], "parenttype": "Sales Invoice", "discount_amount": [">", 0]},
-		fields=["parent", "qty", "discount_amount", "conversion_rate"],
+		fields=["parent", "qty", "discount_amount"],
 	)
 	returns = set(frappe.get_all("Sales Invoice", filters={"name": ["in", names], "is_return": 1}, pluck="name"))
 	total, with_discount = 0.0, set()

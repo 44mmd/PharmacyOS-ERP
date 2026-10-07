@@ -18,6 +18,7 @@
   "documents_section",
   "show_powered_by",
   "receipt_footer",
+  "receipt_paper_width",
   "expiry_tab",
   "critical_days",
   "expiring_soon_days",
@@ -119,6 +120,14 @@
    "fieldname": "receipt_footer",
    "fieldtype": "Small Text",
    "label": "Receipt Footer"
+  },
+  {
+   "default": "80mm",
+   "description": "Width of the receipt printer's paper roll. Most counter printers use 80 mm; small ones 58 mm.",
+   "fieldname": "receipt_paper_width",
+   "fieldtype": "Select",
+   "label": "Receipt Paper Width",
+   "options": "80mm\n58mm"
   },
   {
    "fieldname": "expiry_tab",
@@ -326,7 +335,7 @@
  ],
  "issingle": 1,
  "links": [],
- "modified": "2026-10-03 12:00:00.000000",
+ "modified": "2026-10-07 01:00:00.000000",
  "modified_by": "Administrator",
  "module": "PharmacyOS",
  "name": "PharmacyOS Settings",

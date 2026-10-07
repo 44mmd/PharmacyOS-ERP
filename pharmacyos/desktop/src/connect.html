@@ -5,76 +5,178 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data:; font-src 'self'">
 <title>PharmacyOS ERP</title>
-<style>
-@font-face { font-family: "Tajawal"; src: url(assets/tajawal-arabic-400.woff2) format("woff2"); font-weight: 400; }
-@font-face { font-family: "Tajawal"; src: url(assets/tajawal-arabic-700.woff2) format("woff2"); font-weight: 700; }
-:root { --deep:#063F36; --core:#087B61; --mint:#63E6BE; --soft:#EAFBF5; --clinical:#F8FBFA; --ink:#10231F; --ink2:#63736F; --border:rgba(6,63,54,.14); --warn:#B45309; }
-* { box-sizing: border-box; }
-html, body { height: 100%; margin: 0; }
-body { background: var(--clinical); color: var(--ink); font: 15px/1.6 Tajawal, Inter, "Segoe UI", sans-serif; display: grid; place-items: center; padding: 16px; }
-.card { width: min(460px, 100%); background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 28px; box-shadow: 0 8px 24px rgba(6,63,54,.06); }
-.brand { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
-.brand img { width: 40px; height: 40px; }
-.brand b { display: block; font-size: 18px; color: var(--deep); }
-.brand span { color: var(--ink2); font-size: 13px; }
-h1 { font-size: 18px; margin: 0 0 6px; }
-p { margin: 0 0 16px; color: var(--ink2); }
-.choice { display: grid; gap: 10px; margin-bottom: 16px; }
-.choice label { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--border); border-radius: 10px; padding: 12px; cursor: pointer; }
-.choice label:has(input:checked) { border-color: var(--core); background: var(--soft); }
-.choice small { display: block; color: var(--ink2); }
-input[type=text], select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font: inherit; background: var(--clinical); }
-input[type=text] { direction: ltr; text-align: right; }
-.row { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
-button { font: inherit; font-weight: 700; border-radius: 8px; padding: 10px 16px; border: 1px solid var(--border); background: #fff; color: var(--deep); cursor: pointer; }
-button.primary { background: var(--deep); border-color: var(--deep); color: #fff; }
-button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid rgba(10,167,126,.35); outline-offset: 1px; }
-.status { margin-top: 12px; font-size: 13px; min-height: 20px; }
-.status.bad { color: var(--warn); } .status.good { color: var(--core); }
-.spinner { width: 28px; height: 28px; border: 3px solid var(--soft); border-top-color: var(--core); border-radius: 50%; animation: spin .9s linear infinite; margin: 8px 0 12px; }
-@keyframes spin { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
-.foot { margin-top: 18px; font-size: 12px; color: var(--ink2); }
-[hidden] { display: none !important; }
-.field { margin-top: 12px; } .field label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 4px; }
-</style>
+<link rel="stylesheet" href="connect.css">
 </head>
 <body>
 <main class="card" aria-live="polite">
-	<div class="brand">
+	<header class="brand">
 		<img src="assets/pharmacyos-mark.svg" alt="">
-		<div><b>PharmacyOS ERP</b><span>نظام تشغيل الصيدلية · Pharmacy Operating System</span></div>
-	</div>
+		<div><b>PharmacyOS ERP</b><span>نظام تشغيل الصيدلية · Pharmacy Operating System <bdi class="ver" data-slot="version"></bdi></span></div>
+	</header>
 
-	<section data-view="connecting" hidden>
-		<div class="spinner" role="progressbar" aria-label="جارٍ الاتصال"></div>
-		<h1>جارٍ تشغيل PharmacyOS…</h1>
-		<p data-slot="progress">يتم الاتصال بخادم الصيدلية. Connecting to the pharmacy server…</p>
+	<!-- ============================================================ first run -->
+	<section data-view="welcome" hidden>
+		<h1>مرحبًا بك في PharmacyOS</h1>
+		<p>اختر دور هذا الجهاز. <span class="en">Choose what this computer does.</span></p>
+		<div class="choice">
+			<label><input type="radio" name="role" value="this-pc" checked>
+				<span><b>هذا الجهاز هو خادم الصيدلية</b> <em class="tag">موصى به</em>
+				<small>صيدلية بجهاز واحد، أو الجهاز الرئيسي. يُثبَّت نظام الصيدلية على هذا الجهاز ويعمل بدون إنترنت.</small>
+				<small class="en">This PC runs the pharmacy server (single-PC pharmacy or the main PC). Works without internet.</small></span></label>
+			<label><input type="radio" name="role" value="network">
+				<span><b>الاتصال بخادم الصيدلية على الشبكة</b>
+				<small>جهاز كاشير أو مكتب إضافي في نفس الصيدلية.</small>
+				<small class="en">An extra counter or office PC that connects to the pharmacy's server.</small></span></label>
+		</div>
+		<div class="row"><button class="primary" data-action="welcome-next">متابعة · Continue</button></div>
 	</section>
 
-	<section data-view="offline" hidden>
-		<h1>تعذّر الوصول إلى خادم الصيدلية</h1>
-		<p>تأكد من تشغيل جهاز الخادم وأنه متصل بشبكة الصيدلية، ثم أعد المحاولة. لم يُفقد أي بيع محفوظ.<br>
-		<span lang="en" dir="ltr">The pharmacy server could not be reached. Check that it is on and connected, then retry. Saved sales are not lost.</span></p>
+	<section data-view="pharmacy" hidden>
+		<h1>بيانات الصيدلية · Your pharmacy</h1>
+		<p>تُستخدم في الفواتير والوصولات وفي حساب صاحب الصيدلية. <span class="en">Used on invoices and receipts, and for the owner's account.</span></p>
+		<form data-form="pharmacy" novalidate>
+			<div class="grid">
+				<div class="field"><label for="pharmacy_name">اسم الصيدلية (بالإنجليزية) · Pharmacy name</label><input id="pharmacy_name" name="pharmacy_name" maxlength="140" autocomplete="organization" dir="auto" required><span class="err" data-err="pharmacy_name"></span></div>
+				<div class="field"><label for="pharmacy_name_ar">اسم الصيدلية بالعربية · Arabic name</label><input id="pharmacy_name_ar" name="pharmacy_name_ar" maxlength="140" dir="rtl"></div>
+				<div class="field"><label for="owner_full_name">اسم صاحب الصيدلية · Owner's name</label><input id="owner_full_name" name="owner_full_name" maxlength="140" autocomplete="name" dir="auto" required><span class="err" data-err="owner_full_name"></span></div>
+				<div class="field"><label for="phone">الهاتف (اختياري) · Phone (optional)</label><input id="phone" name="phone" maxlength="20" inputmode="tel" dir="ltr"><span class="err" data-err="phone"></span></div>
+				<div class="field wide"><label for="owner_email">بريد صاحب الصيدلية (اسم الدخول) · Owner's email (sign-in)</label><input id="owner_email" name="owner_email" type="email" maxlength="140" autocomplete="email" dir="ltr" required><span class="err" data-err="owner_email"></span></div>
+				<div class="field"><label for="owner_password">كلمة المرور · Password</label><input id="owner_password" name="owner_password" type="password" minlength="8" autocomplete="new-password" required><span class="err" data-err="owner_password"></span></div>
+				<div class="field"><label for="owner_password_confirm">تأكيد كلمة المرور · Confirm</label><input id="owner_password_confirm" name="owner_password_confirm" type="password" autocomplete="new-password" required><span class="err" data-err="owner_password_confirm"></span></div>
+			</div>
+			<label class="check"><input type="checkbox" name="share_on_network"> مشاركة الخادم مع أجهزة أخرى في الصيدلية (Windows 11) · <span class="en">Let other PCs in the pharmacy connect (Windows 11)</span></label>
+			<div class="row">
+				<button type="submit" class="primary">التالي · Next</button>
+				<button type="button" data-action="back-welcome">رجوع · Back</button>
+			</div>
+		</form>
+	</section>
+
+	<section data-view="check" hidden>
+		<h1>فحص الجهاز · Checking this computer</h1>
+		<div class="spinner" data-slot="check-spinner" role="progressbar" aria-label="جارٍ الفحص"></div>
+		<ul class="checks" data-slot="checks"></ul>
+		<div class="note" data-slot="check-note" hidden>
+			<p>سيطلب Windows الإذن مرة واحدة. يحتاج التثبيت إلى الإنترنت هذه المرة فقط (تنزيل حوالي 1.5 غيغابايت) ويستغرق 20–40 دقيقة. قد يُطلب إعادة تشغيل الجهاز مرة واحدة ويكمل الإعداد تلقائيًا بعدها.</p>
+			<p class="en">Windows will ask for permission once. Installing needs the internet this one time (about 1.5 GB) and takes 20–40 minutes. Windows may need one restart; setup then continues by itself.</p>
+		</div>
 		<div class="row">
-			<button class="primary" data-action="retry">إعادة المحاولة · Retry</button>
-			<button data-action="settings">إعدادات الاتصال · Settings</button>
+			<button class="primary" data-action="install" disabled>تثبيت · Install</button>
+			<button data-action="back-pharmacy">رجوع · Back</button>
+		</div>
+		<div class="status bad" data-slot="install-error"></div>
+	</section>
+
+	<section data-view="install" hidden>
+		<h1>جارٍ تثبيت PharmacyOS · Installing PharmacyOS</h1>
+		<div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100"><div data-slot="bar"></div></div>
+		<p class="pct"><b data-slot="pct">0%</b> · <span data-slot="elapsed"></span></p>
+		<ol class="steps" data-slot="steps"></ol>
+		<p class="msg" data-slot="install-msg" dir="auto"></p>
+		<div class="alert" data-slot="install-failed" hidden>
+			<b>توقف التثبيت · Setup stopped</b>
+			<p data-slot="fail-msg" dir="auto"></p>
+			<div class="row"><button class="primary" data-action="install-retry">إعادة المحاولة · Retry</button></div>
+		</div>
+		<details><summary>التفاصيل التقنية · Technical details</summary><pre data-slot="log" dir="ltr"></pre></details>
+		<p class="foot-note">يمكنك ترك الجهاز يعمل. لا تطفئ الجهاز أثناء التثبيت. <span class="en">You can leave the PC; do not turn it off while installing.</span></p>
+	</section>
+
+	<section data-view="reboot" hidden>
+		<h1>إعادة تشغيل مطلوبة · Restart required</h1>
+		<p>يجب إعادة تشغيل Windows لإكمال تفعيل بيئة الخادم. بعد إعادة التشغيل وتسجيل الدخول يكمل PharmacyOS الإعداد تلقائيًا من حيث توقف — لا تحتاج إلى بدء الإعداد من جديد.</p>
+		<p class="en">Windows must restart to finish turning on the server environment. After you sign in again, PharmacyOS continues the setup by itself from where it stopped.</p>
+		<div class="row">
+			<button class="primary" data-action="reboot">إعادة التشغيل الآن · Restart now</button>
+			<button data-action="reboot-later">لاحقًا · Later</button>
 		</div>
 	</section>
 
-	<section data-view="setup" hidden>
-		<h1>إعداد هذا الجهاز · Set up this computer</h1>
-		<p>اختر مكان تشغيل نظام الصيدلية.</p>
-		<form data-form>
+	<section data-view="done" hidden>
+		<h1>✓ PharmacyOS جاهز · PharmacyOS is ready</h1>
+		<p>تم تثبيت خادم الصيدلية على هذا الجهاز، وسيعمل تلقائيًا مع كل تشغيل لـ Windows. سجّل الدخول ببريد صاحب الصيدلية وكلمة المرور.</p>
+		<p class="en">The pharmacy server is installed on this PC and starts with Windows. Sign in with the owner's email and password.</p>
+		<ul class="tips">
+			<li>أضف الأدوية من: الصيدلية ← الأدوية ← إضافة دواء. <span class="en">Add medicines: Pharmacy → Medicines → Add Medicine.</span></li>
+			<li>أضف حسابات الكاشير من: الفريق ← المستخدمون. <span class="en">Add cashier accounts: Team → Users.</span></li>
+			<li>قارئ الباركود يعمل مباشرة (USB لوحة مفاتيح). اختر طابعة الوصل من القائمة ← الاتصال والطابعة. <span class="en">Barcode scanners work as plugged in; choose the receipt printer in Menu → Connection &amp; Printer.</span></li>
+		</ul>
+		<div class="row"><button class="primary" data-action="finish">فتح PharmacyOS · Open PharmacyOS</button></div>
+	</section>
+
+	<!-- ============================================================ every start -->
+	<section data-view="starting" hidden>
+		<div class="spinner" role="progressbar" aria-label="جارٍ التشغيل"></div>
+		<h1>جارٍ تشغيل PharmacyOS…</h1>
+		<p data-slot="starting-msg">يتم الاتصال بخادم الصيدلية. <span class="en">Connecting to the pharmacy server…</span></p>
+	</section>
+
+	<section data-view="recovery" hidden>
+		<h1>خادم الصيدلية لا يستجيب · The pharmacy server is not answering</h1>
+		<p>لم يُفقد أي بيع محفوظ. جرّب بالترتيب: <span class="en">No saved sale is lost. Try, in this order:</span></p>
+		<ol class="tips">
+			<li data-only="this-pc">اضغط «تشغيل الخادم» وانتظر دقيقتين. <span class="en">Press "Start the server" and wait two minutes.</span></li>
+			<li data-only="network">تأكد أن جهاز الخادم يعمل ومتصل بشبكة الصيدلية. <span class="en">Check that the server PC is on and connected to the pharmacy network.</span></li>
+			<li>أعد تشغيل هذا الجهاز ثم افتح PharmacyOS. <span class="en">Restart this computer, then open PharmacyOS.</span></li>
+			<li>إذا استمرت المشكلة، تواصل مع الدعم وأرسل ملف السجل من مجلد PharmacyOS\Logs. <span class="en">If it continues, contact support with the log from the PharmacyOS\Logs folder.</span></li>
+		</ol>
+		<div class="row">
+			<button class="primary" data-action="retry">إعادة المحاولة · Retry</button>
+			<button data-action="server-start" data-only="this-pc">تشغيل الخادم · Start the server</button>
+			<button data-action="settings">إعدادات الاتصال · Settings</button>
+		</div>
+		<div class="status" data-slot="recovery-status"></div>
+	</section>
+
+	<section data-view="update" hidden>
+		<h1>تحديث خادم الصيدلية · Pharmacy server update</h1>
+		<p>هذه النسخة من PharmacyOS تحمل تحديثًا لخادم الصيدلية: <bdi data-slot="from"></bdi> ← <bdi data-slot="to"></bdi>. تُؤخذ نسخة احتياطية أولًا؛ وإذا فشل أي شيء يعود الخادم تلقائيًا إلى النسخة السابقة ببياناته. يستغرق 5–10 دقائق، ويتوقف البيع خلالها.</p>
+		<p class="en">This version brings a pharmacy server update. A backup is taken first; if anything fails the server returns to the previous version with its data. It takes 5–10 minutes; selling pauses meanwhile.</p>
+		<div class="row" data-slot="update-actions">
+			<button class="primary" data-action="update-now">التحديث الآن · Update now</button>
+			<button data-action="update-later">لاحقًا · Later</button>
+		</div>
+		<div class="spinner" data-slot="update-spinner" hidden></div>
+		<p class="msg" data-slot="update-msg" dir="auto"></p>
+		<details><summary>التفاصيل التقنية · Technical details</summary><pre data-slot="update-log" dir="ltr"></pre></details>
+		<div class="row" data-slot="update-done" hidden><button class="primary" data-action="update-continue">متابعة · Continue</button></div>
+	</section>
+
+	<section data-view="backups" hidden>
+		<h1>النسخ الاحتياطية · Backups</h1>
+		<p>يأخذ PharmacyOS نسخة احتياطية تلقائيًا كل ساعة ونسخة كاملة يوميًا، في المجلد <bdi dir="ltr">C:\ProgramData\PharmacyOS\Backups</bdi>. انسخ هذا المجلد إلى قرص خارجي بانتظام.</p>
+		<p class="en">PharmacyOS backs up every hour (database) and every day (database and files) into C:\ProgramData\PharmacyOS\Backups. Copy that folder to an external drive regularly.</p>
+		<div class="row">
+			<button class="primary" data-action="backup-now">نسخ احتياطي الآن · Back up now</button>
+			<button data-action="backup-open">فتح المجلد · Open the folder</button>
+			<button data-action="back-app">رجوع · Back</button>
+		</div>
+		<div class="status" data-slot="backup-status" dir="auto"></div>
+		<ul class="backups" data-slot="backup-list"><li class="muted">…</li></ul>
+		<div class="alert" data-slot="restore-confirm" hidden>
+			<b>استعادة نسخة احتياطية · Restore a backup</b>
+			<p>سيستبدل هذا <b>كل</b> بيانات الصيدلية الحالية ببيانات النسخة <bdi data-slot="restore-name"></bdi>. تُحفظ نسخة احتياطية من الوضع الحالي قبل الاستعادة. اكتب <b>استعادة</b> أو <b dir="ltr">RESTORE</b> للتأكيد.</p>
+			<p class="en">This replaces ALL current pharmacy data with this backup. The current state is backed up first. Type RESTORE to confirm.</p>
+			<input data-slot="restore-word" autocomplete="off" dir="auto">
+			<label class="check"><input type="checkbox" data-slot="restore-files"> استعادة الملفات المرفقة أيضًا · <span class="en">Also restore attached files</span></label>
+			<div class="row"><button class="danger" data-action="restore-go">استعادة · Restore</button><button data-action="restore-cancel">إلغاء · Cancel</button></div>
+		</div>
+		<details><summary>التفاصيل التقنية · Technical details</summary><pre data-slot="backup-log" dir="ltr"></pre></details>
+	</section>
+
+	<!-- ============================================================ connection & printer -->
+	<section data-view="settings" hidden>
+		<h1>الاتصال والطابعة · Connection &amp; printer</h1>
+		<form data-form="settings">
 			<div class="choice">
 				<label><input type="radio" name="mode" value="this-pc" checked>
-					<span>هذا الجهاز هو خادم الصيدلية<small>صيدلية بجهاز واحد — This computer runs the pharmacy server</small></span></label>
+					<span>هذا الجهاز هو خادم الصيدلية<small>This computer runs the pharmacy server</small></span></label>
 				<label><input type="radio" name="mode" value="network">
-					<span>الاتصال بخادم الصيدلية على الشبكة<small>جهاز كاشير أو مكتب — Connect to the pharmacy's server</small></span></label>
+					<span>الاتصال بخادم الصيدلية على الشبكة<small>Connect to the pharmacy's server</small></span></label>
 			</div>
 			<div class="field" data-slot="address" hidden>
 				<label for="server">عنوان الخادم · Server address</label>
-				<input id="server" type="text" name="serverUrl" placeholder="192.168.1.10" autocomplete="off" spellcheck="false">
+				<input id="server" type="text" name="serverUrl" placeholder="192.168.1.10" autocomplete="off" spellcheck="false" dir="ltr">
 			</div>
 			<div class="field">
 				<label for="printer">طابعة الوصل · Receipt printer</label>
@@ -87,16 +189,17 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 					<option value="desk">نظام الصيدلية (ERP) · ERP</option>
 				</select>
 			</div>
-			<label class="field" style="display:flex;gap:8px;align-items:center"><input type="checkbox" name="silentReceipts"> طباعة الوصل مباشرة بدون نافذة · Print receipts directly</label>
+			<label class="check"><input type="checkbox" name="silentReceipts"> طباعة الوصل مباشرة بدون نافذة · Print receipts directly</label>
 			<div class="row">
 				<button type="submit" class="primary">حفظ ومتابعة · Save</button>
 				<button type="button" data-action="test">اختبار الاتصال · Test</button>
+				<button type="button" data-action="test-print">طباعة وصل تجريبي · Test receipt</button>
 			</div>
 			<div class="status" data-slot="status"></div>
 		</form>
 	</section>
 
-	<div class="foot">Designed &amp; Developed by HALF</div>
+	<footer class="foot">Designed &amp; Developed by HALF · <span data-slot="foot-version"></span></footer>
 </main>
 <script src="connect.js"></script>
 </body>
