@@ -22,10 +22,11 @@ path):
 * no discount above PharmacyOS Settings → Maximum Counter Discount (%) (default 10 %), per line and for
   the sale as a whole; above that a pharmacy manager or the owner completes the sale.
 
-Pricing rules (automatic offers) are part of ERPNext's priced copy, so they always pass. Managers, the
-owner, the accountant and System Managers are not limited. A sale built by `pos/api.py` was priced the
-same way a moment earlier and is marked so (an in-memory flag a request cannot set); only the discount
-ceiling is re-checked for it.
+Pricing rules (automatic offers) are part of ERPNext's priced copy, so they always pass, and the ceiling
+counts only what the counter takes off on top of them (a 20 % promotion is not a 20 % counter discount).
+Managers, the owner, the accountant and System Managers are not limited. A sale built by `pos/api.py` was
+priced the same way a moment earlier and is marked so (in-memory flags a request cannot set, with the
+rates ERPNext charged before the counter's discount); only the discount ceiling is re-checked for it.
 """
 
 import frappe
@@ -36,6 +37,7 @@ PRICE_AUTHORITY_ROLES = ("Pharmacy Owner", "Pharmacy Manager", "Sales Manager", 
 COUNTER_ROLES = ("Cashier", "Pharmacist")
 DEFAULT_MAX_DISCOUNT = 10.0
 PRICED_FLAG = "pharmacyos_priced"
+BASE_RATES = "pharmacyos_base_rates"  # flag: per line, the rate ERPNext charges before any counter discount
 
 
 class CounterPriceError(frappe.PermissionError):
@@ -105,6 +107,7 @@ def guard_counter_pricing(doc, method=None):
 			CounterPriceError,
 		)
 
+	reference = None
 	if not doc.flags.get(PRICED_FLAG):
 		reference = _priced_copy(doc)
 		for row, ref in zip(doc.items, reference.items, strict=True):
@@ -124,27 +127,32 @@ def guard_counter_pricing(doc, method=None):
 		if (flt(doc.additional_discount_percentage) > 0 or flt(doc.discount_amount) > 0) and not allow_discount:
 			frappe.throw(_("Discounts are not allowed on this counter."), CounterPriceError)
 
-	check_discount_ceiling(doc)
+	check_discount_ceiling(doc, reference)
 
 
-def check_discount_ceiling(doc) -> None:
-	"""The discount ceiling for counter staff, per line and for the whole sale (against the list prices).
-	Also used by the POS quote, so the cashier sees it before payment."""
+def check_discount_ceiling(doc, reference=None) -> None:
+	"""The discount ceiling for counter staff, per line and for the whole sale, as a share of the list
+	prices. Only the counter's own discount counts: the rate ERPNext charges with its pricing rules
+	(`reference`, or the rates `pos/api.py` recorded) is the starting point. Also used by the POS quote, so
+	the cashier sees it before payment."""
 	if not is_counter_only():
 		return
 	tolerance = 0.5 * 10 ** -(cint(frappe.get_precision(doc.doctype, "grand_total")) or 0)
 	limit = max_counter_discount()
-	listed = 0.0
-	for row in doc.items:
+	base_rates = doc.flags.get(BASE_RATES) or ([flt(r.rate) for r in reference.items] if reference else None)
+	listed = offered = 0.0
+	for i, row in enumerate(doc.items):
 		plr = flt(row.price_list_rate)
+		base = min(flt(base_rates[i]), plr) if base_rates and i < len(base_rates) and plr > 0 else plr
 		listed += plr * flt(row.qty)
-		if plr > 0 and (plr - flt(row.rate)) / plr * 100 > limit + 1e-6:
+		offered += base * flt(row.qty)
+		if plr > 0 and (base - flt(row.rate)) / plr * 100 > limit + 1e-6:
 			frappe.throw(
 				_("Row {0}: a discount above {1}% needs a pharmacy manager.").format(row.idx, frappe.format(limit, {"fieldtype": "Float"})),
 				CounterPriceError,
 			)
 	charged = flt(doc.net_total)
-	if listed > 0 and (listed - charged) / listed * 100 > limit + 1e-6 and listed - charged > tolerance:
+	if listed > 0 and (offered - charged) / listed * 100 > limit + 1e-6 and offered - charged > tolerance:
 		frappe.throw(
 			_("A discount above {0}% of the sale needs a pharmacy manager.").format(frappe.format(limit, {"fieldtype": "Float"})),
 			CounterPriceError,

@@ -14,6 +14,11 @@ from pharmacyos_erp.branding import get_brand
 
 no_cache = 1
 sitemap = 0
+CSP = (
+	"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self'; img-src 'self' data: blob:; "
+	"font-src 'self'; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'; "
+	"form-action 'self'; frame-ancestors 'self'"
+)
 
 
 def get_context(context):
@@ -28,6 +33,12 @@ def get_context(context):
 	from frappe.sessions import get_csrf_token
 
 	get_csrf_token()
+
+	# the counter screen loads only its own origin's code: no plug-ins, no framing by other sites (the same
+	# policy the POS-host nginx template sets; here it also covers the local server's own nginx)
+	frappe.local.response_headers["Content-Security-Policy"] = CSP
+	frappe.local.response_headers["X-Frame-Options"] = "SAMEORIGIN"
+	frappe.local.response_headers["Referrer-Policy"] = "same-origin"
 
 	brand = get_brand()
 	lang = frappe.local.lang or "en"

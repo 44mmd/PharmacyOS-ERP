@@ -383,7 +383,8 @@ function registerIpc() {
 		const args = ["restore", String(folder)];
 		if (withFiles) args.push("--with-files");
 		const r = await localserver.run(args, { onLine: (line) => win.webContents.send("server:line", line) });
-		return { ok: r.code === 0 && r.result && r.result.status === "restored", error: r.code === 0 ? null : r.output.slice(-600) };
+		const status = (r.result && r.result.status) || null; // restored | failed_unchanged | failed_reverted | failed_maintenance | invalid_folder
+		return { ok: r.code === 0 && status === "restored", status, error: r.code === 0 ? null : r.output.slice(-600) };
 	})));
 	ipcMain.handle("backups:open", local(() => shell.openPath(path.join(process.env.ProgramData || "C:\\ProgramData", "PharmacyOS", "Backups"))));
 	ipcMain.handle("app:open", local(openWhenFree));

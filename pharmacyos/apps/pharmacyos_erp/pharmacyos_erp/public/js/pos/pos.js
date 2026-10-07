@@ -1228,6 +1228,8 @@
 				error.textContent = "";
 				call(M_CLOSE_SHIFT, { counted: counted }, { post: true }).then(function () {
 					store.set("cart", null);
+					var closed = S.profile && S.profile.name;
+					store.set("held", heldAll().filter(function (x) { return x.profile !== closed; })); // parked sales end with the shift
 					S.profile = null;
 					S.cart = [];
 					closeDialog();
@@ -1244,9 +1246,14 @@
 
 	var MAX_HELD = 20;
 
+	// Held sales are kept until the end of the day they were parked (and cleared when the shift closes):
+	// a customer's name and medicines do not stay on a shared computer.
 	function heldAll() {
 		var list = store.get("held");
-		return Array.isArray(list) ? list.filter(function (x) { return x && Array.isArray(x.cart); }) : [];
+		var today = new Date().toDateString();
+		return Array.isArray(list) ? list.filter(function (x) {
+			return x && Array.isArray(x.cart) && x.at && new Date(x.at).toDateString() === today;
+		}) : [];
 	}
 
 	function heldHere() {

@@ -214,20 +214,25 @@ def _build_invoice(pos_profile: str, items, customer: str | None, additional_dis
 
 	doc.selling_price_list = profile.selling_price_list
 	doc.set_missing_values()  # ERPNext: POS profile, price list, item prices, taxes, accounts, payments
+	doc.calculate_taxes_and_totals()
+	base_rates = [flt(row.rate) for row in doc.items]  # what ERPNext charges, its pricing rules included
 	for row, line in zip(doc.items, lines, strict=True):
 		if "rate" in line:
 			row.price_list_rate = row.price_list_rate or line["rate"]
 			row.rate = line["rate"]
 		if line.get("discount_percentage"):
 			row.discount_percentage = line["discount_percentage"]
+			if "rate" not in line:
+				row.rate = 0  # derived again from the list price and this discount
 	if flt(additional_discount_percentage):
 		doc.additional_discount_percentage = flt(additional_discount_percentage)
 	doc.calculate_taxes_and_totals()
 	# priced by ERPNext here, with the counter's switches checked above: the invoice guard only re-checks
 	# the discount ceiling (an in-memory flag; a request cannot set it)
-	from pharmacyos_erp.pharmacy.counter_sales import PRICED_FLAG
+	from pharmacyos_erp.pharmacy.counter_sales import BASE_RATES, PRICED_FLAG
 
 	doc.flags[PRICED_FLAG] = True
+	doc.flags[BASE_RATES] = base_rates
 	return doc, profile
 
 

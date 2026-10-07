@@ -4,7 +4,7 @@
 <div class="pos-invoice" dir="{{ 'rtl' if ar else 'ltr' }}">
 	<header class="i-head">
 		<div class="i-pharmacy">
-			{%- if id.pharmacy_logo %}<img class="i-logo" src="{{ id.pharmacy_logo }}" alt="">{% endif %}
+			{%- if id.pharmacy_logo %}<img class="i-logo" src="{{ id.pharmacy_logo|e }}" alt="">{% endif %}
 			<div>
 				<div class="i-name">{{ id.pharmacy_name|e }}</div>
 				{%- if id.pharmacy_name_ar %}<div class="i-name-ar" dir="rtl">{{ id.pharmacy_name_ar|e }}</div>{% endif %}
@@ -28,7 +28,10 @@
 	<section class="i-party">
 		<div class="i-label">{{ _("Bill To") }}</div>
 		<div class="i-party-name">{{ doc.customer_name|e }}</div>
-		{%- if doc.address_display %}<div class="i-meta">{{ doc.address_display|e }}</div>{% endif %}
+		{%- if doc.address_display %}<div class="i-meta">
+			{#- ERPNext's address is HTML lines: printed as text, one line each -#}
+			{%- for line in doc.address_display.replace("<br/>", "<br>").replace("<br />", "<br>").split("<br>") if line|striptags|trim %}{{ line|striptags|e }}{% if not loop.last %}<br>{% endif %}{% endfor -%}
+		</div>{% endif %}
 	</section>
 
 	<table class="i-items">

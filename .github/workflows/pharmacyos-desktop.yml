@@ -98,7 +98,7 @@ jobs:
           # the data-folder lock install-server.ps1 runs first, on a stand-in folder: a planted file loses the
           # permissions it was given, and running it again keeps the folder locked
           $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true) |
-            Where-Object { $_.Name -in "Write-Log", "Invoke-Native", "Test-DataFolderLocked", "Protect-DataItems", "Protect-DataFolder" } | ForEach-Object { Invoke-Expression $_.Extent.Text }
+            Where-Object { $_.Name -in "Write-Log", "Invoke-Native", "Test-DataFolderLocked", "Test-ItemClean", "Protect-DataItems", "Protect-DataFolder" } | ForEach-Object { Invoke-Expression $_.Extent.Text }
           $DataOwnerSid = "S-1-5-32-544"
           $Root = Join-Path $env:RUNNER_TEMP "PharmacyOS-acl"
           New-Item -ItemType Directory -Force -Path (Join-Path $Root "Backups"), (Join-Path $Root "Logs") | Out-Null
@@ -106,7 +106,14 @@ jobs:
           $planted = Join-Path $Root "Backups\planted.sql.gz"
           Set-Content -Path $planted -Value "x"
           icacls $planted /grant "*S-1-5-32-545:(F)" | Out-Null
+          # a link planted in the data folder is removed, never followed (its target keeps its contents)
+          $target = Join-Path $env:RUNNER_TEMP "PharmacyOS-link-target"
+          New-Item -ItemType Directory -Force -Path $target | Out-Null
+          Set-Content -Path (Join-Path $target "keep.txt") -Value "keep"
+          New-Item -ItemType Junction -Path (Join-Path $Root "Backups\planted-link") -Target $target | Out-Null
           if (-not (Protect-DataFolder)) { throw "Protect-DataFolder did not lock the folder: $(Get-Content -Raw $LogFile)" }
+          if (Test-Path -LiteralPath (Join-Path $Root "Backups\planted-link")) { throw "the planted link is still there" }
+          if ((Get-Content -Raw (Join-Path $target "keep.txt")).Trim() -ne "keep") { throw "the link's target was changed" }
           $acl = Get-Acl -LiteralPath $planted
           if (@($acl.GetAccessRules($true, $false, [Security.Principal.SecurityIdentifier])).Count -or @($acl.GetAccessRules($true, $true, [Security.Principal.SecurityIdentifier]) | Where-Object { $_.IdentityReference.Value -eq "S-1-5-32-545" }).Count) { throw "the planted file kept its own permissions" }
           if (-not (Protect-DataFolder)) { throw "Protect-DataFolder failed when run again" }

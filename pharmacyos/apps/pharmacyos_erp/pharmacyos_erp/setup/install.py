@@ -83,7 +83,9 @@ ROLE_PROFILES = {
 		"Item Manager",
 		"Purchase User",
 	],
-	"Purchasing Officer": ["Purchasing Officer", "Purchase User", "Purchase Manager", "Stock User"],
+	# receiving needs Purchase User only; ERPNext's Stock User would add any stock movement (Material Issue,
+	# write-offs), which stays with the stock roles
+	"Purchasing Officer": ["Purchasing Officer", "Purchase User", "Purchase Manager"],
 	"Pharmacy Accountant": ["Pharmacy Accountant", "Accounts User", "Accounts Manager"],
 	# runs one branch: restrict with a Branch User Permission; opens/closes POS shifts (Sales Manager)
 	"Branch Manager": [
@@ -103,6 +105,7 @@ REVOKED_PROFILE_ROLES = {
 	"Cashier": ("Accounts User", "Stock User", "Sales User"),
 	"Pharmacist": ("Accounts User", "Stock User", "Sales User"),
 	"PharmacyOS Integration": ("Accounts User", "Stock User", "Sales User"),
+	"Purchasing Officer": ("Stock User",),
 }
 
 DOSAGE_FORMS = [

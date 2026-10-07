@@ -91,7 +91,8 @@ def ops(c):
 
 	def adjust(s):
 		b = s.get_call("pharmacyos_erp.pharmacy.expiry.get_batches", bucket="all", search="SEN-QA-2601")["rows"][0]
-		return s.submit(s.insert({"doctype": "Stock Reconciliation", "company": company, "purpose": "Stock Reconciliation", "items": [{"item_code": "QA-SENSO", "warehouse": wh, "qty": b["qty"], "batch_no": b["batch"], "use_serial_batch_fields": 1, "valuation_rate": 2800}]}))["name"]
+		# a count that finds one more pack (a reconciliation must change something)
+		return s.submit(s.insert({"doctype": "Stock Reconciliation", "company": company, "purpose": "Stock Reconciliation", "items": [{"item_code": "QA-SENSO", "warehouse": wh, "qty": b["qty"] + 1, "batch_no": b["batch"], "use_serial_batch_fields": 1, "valuation_rate": 2800}]}))["name"]
 
 	def batches_page(s):
 		return len(s.get_call("pharmacyos_erp.pharmacy.expiry.get_batches", bucket="all", page_length=5)["rows"])

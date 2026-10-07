@@ -268,6 +268,30 @@ async function waitWhileBusy(operation) {
 	} else api.openApp(); // the app — or the update screen, if the server still needs the update
 }
 
+// What the server reports after an update or a restore, said exactly (pharmacyos-server prints the outcome)
+function updateMessage(result) {
+	const status = result && result.status;
+	const v = (result && result.version) || "";
+	const backup = (result && result.backup) || "";
+	if (status === "updated") return `✓ تم التحديث إلى ${v} · Updated to ${v}`;
+	if (status === "current") return `الخادم محدَّث مسبقًا (${v}). · The server is already up to date (${v}).`;
+	if (status === "rolled_back")
+		return `تعذّر التحديث، وأُعيد الخادم إلى النسخة السابقة ${v} ببياناته كاملة. تواصل مع الدعم. · The update failed; the server is back on ${v} with all its data. Contact support.`;
+	if (status === "rollback_failed")
+		return `تعذّر التحديث، وتعذّرت أيضًا إعادة البيانات تلقائيًا. الخادم متوقف عن البيع (وضع الصيانة) حتى لا يُباع على بيانات ناقصة. تواصل مع الدعم فورًا — النسخة الآمنة: ${backup} · The update failed and putting the data back automatically failed too. The server stays in maintenance mode (no sales on incomplete data). Contact support now — safety backup: ${backup}`;
+	return "تعذّر التحديث. الخادم لم يتغير. · The update could not run; nothing changed.";
+}
+
+function restoreMessage(r) {
+	if (r && r.ok) return "✓ تمت الاستعادة · Restored. سجّل الدخول من جديد · Sign in again.";
+	const status = r && r.status;
+	if (status === "failed_reverted") return "تعذّرت الاستعادة، وأُعيدت البيانات كما كانت قبلها من النسخة الآمنة. · The restore failed; the data was put back as it was before (safety backup).";
+	if (status === "failed_maintenance")
+		return "تعذّرت الاستعادة وتعذّرت إعادة النسخة الآمنة تلقائيًا. الخادم في وضع الصيانة (لا بيع). تواصل مع الدعم فورًا. · The restore failed and the safety backup could not be put back automatically. The server stays in maintenance mode (no sales). Contact support now.";
+	if (status === "failed_unchanged" || status === "invalid_folder") return "تعذّرت الاستعادة؛ البيانات الحالية لم تتغير. · The restore could not run; the current data is unchanged.";
+	return `تعذّرت الاستعادة · Restore failed ${(r && r.error) || ""}`;
+}
+
 // ------------------------------------------------------------------ actions
 
 document.addEventListener("click", async (e) => {
@@ -332,13 +356,7 @@ document.addEventListener("click", async (e) => {
 		const r = await api.server.update();
 		if (r && r.busy) return waitWhileBusy(r.operation);
 		slot("update-spinner").hidden = true;
-		const status = r && r.result && r.result.status;
-		slot("update-msg").textContent =
-			status === "updated"
-				? `✓ تم التحديث إلى ${r.result.version} · Updated to ${r.result.version}`
-				: status === "rolled_back"
-				? `تعذّر التحديث، وأُعيد الخادم إلى النسخة السابقة ${r.result.version} ببياناته كاملة. تواصل مع الدعم. · The update failed; the server is back on ${r.result.version} with all its data.`
-				: "تعذّر التحديث. الخادم لم يتغير. · The update could not run; nothing changed.";
+		slot("update-msg").textContent = updateMessage(r && r.result);
 		slot("update-done").hidden = false;
 	} else if (action === "update-later" || action === "update-continue") api.server.continue();
 	else if (action === "back-app") api.openApp();
@@ -363,7 +381,7 @@ document.addEventListener("click", async (e) => {
 		const r = await api.backups.restore(restoreTarget.folder, slot("restore-files").checked);
 		btn.disabled = false;
 		slot("restore-confirm").hidden = true;
-		slot("backup-status").textContent = r && r.busy ? BUSY_REFUSED : r && r.ok ? "✓ تمت الاستعادة · Restored. سجّل الدخول من جديد · Sign in again." : `تعذّرت الاستعادة؛ البيانات الحالية لم تتغير أو أُعيدت من النسخة الآمنة · Restore failed ${(r && r.error) || ""}`;
+		slot("backup-status").textContent = r && r.busy ? BUSY_REFUSED : restoreMessage(r);
 		slot("backup-status").className = "status " + (r && r.ok ? "good" : "bad");
 		loadBackups();
 	}

@@ -6,8 +6,9 @@ account, and the document keeps who disposed of what, when, how much and why (re
 deleted; a disposal can only be undone by cancelling that Stock Entry (a stock manager's right), which
 returns the units as the same — still expired, never sellable — batch.
 
-Rights: whoever may create and submit Stock Entries (Pharmacy Owner, Pharmacy Manager, Inventory Manager);
-the documents are inserted and submitted as that user, never with raised rights. Counter staff cannot.
+Rights: the stock roles (Pharmacy Owner, Pharmacy Manager, Inventory Manager — DISPOSAL_ROLES) that may also
+create and submit Stock Entries; the documents are inserted and submitted as that user, never with raised
+rights. Counter staff, buyers and the accountant cannot.
 
 Expired stock never becomes sellable again: ERPNext refuses expired batches in every sale, and
 `guard_batch_expiry` never lets an expired batch be re-dated (by anyone), and lets only the owner correct a
@@ -24,6 +25,8 @@ DISPOSAL_TYPE = "Expired Stock Disposal"
 REASONS = ("Expired", "Damaged", "Recalled", "Other")
 REASON_FIELD = "pharmacyos_disposal_reason"
 EXPIRY_CHANGE_ROLES = ("Pharmacy Owner", "System Manager")
+# who may write stock off — whatever other stock rights a role carries
+DISPOSAL_ROLES = ("Pharmacy Owner", "Pharmacy Manager", "Inventory Manager", "System Manager")
 
 
 def ensure_disposal_type() -> None:
@@ -41,7 +44,11 @@ def _batch_qty(item_code: str, batch: str, warehouse: str) -> float:
 
 @frappe.whitelist()
 def can_dispose() -> int:
-	return cint(frappe.has_permission("Stock Entry", "create") and frappe.has_permission("Stock Entry", "submit"))
+	return cint(
+		bool(set(frappe.get_roles()) & set(DISPOSAL_ROLES))
+		and frappe.has_permission("Stock Entry", "create")
+		and frappe.has_permission("Stock Entry", "submit")
+	)
 
 
 @frappe.whitelist(methods=["POST"])

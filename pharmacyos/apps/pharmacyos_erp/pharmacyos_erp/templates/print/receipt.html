@@ -5,7 +5,7 @@
 {%- if narrow %}<style>.print-format { max-width: 58mm; } .pos-receipt { width: 50mm; font-size: 10.5px; } @media print { @page { size: 58mm auto; margin: 2mm; } }</style>{% endif %}
 <div class="pos-receipt{{ ' pos-receipt--58' if narrow else '' }}" dir="{{ 'rtl' if ar else 'ltr' }}">
 	<header class="r-head">
-		{%- if id.pharmacy_logo %}<img class="r-logo" src="{{ id.pharmacy_logo }}" alt="">{% endif %}
+		{%- if id.pharmacy_logo %}<img class="r-logo" src="{{ id.pharmacy_logo|e }}" alt="">{% endif %}
 		<div class="r-name">{{ (id.pharmacy_name_ar if ar and id.pharmacy_name_ar else id.pharmacy_name)|e }}</div>
 		{%- if id.pharmacy_name_ar and not ar %}<div class="r-name-ar" dir="rtl">{{ id.pharmacy_name_ar|e }}</div>{% endif %}
 		{%- if id.branch %}<div class="r-meta">{{ (id.branch_ar if ar and id.branch_ar else id.branch)|e }}</div>{% endif %}

@@ -113,6 +113,38 @@ class TestCounterPricing(IntegrationTestCase):
 		doc.insert()
 		self.assertEqual(doc.grand_total, 950)
 
+	def test_a_promotion_is_not_a_counter_discount(self):
+		# an automatic 20 % offer (ERPNext Pricing Rule) above the 10 % ceiling: the counter sells at the
+		# offer, and the ceiling counts only what the counter takes off on top of it
+		promo = make_medicine("CERT-PROMO", item_name="Cert Promotion Medicine")
+		ensure_price(promo.name, 1000)
+		batch = make_batch(promo.name, "CERT-PROMO-B1", 400)
+		receive(promo.name, batch, 50)
+		if not frappe.db.exists("Pricing Rule", {"title": "Cert promotion 20"}):
+			frappe.get_doc(
+				{
+					"doctype": "Pricing Rule",
+					"title": "Cert promotion 20",
+					"apply_on": "Item Code",
+					"items": [{"item_code": promo.name}],
+					"selling": 1,
+					"company": COMPANY,
+					"price_or_product_discount": "Price",
+					"rate_or_discount": "Discount Percentage",
+					"discount_percentage": 20,
+				}
+			).insert()
+		frappe.db.commit()
+		frappe.set_user(CASHIER)
+		self.assertEqual(api.quote(pos_profile=COUNTER, items=[{"item_code": promo.name, "qty": 1}])["grand_total"], 800)
+		sale = api.checkout(pos_profile=COUNTER, items=[{"item_code": promo.name, "qty": 1}], payments=[{"mode_of_payment": "Cash", "amount": 800}], request_id=rid())
+		self.assertEqual(sale["grand_total"], 800)
+		# the counter's own 10 % on the sale, on top of the offer (28 % of the list price in all)
+		more = api.checkout(pos_profile=COUNTER, items=[{"item_code": promo.name, "qty": 1}], payments=[{"mode_of_payment": "Cash", "amount": 720}], request_id=rid(), additional_discount_percentage=10)
+		self.assertEqual(more["grand_total"], 720)
+		with self.assertRaises(CounterPriceError):  # 15 % on top of the offer: 12 % of the list price
+			api.quote(pos_profile=COUNTER, items=[{"item_code": promo.name, "qty": 1}], additional_discount_percentage=15)
+
 	def test_counter_sales_are_in_the_users_own_shift_and_dated_today(self):
 		frappe.set_user(CASHIER)
 		with self.assertRaises(CounterShiftError):  # CASHIER2's counter: not CASHIER's shift
@@ -193,6 +225,12 @@ class TestStaffAndReceivingRights(IntegrationTestCase):
 	def test_purchasing_officer_receives_a_medicine_with_its_batch(self):
 		from pharmacyos_erp.pharmacy.receiving import create_receiving_batch
 
+		from pharmacyos_erp.pharmacy.disposal import can_dispose
+
+		frappe.set_user(BUYER)
+		self.assertFalse(can_dispose(), "buyers receive stock; writing stock off stays with the stock roles")
+		self.assertNotIn("Stock User", frappe.get_roles(BUYER))
+		frappe.set_user("Administrator")
 		supplier = frappe.db.get_value("Supplier", {}, "name") or frappe.get_doc({"doctype": "Supplier", "supplier_name": "Cert Supplier", "supplier_group": frappe.db.get_value("Supplier Group", {"is_group": 0})}).insert(ignore_permissions=True).name
 		frappe.set_user(BUYER)
 		batch = create_receiving_batch(self.item.name, "CERT-RCV-01", add_days(nowdate(), 500))

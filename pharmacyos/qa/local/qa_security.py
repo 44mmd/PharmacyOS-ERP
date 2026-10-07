@@ -40,7 +40,8 @@ def main():
 		return name
 
 	mine = shift(cashier, "cashier@qa-pharmacy.test")
-	batch = owner.get_list("Batch", filters=[["batch_id", "=", "PAN-QA-2602"]], fields=["name"])[0]["name"]
+	# the earliest-expiring Panadol batch (FEFO), so each refusal below has exactly one reason
+	batch = owner.call("pharmacyos_erp.pharmacy.fefo.get_fefo_batches", item_code="QA-PAN500", warehouse=wh)[0]["batch_no"]
 
 	def invoice(**over):
 		doc = {"doctype": "Sales Invoice", "customer": main_profile["customer"], "company": company, "is_pos": 1, "pos_profile": mine, "update_stock": 1, "set_warehouse": wh,
@@ -57,11 +58,11 @@ def main():
 		d = s.insert(doc)
 		return s.submit(d)["name"]
 
-	R.refused(A, "cashier sells at 1 IQD through the document API", "refused: the price must be the pharmacy's price", lambda: post(cashier, invoice(row={"rate": 1, "price_list_rate": 1}, payments=[{"mode_of_payment": "Cash", "amount": 1}])), must_contain="price")
-	R.refused(A, "cashier gives 100% off through the document API", "refused: above the counter discount limit", lambda: post(cashier, invoice(additional_discount_percentage=100, payments=[{"mode_of_payment": "Cash", "amount": 0}])))
-	R.refused(A, "cashier makes a credit (non-POS) invoice", "refused: counter staff sell through the POS", lambda: post(cashier, invoice(is_pos=0, pos_profile=None, payments=[])))
-	R.refused(A, "cashier back-dates a sale (expiry is checked against the posting date)", "refused: today's date only", lambda: post(cashier, invoice(set_posting_time=1, posting_date=str(today - dt.timedelta(days=30)))))
-	R.refused(A, "cashier sells on a counter that is not their open shift", "refused: own shift only", lambda: post(cashier, invoice(pos_profile="Main Counter")))
+	R.refused(A, "cashier sells at 1 IQD through the document API", "refused: the price must be the pharmacy's price", lambda: post(cashier, invoice(row={"rate": 1, "price_list_rate": 1}, payments=[{"mode_of_payment": "Cash", "amount": 1}])), must_contain="سعر الصيدلية")
+	R.refused(A, "cashier gives 100% off through the document API", "refused: above the counter discount limit", lambda: post(cashier, invoice(additional_discount_percentage=100, payments=[{"mode_of_payment": "Cash", "amount": 0}])), must_contain="مدير الصيدلية")
+	R.refused(A, "cashier makes a credit (non-POS) invoice", "refused: counter staff sell through the POS", lambda: post(cashier, invoice(is_pos=0, pos_profile=None, payments=[])), must_contain="نقطة البيع")
+	R.refused(A, "cashier back-dates a sale (expiry is checked against the posting date)", "refused: today's date only", lambda: post(cashier, invoice(set_posting_time=1, posting_date=str(today - dt.timedelta(days=30)))), must_contain="بتاريخ اليوم")
+	R.refused(A, "cashier sells on a counter that is not their open shift", "refused: own shift only", lambda: post(cashier, invoice(pos_profile="Main Counter")), must_contain="افتح ورديتك")
 	R.refused(A, "cashier discount above the 10% ceiling at the POS", "refused before payment (quote)", lambda: cashier.call(POS + "quote", pos_profile=mine, items=[{"item_code": "QA-PAN500", "qty": 1, "discount_percentage": 25}]))
 	ok = cashier.call(POS + "checkout", pos_profile=mine, items=[{"item_code": "QA-PAN500", "qty": 1, "discount_percentage": 10}], payments=[{"mode_of_payment": "Cash", "amount": 2250}], request_id=rid())
 	R.add(A, "a correct counter sale still works (10% discount, own shift)", "sale submitted for 2,250", (ok["name"], ok["grand_total"]), abs(ok["grand_total"] - 2250) < 1)
@@ -72,8 +73,14 @@ def main():
 	# a customer whose default price list is cheaper
 	cheap = "QA Cheap List"
 	if not owner.get_list("Price List", filters=[["name", "=", cheap]], fields=["name"]):
-		owner.insert({"doctype": "Price List", "price_list_name": cheap, "selling": 1, "currency": "IQD"})
-		owner.insert({"doctype": "Item Price", "item_code": "QA-PAN500", "price_list": cheap, "price_list_rate": 100})
+		# test setup (a second selling price list is an ERPNext sales-master task): made as Administrator
+		import os
+
+		with open("/var/tmp/wslroot/tmp/cheaplist.py", "w") as f:
+			f.write("import frappe\ndef run():\n\tfrappe.set_user('Administrator')\n"
+				"\tfrappe.get_doc({'doctype': 'Price List', 'price_list_name': 'QA Cheap List', 'selling': 1, 'currency': 'IQD'}).insert()\n"
+				"\tfrappe.get_doc({'doctype': 'Item Price', 'item_code': 'QA-PAN500', 'price_list': 'QA Cheap List', 'price_list_rate': 100}).insert()\n")
+		os.system("/var/tmp/py.sh /var/tmp/wslroot/tmp/cheaplist.py >/dev/null 2>&1")
 	if not owner.get_list("Customer", filters=[["customer_name", "=", "QA Cheap Customer"]], fields=["name"]):
 		owner.insert({"doctype": "Customer", "customer_name": "QA Cheap Customer", "customer_type": "Individual", "default_price_list": cheap})
 	cust = owner.get_list("Customer", filters=[["customer_name", "=", "QA Cheap Customer"]], fields=["name"])[0]["name"]
@@ -83,13 +90,20 @@ def main():
 	sale = cashier.call(POS + "checkout", pos_profile=mine, items=[{"item_code": "QA-PAN500", "qty": 2}], payments=[{"mode_of_payment": "Cash", "amount": 5000}], request_id=rid())["name"]
 	line = cashier.call(POS + "get_return_candidate", invoice=sale)["lines"][0]
 	cashier.call(POS + "submit_return", invoice=sale, lines=[{"row": line["row"], "qty": 2}], request_id=rid())
-	before = owner.value("Sales Invoice", sale, "pharma_return_ledger")
+	def ledger():
+		# the ledger is at a permission level no client role holds: read on the server itself
+		with open("/var/tmp/wslroot/tmp/ledger.py", "w") as f:
+			f.write(f"import frappe\ndef run():\n\tprint('LEDGER=' + str(frappe.db.get_value('Sales Invoice', '{sale}', 'pharma_return_ledger')))\n")
+		out = subprocess.run(["/var/tmp/py.sh", "/var/tmp/wslroot/tmp/ledger.py"], capture_output=True, text=True).stdout
+		return next((l[7:] for l in out.splitlines() if l.startswith("LEDGER=")), None)
+
+	before = ledger()
 	try:
 		cashier.update("Sales Invoice", sale, {"pharma_return_ledger": '{"returns": {}}'})
 	except Refused:
 		pass
-	after = owner.value("Sales Invoice", sale, "pharma_return_ledger")
-	R.add(A, "cashier cannot rewrite a sale's return ledger", "ledger unchanged", "unchanged" if before == after else f"CHANGED to {after}", before == after and bool(before))
+	after = ledger()
+	R.add(A, "cashier cannot rewrite a sale's return ledger", "ledger unchanged (and hidden from every client)", "unchanged: " + str(after)[:120] if before == after else f"CHANGED to {after}", before == after and bool(before) and before != "None")
 	R.refused(A, "the same goods cannot be returned twice", "second full return refused", lambda: cashier.call(POS + "submit_return", invoice=sale, lines=[{"row": line["row"], "qty": 2}], request_id=rid()))
 
 	# cost privacy
