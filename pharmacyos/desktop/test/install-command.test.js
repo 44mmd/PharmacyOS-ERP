@@ -232,3 +232,32 @@ test("every Windows setup script parses (PowerShell AST) and starts with a UTF-8
 		assert.equal(r.stdout.trim(), "", `${name}: ${r.stdout}`);
 	}
 });
+
+test("setup runs the script from a file in the locked Setup folder: no value on any command line", { skip }, () => {
+	// the command line names the file only
+	const out = pwsh(["Get-InstallFileArguments"], `[Console]::Out.Write((Get-InstallFileArguments "PharmacyOS" "/mnt/c/ProgramData/PharmacyOS/Setup/install-run.sh"))`);
+	assert.deepEqual(windowsArgv(out), ["-d", "PharmacyOS", "--user", "root", "--exec", "bash", "/mnt/c/ProgramData/PharmacyOS/Setup/install-run.sh"]);
+	// the file holds the same one-shell script: run as "bash <file>", every value arrives byte for byte
+	const names = Object.keys(TRICKY);
+	const stub = stubInstaller(names, "resources/server");
+	try {
+		const script = windowsArgv(installArguments(TRICKY, stub.file))[7];
+		const file = path.join(stub.root, "install-run.sh");
+		fs.writeFileSync(file, script + "\n");
+		const r = spawnSync("bash", [file], { cwd: stub.root, env: { PATH: process.env.PATH }, encoding: "utf8" });
+		assert.equal(r.status, 0, r.stderr);
+		for (const name of names) {
+			const m = new RegExp(`^${name}=(.*)$`, "m").exec(r.stdout);
+			assert.ok(m, `${name} missing`);
+			assert.equal(Buffer.from(m[1], "base64").toString("utf8"), TRICKY[name], name);
+		}
+	} finally {
+		fs.rmSync(stub.root, { recursive: true, force: true });
+	}
+	// and the installer really starts it that way (not with the values inline)
+	const src = fs.readFileSync(INSTALLER, "utf8");
+	assert.match(src, /\$psi\.Arguments = Get-InstallFileArguments \$Distro/);
+	assert.match(src, /WriteAllText\(\$runFile, \(ConvertTo-InstallScript /);
+	assert.match(src, /Remove-Item -LiteralPath \$runFile/);
+	assert.doesNotMatch(src, /\$psi\.Arguments = Get-InstallArguments /);
+});

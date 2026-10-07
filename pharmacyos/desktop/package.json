@@ -1,7 +1,7 @@
 {
   "name": "pharmacyos-erp-desktop",
   "productName": "PharmacyOS ERP",
-  "version": "1.0.0-rc.1",
+  "version": "1.0.0-rc.2",
   "description": "PharmacyOS ERP — the LOCAL ERP (Pharmacy Operating System) for Windows. Designed & Developed by HALF.",
   "author": "HALF",
   "license": "GPL-3.0-only",
@@ -56,7 +56,7 @@
     "nsis": {
       "oneClick": false,
       "perMachine": true,
-      "allowToChangeInstallationDirectory": true,
+      "allowToChangeInstallationDirectory": false,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "PharmacyOS ERP",
@@ -65,6 +65,14 @@
       "uninstallDisplayName": "PharmacyOS ERP",
       "runAfterFinish": true,
       "artifactName": "PharmacyOS-Setup-${version}.${ext}"
+    },
+    "electronFuses": {
+      "runAsNode": false,
+      "enableCookieEncryption": true,
+      "enableNodeOptionsEnvironmentVariable": false,
+      "enableNodeCliInspectArguments": true,
+      "enableEmbeddedAsarIntegrityValidation": true,
+      "onlyLoadAppFromAsar": true
     }
   }
 }

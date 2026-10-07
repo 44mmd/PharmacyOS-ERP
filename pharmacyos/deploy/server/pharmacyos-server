@@ -38,11 +38,16 @@ secure_redis() {
 		REDIS_PASSWORD="$(python3 -c 'import secrets; print(secrets.token_hex(24))')"
 		( umask 077; echo "REDIS_PASSWORD='$REDIS_PASSWORD'" >> "$ENV_FILE" )
 	fi
-	for f in "$conf/redis_cache.conf" "$conf/redis_queue.conf"; do
-		[ -f "$f" ] || continue
-		sed -i '/^requirepass /d' "$f"
-		echo "requirepass $REDIS_PASSWORD" >> "$f"
-		chmod 600 "$f"; chown "$BENCH_USER" "$f"
+	# bench's Redis configs load an ACL file (where `requirepass` is ignored): the default user gets the
+	# password there, stored as its SHA-256
+	local hash
+	hash="$(printf %s "$REDIS_PASSWORD" | sha256sum | cut -d' ' -f1)"
+	for name in redis_cache redis_queue; do
+		[ -f "$conf/$name.conf" ] || continue
+		sed -i '/^requirepass /d' "$conf/$name.conf"
+		grep -q '^aclfile ' "$conf/$name.conf" || echo "aclfile $conf/$name.acl" >> "$conf/$name.conf"
+		echo "user default on #$hash ~* &* +@all" > "$conf/$name.acl"
+		chmod 600 "$conf/$name.conf" "$conf/$name.acl"; chown "$BENCH_USER" "$conf/$name.conf" "$conf/$name.acl"
 	done
 	REDIS_PASSWORD="$REDIS_PASSWORD" python3 - "$common" <<'PY'
 import json, os, re, sys
@@ -103,6 +108,8 @@ update() {
 	new_version="$(cat "$bundle/VERSION")"
 	new_build="$(cat "$bundle/BUILD_ID" 2>/dev/null || true)"
 	old_release="$(readlink -f "$OPT/app")"
+	old_version="$(cat "$OPT/VERSION" 2>/dev/null || basename "$old_release")"
+	old_build="$(cat "$OPT/BUILD_ID" 2>/dev/null || true)"
 	# one release folder per build: an installer with corrected code but the same version is still installed
 	new_release="$OPT/releases/$new_version${new_build:+-${new_build:0:12}}"
 	if [ "$old_release" = "$new_release" ]; then
@@ -115,7 +122,7 @@ update() {
 	echo "== Safety backup"
 	if ! safety="$(backup)"; then
 		as_bench "bench --site '$SITE' set-maintenance-mode off" || true
-		result "{\"status\": \"failed\", \"step\": \"backup\", \"version\": \"$(basename "$old_release")\"}"
+		result "{\"status\": \"failed\", \"step\": \"backup\", \"version\": \"$old_version\"}"
 		exit 1
 	fi
 	echo "   $safety"
@@ -128,13 +135,14 @@ update() {
 		run_restore "$SITE" "$safety" --yes --keep-maintenance && restored=1
 		as_bench "bench build --app pharmacyos_erp" || true
 		supervisorctl restart all >/dev/null || true
-		basename "$old_release" > "$OPT/VERSION"
+		echo "$old_version" > "$OPT/VERSION"
+		printf '%s' "$old_build" > "$OPT/BUILD_ID"
 		if [ "$restored" = 1 ]; then
 			as_bench "bench --site '$SITE' set-maintenance-mode off" || true
-			result "{\"status\": \"rolled_back\", \"version\": \"$(basename "$old_release")\", \"backup\": \"$safety\"}"
+			result "{\"status\": \"rolled_back\", \"version\": \"$old_version\", \"backup\": \"$safety\"}"
 		else
 			# the data could not be put back automatically: stay in maintenance (no sales on a half state)
-			result "{\"status\": \"rollback_failed\", \"version\": \"$(basename "$old_release")\", \"backup\": \"$safety\"}"
+			result "{\"status\": \"rollback_failed\", \"version\": \"$old_version\", \"backup\": \"$safety\"}"
 		fi
 		exit 1
 	}
@@ -167,7 +175,7 @@ update() {
 	mv "$OPT/bin/pharmacyos-server.new" "$OPT/bin/pharmacyos-server"
 	# keep the previous release (rollback by hand) and drop older ones
 	find "$OPT/releases" -mindepth 1 -maxdepth 1 -type d ! -path "$new_release" ! -path "$old_release" -exec rm -rf {} +
-	result "{\"status\": \"updated\", \"version\": \"$new_version\", \"previous\": \"$(basename "$old_release")\", \"backup\": \"$safety\"}"
+	result "{\"status\": \"updated\", \"version\": \"$new_version\", \"previous\": \"$old_version\", \"backup\": \"$safety\"}"
 }
 
 case "${1:-status}" in

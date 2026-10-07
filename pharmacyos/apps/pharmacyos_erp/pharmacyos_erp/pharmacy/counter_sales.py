@@ -70,8 +70,23 @@ def is_counter_only(user: str | None = None) -> bool:
 
 
 def max_counter_discount() -> float:
-	value = frappe.db.get_single_value("PharmacyOS Settings", "max_counter_discount")
-	return DEFAULT_MAX_DISCOUNT if value is None or value == "" else min(max(flt(value), 0.0), 100.0)
+	# the stored value itself: a setting never saved reads as 0 through get_single_value, which would
+	# forbid every counter discount on a pharmacy updated from an older version
+	raw = _stored_ceiling()
+	return DEFAULT_MAX_DISCOUNT if raw in (None, "") else min(max(flt(raw), 0.0), 100.0)
+
+
+def _stored_ceiling():
+	row = frappe.db.sql(
+		"select value from `tabSingles` where doctype='PharmacyOS Settings' and field='max_counter_discount'"
+	)
+	return row[0][0] if row else None
+
+
+def ensure_default_setting() -> None:
+	"""after_migrate: store the default ceiling on pharmacies set up before the setting existed."""
+	if _stored_ceiling() in (None, ""):
+		frappe.db.set_single_value("PharmacyOS Settings", "max_counter_discount", DEFAULT_MAX_DISCOUNT)
 
 
 def guard_counter_pricing(doc, method=None):

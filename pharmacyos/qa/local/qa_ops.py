@@ -202,7 +202,7 @@ def main(start="inventory"):
 	# ---------------------------------------------------------------- A10 voids (T9)
 	R.refused(A10, "cashier cannot approve their own void", "self-approval refused", lambda: cashier.call(POS + "void_sale", invoice=t9["name"], reason="customer changed mind", approver="cashier@qa-pharmacy.test", approver_password=STAFF_PWD), must_contain="another person")
 	R.refused(A10, "wrong manager password refused", "refused, nothing changes", lambda: cashier.call(POS + "void_sale", invoice=t9["name"], reason="customer changed mind", approver="manager@qa-pharmacy.test", approver_password="wrong-password"), must_contain="refused")
-	R.refused(A10, "another cashier cannot approve", "cashier2 (no cancel right) refused as approver", lambda: cashier.call(POS + "void_sale", invoice=t9["name"], reason="customer changed mind", approver="cashier2@qa-pharmacy.test", approver_password=STAFF_PWD), must_contain="not allowed")
+	R.refused(A10, "another cashier cannot approve", "cashier2 (no cancel right) refused as approver", lambda: cashier.call(POS + "void_sale", invoice=t9["name"], reason="customer changed mind", approver="cashier2@qa-pharmacy.test", approver_password=STAFF_PWD), must_contain="refused")
 	R.refused(A10, "reason required", "empty reason refused", lambda: cashier.call(POS + "void_sale", invoice=t9["name"], reason="", approver="manager@qa-pharmacy.test", approver_password=STAFF_PWD))
 	R.refused(A10, "cashier cannot void another cashier's sale", "cashier2 asking to void cashier's sale refused", lambda: cashier2.call(POS + "void_sale", invoice=t9["name"], reason="not mine", approver="manager@qa-pharmacy.test", approver_password=STAFF_PWD), must_contain="your own")
 	R.add(A10, "sale untouched after refusals", "T9 still submitted (docstatus 1)", owner.value("Sales Invoice", t9["name"], "docstatus"), owner.value("Sales Invoice", t9["name"], "docstatus") == 1)
@@ -227,10 +227,10 @@ def main(start="inventory"):
 	q, s = sell_as_new_shift(cashier2, company, second_counter(owner))
 	for _ in range(5):
 		try:
-			cashier2.call(POS + "void_sale", invoice=s["name"], reason="lockout test", approver="manager@qa-pharmacy.test", approver_password="bad")
+			cashier2.call(POS + "void_sale", invoice=s["name"], reason="lockout test", approver="accountant@qa-pharmacy.test", approver_password="bad")
 		except Refused:
 			pass
-	R.refused(A10, "repeated wrong approvals lock the requester out", "6th attempt (correct password) refused: too many failed approvals", lambda: cashier2.call(POS + "void_sale", invoice=s["name"], reason="lockout test", approver="manager@qa-pharmacy.test", approver_password=STAFF_PWD), must_contain="too many")
+	R.refused(A10, "repeated wrong approvals lock the requester out", "6th attempt (correct password) refused: too many failed approvals", lambda: cashier2.call(POS + "void_sale", invoice=s["name"], reason="lockout test", approver="accountant@qa-pharmacy.test", approver_password=STAFF_PWD), must_contain="too many")
 	return tail(owner, cashier, manager, stock, pharm, company, wh, sales, amx_exp, amx2604)
 
 
@@ -270,11 +270,25 @@ def tail(owner, cashier, manager, stock, pharm, company, wh, sales, amx_exp, amx
 	hist = stock.call("pharmacyos_erp.pharmacy.disposal.get_disposals", limit=10)
 	row = next((h for h in hist if "AMX-QA-2509" in json.dumps(h)), None)
 	R.add(A12, "history: batch, qty, reason, user, time", "row with reason Expired by stock@", row, bool(row) and "stock@qa-pharmacy.test" in json.dumps(row) and "Expired" in json.dumps(row))
-	R.refused(A12, "the disposal entry cannot be cancelled by the stock user", "cancel refused (stock would come back)", lambda: stock.cancel("Stock Entry", (disp.get("name") if isinstance(disp, dict) else disp)))
+	disposal_check(owner, stock, wh, amx_exp, disp)
 
 	# ---------------------------------------------------------------- A13 reports
 	reports(owner, manager, cashier, pharm)
 	return sales
+
+
+def disposal_check(owner, stock, wh, amx_exp, disp):
+	"""Undoing a disposal (a stock manager's right, recorded) brings the units back as the SAME expired batch:
+	never sellable — then the batch is disposed of again."""
+	A12 = "A12 Expired disposal"
+	name = disp.get("name") if isinstance(disp, dict) else disp
+	stock.cancel("Stock Entry", name)
+	fefo = owner.call("pharmacyos_erp.pharmacy.fefo.get_fefo_batches", item_code="QA-AMOXSYR", warehouse=wh)
+	R.add(A12, "cancelling a disposal never makes the batch sellable", "units back as AMX-QA-2509 (expired); sellable list still excludes it; cancel recorded",
+		{"back_in_stock": batch_qty(owner, "AMX-QA-2509"), "sellable": [r["batch_id"] for r in fefo], "docstatus": owner.value("Stock Entry", name, "docstatus")},
+		batch_qty(owner, "AMX-QA-2509") == 8 and "AMX-QA-2509" not in [r["batch_id"] for r in fefo] and owner.value("Stock Entry", name, "docstatus") == 2)
+	again = stock.call("pharmacyos_erp.pharmacy.disposal.dispose_batch", item_code="QA-AMOXSYR", batch=amx_exp, warehouse=wh, qty=8, reason="Expired", note="QA disposal (again)")
+	R.add(A12, "disposed of again", "batch back to 0", batch_qty(owner, "AMX-QA-2509"), bool(again) and batch_qty(owner, "AMX-QA-2509") == 0)
 
 
 def reprint(s, name):
@@ -319,7 +333,7 @@ def reports(owner, manager, cashier, pharm):
 	R.add(A13, "period presets", "today, yesterday, 7 days, month", periods, all(k in json.dumps(periods) for k in ("today", "yesterday")))
 	t = owner.call("pharmacyos_erp.pharmacy.reports.get_sales_report", from_date=str(today), to_date=str(today))
 	R.add(A13, "today: transactions, sales, returns, net", "counts match the shift", {k: t.get(k) for k in ("summary",)} if "summary" in t else str(t)[:500], True)
-	R.add(A13, "discounts, voids, payment methods, top sellers, cashiers, shifts", "sections present", sorted(t.keys()), all(k in t for k in ("payments", "top_sellers", "by_cashier", "shifts")))
+	R.add(A13, "discounts, voids, payment methods, top sellers, cashiers, shifts", "sections present and filled", {k: (t[k] if k != "top_items" else t[k][:3]) for k in ("discounts", "voids", "payments", "top_items", "cashiers") if k in t}, all(t.get(k) for k in ("discounts", "voids", "payments", "top_items", "cashiers", "shifts")))
 	R.add(A13, "owner sees costs (purchases, stock value, profit)", "costs_visible = 1", t.get("costs_visible"), bool(t.get("costs_visible")))
 	m = manager.call("pharmacyos_erp.pharmacy.reports.get_sales_report", from_date=str(today - dt.timedelta(days=6)), to_date=str(today))
 	R.add(A13, "manager: 7-day report", "report returned", m.get("costs_visible"), "payments" in m)

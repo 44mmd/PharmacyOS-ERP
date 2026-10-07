@@ -142,13 +142,11 @@ async function launchElevated(app, file) {
 	return { ok: true };
 }
 
-// Retry of a failed setup with the details already given. If Windows' prompt is refused the details are
-// forgotten too; a script that needs them then says so and the owner enters them again.
+// Retry of a failed setup with the details already given. A refused Windows prompt keeps them, so the
+// next Retry can still work; "Enter the details again" (or leaving setup) forgets them.
 async function resume(app, launch = launchElevated) {
 	const file = requestFile(app.getPath("userData"));
-	const r = await launch(app, fs.existsSync(file) ? file : "");
-	if (!r.ok) forgetRequest(app);
-	return r;
+	return launch(app, fs.existsSync(file) ? file : "");
 }
 
 function readState() {

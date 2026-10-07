@@ -90,7 +90,7 @@ test("the owner's password does not stay on disk when the setup script will not 
 			return { ok: false, denied: true };
 		});
 		assert.equal(retried.ok, false);
-		assert.ok(!fs.existsSync(file));
+		assert.ok(fs.existsSync(file), "kept after a refused Retry, so the next Retry can still work");
 		// the setup failed and the owner goes back to enter the details again
 		assert.equal((await setup.start(app, PHARMACY, async () => ({ ok: true }))).ok, true);
 		assert.equal(setup.forgetRequest(app), true);

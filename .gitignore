@@ -25,3 +25,6 @@ erpnext/public/banking
 erpnext/www/banking.html
 # PharmacyOS desktop: generated server bundle (npm run bundle)
 pharmacyos/desktop/server-bundle/
+
+# agent worktrees (local only)
+.claude/

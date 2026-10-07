@@ -59,14 +59,17 @@ def main():
 	R.add(A, "catalogue size", "≥ 140 products", total_items, total_items >= 140)
 
 	ctx = cashier.call(POS + "get_context")
-	if not ctx.get("shift"):
-		cashier.call("erpnext.selling.page.point_of_sale.point_of_sale.create_opening_voucher", pos_profile=PROFILE, company=company, balance_details=json.dumps([{"mode_of_payment": "Cash", "opening_amount": 25000}]))
+	if ctx.get("shift"):
+		prof = ctx["shift"]["pos_profile"]  # the cashier's open shift (sales go to the user's own shift)
+	else:
+		prof = PROFILE
+		cashier.call("erpnext.selling.page.point_of_sale.point_of_sale.create_opening_voucher", pos_profile=prof, company=company, balance_details=json.dumps([{"mode_of_payment": "Cash", "opening_amount": 25000}]))
 
 	# 100 rapid scans (barcode lookups, back to back)
 	ms = []
 	misses = 0
 	for i in range(100):
-		res, t = timed(lambda: cashier.call(POS + "search_items", pos_profile=PROFILE, search_term=f"62919{i % 120:08d}"))
+		res, t = timed(lambda: cashier.call(POS + "search_items", pos_profile=prof, search_term=f"62919{i % 120:08d}"))
 		ms.append(t)
 		misses += 0 if res["items"] and res["items"][0]["item_code"] == f"QA-STRESS-{i % 120:03d}" else 1
 	R.add(A, "100 rapid barcode scans", "every scan resolves to its product", {**stats(ms), "wrong_or_missing": misses}, misses == 0)
@@ -76,7 +79,7 @@ def main():
 	ms = []
 	empty = 0
 	for i in range(100):
-		res, t = timed(lambda: cashier.call(POS + "search_items", pos_profile=PROFILE, search_term=terms[i % len(terms)]))
+		res, t = timed(lambda: cashier.call(POS + "search_items", pos_profile=prof, search_term=terms[i % len(terms)]))
 		ms.append(t)
 		empty += 0 if res["items"] else 1
 	R.add(A, "100 searches (EN / AR / generic / partial)", "every search returns results", {**stats(ms), "empty": empty}, empty == 0)
@@ -87,7 +90,7 @@ def main():
 	names = set()
 	for i in range(60):
 		code = f"QA-STRESS-{i % 20:03d}"
-		out, t = timed(lambda: cashier.call(POS + "checkout", pos_profile=PROFILE, items=[{"item_code": code, "qty": 1}], payments=[{"mode_of_payment": "Cash", "amount": 5000}], request_id=rid()))
+		out, t = timed(lambda: cashier.call(POS + "checkout", pos_profile=prof, items=[{"item_code": code, "qty": 1}], payments=[{"mode_of_payment": "Cash", "amount": 5000}], request_id=rid()))
 		ms.append(t)
 		names.add(out["name"])
 	after = {c: qty(owner, c, wh) for c in before}
@@ -100,7 +103,7 @@ def main():
 	for item in owner.get_list("Item", filters=[["name", "like", "QA-%"]], fields=["name"], limit=1000):
 		code = item["name"]
 		b = qty(owner, code, wh)
-		sle = owner.get_list("Stock Ledger Entry", filters=[["item_code", "=", code], ["warehouse", "=", wh], ["is_cancelled", "=", 0]], fields=["sum(actual_qty) as q"])
+		sle = owner.get_list("Stock Ledger Entry", filters=[["item_code", "=", code], ["warehouse", "=", wh], ["is_cancelled", "=", 0]], fields=[{"SUM": "actual_qty", "as": "q"}])
 		s = (sle[0]["q"] if sle else 0) or 0
 		if abs(b - s) > 1e-6:
 			bad.append((code, b, s))

@@ -177,6 +177,14 @@ def ensure_structure():
 	ensure_branch_dimension_fields()
 	ensure_voucher_indexes()
 	ensure_disposal_type()
+	ensure_counter_discount_setting()
+
+
+def ensure_counter_discount_setting():
+	"""The counter discount ceiling's default on pharmacies set up before it existed (counter_sales.py)."""
+	from pharmacyos_erp.pharmacy.counter_sales import ensure_default_setting
+
+	ensure_default_setting()
 
 
 def ensure_disposal_type():

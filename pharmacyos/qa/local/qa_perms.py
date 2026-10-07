@@ -37,10 +37,12 @@ def ops(c):
 	u = lambda: rid()[3:11]
 
 	def sell(s):
+		# each seller works their own counter (ERPNext: one open shift per counter)
+		counter = c["counter_of"](s.user)
 		ctx = s.call("pharmacyos_erp.pos.api.get_context")
 		if not ctx.get("shift"):
-			s.call("erpnext.selling.page.point_of_sale.point_of_sale.create_opening_voucher", pos_profile=PROFILE, company=company, balance_details=json.dumps([{"mode_of_payment": "Cash", "opening_amount": 0}]))
-		return s.call("pharmacyos_erp.pos.api.checkout", pos_profile=PROFILE, items=[{"item_code": "QA-PAN500", "qty": 1}], payments=[{"mode_of_payment": "Cash", "amount": 2500}], request_id=rid())["name"]
+			s.call("erpnext.selling.page.point_of_sale.point_of_sale.create_opening_voucher", pos_profile=counter, company=company, balance_details=json.dumps([{"mode_of_payment": "Cash", "opening_amount": 0}]))
+		return s.call("pharmacyos_erp.pos.api.checkout", pos_profile=counter, items=[{"item_code": "QA-PAN500", "qty": 1}], payments=[{"mode_of_payment": "Cash", "amount": 2500}], request_id=rid())["name"]
 
 	def cancel_sale(s):
 		# a fresh sale by the owner, cancelled directly (the desk Cancel) by this user
@@ -123,13 +125,24 @@ def main():
 	owner = Session("owner").login(*OWNER)
 	c = ctx_of(owner)
 
+	main = owner.get_doc("POS Profile", PROFILE)
+	keep = ("company", "warehouse", "currency", "customer", "selling_price_list", "write_off_account", "write_off_cost_center", "cost_center", "update_stock", "allow_discount_change", "allow_rate_change", "print_format")
+
+	def counter_of(user):
+		name = f"QA Counter {user.split('@')[0]}"
+		if not owner.get_list("POS Profile", filters=[["name", "=", name]], fields=["name"]):
+			owner.insert({"doctype": "POS Profile", "__newname": name, **{k: main[k] for k in keep}, "payments": [{"mode_of_payment": "Cash", "default": 1}], "applicable_for_users": [{"user": user}]})
+		return name
+
 	def owner_sale():
+		counter = counter_of(owner.user)
 		ctx = owner.call("pharmacyos_erp.pos.api.get_context")
 		if not ctx.get("shift"):
-			owner.call("erpnext.selling.page.point_of_sale.point_of_sale.create_opening_voucher", pos_profile=PROFILE, company=c["company"], balance_details=json.dumps([{"mode_of_payment": "Cash", "opening_amount": 0}]))
-		return owner.call("pharmacyos_erp.pos.api.checkout", pos_profile=PROFILE, items=[{"item_code": "QA-PAN500", "qty": 1}], payments=[{"mode_of_payment": "Cash", "amount": 2500}], request_id=rid())["name"]
+			owner.call("erpnext.selling.page.point_of_sale.point_of_sale.create_opening_voucher", pos_profile=counter, company=c["company"], balance_details=json.dumps([{"mode_of_payment": "Cash", "opening_amount": 0}]))
+		return owner.call("pharmacyos_erp.pos.api.checkout", pos_profile=counter, items=[{"item_code": "QA-PAN500", "qty": 1}], payments=[{"mode_of_payment": "Cash", "amount": 2500}], request_id=rid())["name"]
 
 	c["owner_sale"] = owner_sale
+	c["counter_of"] = counter_of
 	sessions = {}
 	for label, email, pwd in ROLES:
 		sessions[label] = Session(label).login(email, pwd)

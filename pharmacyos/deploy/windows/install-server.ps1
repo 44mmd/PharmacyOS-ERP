@@ -43,7 +43,19 @@ $LogFile = Join-Path $Root "Logs\install.log"
 $ResumeTask = "PharmacyOS Setup (continue)"
 $ServerTask = "PharmacyOS Server"
 $RootfsUrl = "https://cloud-images.ubuntu.com/wsl/releases/24.04/current/ubuntu-noble-wsl-amd64-wsl.rootfs.tar.gz"
-New-Item -ItemType Directory -Force -Path $SetupDir, (Join-Path $Root "Logs"), (Join-Path $Root "Backups"), (Join-Path $Root "Sales"), (Join-Path $Root "Daily Reports"), (Join-Path $Root "Server") | Out-Null
+$DataFolders = @($SetupDir, (Join-Path $Root "Logs"), (Join-Path $Root "Backups"), (Join-Path $Root "Sales"), (Join-Path $Root "Daily Reports"), (Join-Path $Root "Server"))
+# A link another user planted where PharmacyOS keeps its data would redirect what setup writes there: it is
+# removed before anything is written (the link itself, never what it points to). The whole tree is checked
+# again by Protect-DataFolder below.
+$rootItem = Get-Item -LiteralPath $Root -Force -ErrorAction SilentlyContinue
+if ($rootItem -and ($rootItem.Attributes -band [IO.FileAttributes]::ReparsePoint)) { Write-Error "$Root is a link; setup stops."; exit 5 }
+foreach ($folder in $DataFolders) {
+	$item = Get-Item -LiteralPath $folder -Force -ErrorAction SilentlyContinue
+	if ($item -and ($item.Attributes -band [IO.FileAttributes]::ReparsePoint)) {
+		if ($item.PSIsContainer) { [IO.Directory]::Delete($folder, $false) } else { [IO.File]::Delete($folder) }
+	}
+}
+New-Item -ItemType Directory -Force -Path $DataFolders | Out-Null
 
 # ------------------------------------------------------------------ state, log, helpers
 
@@ -136,6 +148,13 @@ function Get-InstallArguments([string]$DistroName, [System.Collections.IDictiona
 	return "-d $DistroName --user root --exec bash -c `"$(ConvertTo-InstallScript $Values $InstallScript)`""
 }
 
+# What setup actually runs: the same script, written to a file in the Setup folder (readable only by SYSTEM,
+# Administrators and this user — see Protect-DataFolder) and started by path, so the pharmacy's values (the
+# owner's password, base64-encoded) never appear on a process command line, in Windows or in the environment.
+function Get-InstallFileArguments([string]$DistroName, [string]$ScriptWslPath) {
+	return "-d $DistroName --user root --exec bash `"$ScriptWslPath`""
+}
+
 # The SHA-256 Ubuntu publishes for a download, from the SHA256SUMS file in the same folder (over HTTPS).
 function Get-PublishedSha256([string]$Url) {
 	$slash = $Url.LastIndexOf("/")
@@ -172,22 +191,39 @@ function Test-DataFolderLocked([string[]]$Sids) {
 	} catch { return $false }
 }
 
+function Test-ItemClean([string]$Path, [string[]]$Sids) {
+	try {
+		$acl = Get-Acl -LiteralPath $Path
+		return (-not $acl.AreAccessRulesProtected) -and ($Sids -contains $acl.GetOwner([Security.Principal.SecurityIdentifier]).Value) -and
+			(@($acl.GetAccessRules($true, $false, [Security.Principal.SecurityIdentifier])).Count -eq 0)
+	} catch { return $false }
+}
+
+# Every item inside: owned by Administrators and inheriting only the locked set. Links are removed (the link,
+# never its target). Returns $false when anything could not be listed, fixed or verified.
 function Protect-DataItems([string]$Dir, [string[]]$Sids) {
-	foreach ($item in @(Get-ChildItem -LiteralPath $Dir -Force -ErrorAction SilentlyContinue)) {
-		if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) { Write-Log "Not followed (a link): $($item.FullName)"; continue }
-		$clean = $false
-		try {
-			$acl = Get-Acl -LiteralPath $item.FullName
-			$clean = (-not $acl.AreAccessRulesProtected) -and ($Sids -contains $acl.GetOwner([Security.Principal.SecurityIdentifier]).Value) -and
-				(@($acl.GetAccessRules($true, $false, [Security.Principal.SecurityIdentifier])).Count -eq 0)
-		} catch { $clean = $false }
-		if (-not $clean) {
-			Write-Log "Resetting the permissions of $($item.FullName)"
-			Invoke-Native "icacls.exe" @($item.FullName, "/setowner", "*$DataOwnerSid", "/C", "/Q") | Out-Null
-			Invoke-Native "icacls.exe" @($item.FullName, "/reset", "/C", "/Q") | Out-Null
+	$ok = $true
+	try { $items = @(Get-ChildItem -LiteralPath $Dir -Force -ErrorAction Stop) } catch { Write-Log "Cannot list ${Dir}: $($_.Exception.Message)"; return $false }
+	foreach ($item in $items) {
+		if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) {
+			try {
+				if ($item.PSIsContainer) { [IO.Directory]::Delete($item.FullName, $false) } else { [IO.File]::Delete($item.FullName) }
+				Write-Log "Removed a link planted in the data folder: $($item.FullName)"
+			} catch { Write-Log "Could not remove the link $($item.FullName): $($_.Exception.Message)"; $ok = $false }
+			continue
 		}
-		if ($item.PSIsContainer -and $item.FullName -ne (Join-Path $Root "Server\wsl")) { Protect-DataItems $item.FullName $Sids }
+		if (-not (Test-ItemClean $item.FullName $Sids)) {
+			Write-Log "Resetting the permissions of $($item.FullName)"
+			Invoke-Native "takeown.exe" @("/F", $item.FullName, "/A") | Out-Null   # even when its DACL denies Administrators
+			$owner = Invoke-Native "icacls.exe" @($item.FullName, "/setowner", "*$DataOwnerSid", "/C", "/Q")
+			$reset = Invoke-Native "icacls.exe" @($item.FullName, "/reset", "/C", "/Q")
+			if ($owner -ne 0 -or $reset -ne 0 -or -not (Test-ItemClean $item.FullName $Sids)) { Write-Log "Could not restrict $($item.FullName)"; $ok = $false }
+		}
+		if ($item.PSIsContainer -and $item.FullName -ne (Join-Path $Root "Server\wsl")) {
+			if (-not (Protect-DataItems $item.FullName $Sids)) { $ok = $false }
+		}
 	}
+	return $ok
 }
 
 function Protect-DataFolder {
@@ -196,13 +232,15 @@ function Protect-DataFolder {
 	if ((Get-Item -LiteralPath $Root -Force).Attributes -band [IO.FileAttributes]::ReparsePoint) { return $false }
 	if (-not (Test-DataFolderLocked $sids)) {
 		Write-Log "Restricting $Root to SYSTEM, Administrators and $me"
-		Invoke-Native "icacls.exe" @($Root, "/setowner", "*$DataOwnerSid", "/C", "/Q") | Out-Null
-		Invoke-Native "icacls.exe" @($Root, "/reset", "/C", "/Q") | Out-Null   # drops entries anyone added to the folder itself
-		$grants = @($sids | ForEach-Object { "*$($_):(OI)(CI)F" })
-		Invoke-Native "icacls.exe" (@($Root, "/inheritance:r", "/grant:r") + $grants + @("/C", "/Q")) | Out-Null
+		$codes = @(
+			(Invoke-Native "icacls.exe" @($Root, "/setowner", "*$DataOwnerSid", "/C", "/Q")),
+			(Invoke-Native "icacls.exe" @($Root, "/reset", "/C", "/Q")),   # drops entries anyone added to the folder itself
+			(Invoke-Native "icacls.exe" (@($Root, "/inheritance:r", "/grant:r") + @($sids | ForEach-Object { "*$($_):(OI)(CI)F" }) + @("/C", "/Q")))
+		)
+		if (@($codes | Where-Object { $_ -ne 0 }).Count) { Write-Log "icacls failed on $Root ($($codes -join ', '))"; return $false }
 	}
-	Protect-DataItems $Root $sids
-	return (Test-DataFolderLocked $sids)
+	$items = Protect-DataItems $Root $sids
+	return ($items -and (Test-DataFolderLocked $sids))
 }
 
 function Test-DistroInstalled {
@@ -238,6 +276,7 @@ Write-Log "===== PharmacyOS server setup $(if ($Resume) { '(continuing)' }) — 
 $locked = $false
 try { $locked = Protect-DataFolder } catch { Write-Log "Protecting $Root failed: $($_.Exception.Message)" }
 if (-not $locked) { Fail "check" "The PharmacyOS data folder ($Root) could not be protected from other Windows users. Retry; if it fails again, send the log to support." }
+New-Item -ItemType Directory -Force -Path $DataFolders | Out-Null   # (a removed link leaves no folder)
 $Bundle = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 $Version = (Get-Content (Join-Path $Bundle "VERSION") -ErrorAction SilentlyContinue | Select-Object -First 1)
 $request = $null
@@ -335,7 +374,7 @@ if (-not (Test-DistroInstalled)) {
 	if (-not (Test-DistroInstalled)) { Fail "distro" "The PharmacyOS environment could not be created (wsl --import failed). Is virtualization turned on in the BIOS?" }
 }
 # systemd inside the environment (the services start at boot); keep it running while Windows is on
-Invoke-Native "wsl.exe" @("-d", $Distro, "--user", "root", "--", "bash", "-c", "printf '[boot]\nsystemd=true\n[user]\ndefault=root\n' > /etc/wsl.conf") | Out-Null
+Invoke-Native "wsl.exe" @("-d", $Distro, "--user", "root", "--", "bash", "-c", "printf '[boot]\nsystemd=true\n[user]\ndefault=root\n[interop]\nenabled=false\nappendWindowsPath=false\n' > /etc/wsl.conf") | Out-Null
 $wslconfig = Join-Path $env:USERPROFILE ".wslconfig"
 if (-not (Test-Path $wslconfig)) {
 	$lines = @("[wsl2]", "vmIdleTimeout=-1")
@@ -360,7 +399,9 @@ if ($request -and -not $serverDone) {
 $total = $ServerSteps.Count
 $psi = New-Object Diagnostics.ProcessStartInfo
 $psi.FileName = "wsl.exe"
-$psi.Arguments = Get-InstallArguments $Distro $values "$src/deploy/server/install-server.sh"
+$runFile = Join-Path $SetupDir "install-run.sh"
+[IO.File]::WriteAllText($runFile, (ConvertTo-InstallScript $values "$src/deploy/server/install-server.sh") + "`n", (New-Object Text.UTF8Encoding $false))
+$psi.Arguments = Get-InstallFileArguments $Distro (ConvertTo-WslPath $runFile)
 $psi.UseShellExecute = $false
 $psi.RedirectStandardOutput = $true
 $psi.StandardOutputEncoding = [Text.Encoding]::UTF8
@@ -377,6 +418,7 @@ while (-not $proc.StandardOutput.EndOfStream) {
 	}
 }
 $proc.WaitForExit()
+Remove-Item -LiteralPath $runFile -Force -ErrorAction SilentlyContinue
 if ($proc.ExitCode -ne 0) { Fail "server" "Installing the pharmacy server failed (code $($proc.ExitCode)). Retry; if it fails again, send the log to support." }
 if ($RequestFile -and (Test-Path $RequestFile)) { Remove-Item -Force $RequestFile }   # the owner exists: forget the password
 
@@ -392,7 +434,7 @@ $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoi
 Register-ScheduledTask -TaskName $ServerTask -Action $action -Trigger $triggers -Principal $principal -Settings $settings -Force | Out-Null
 Start-ScheduledTask -TaskName $ServerTask
 if ($request -and $request.share_on_network) {
-	New-NetFirewallRule -DisplayName "PharmacyOS ERP (pharmacy network)" -Direction Inbound -Protocol TCP -LocalPort $HttpPort -Profile Private -Action Allow -ErrorAction SilentlyContinue | Out-Null
+	New-NetFirewallRule -DisplayName "PharmacyOS ERP (pharmacy network)" -Direction Inbound -Protocol TCP -LocalPort $HttpPort -Profile Private -RemoteAddress LocalSubnet -Action Allow -ErrorAction SilentlyContinue | Out-Null
 }
 
 # ------------------------------------------------------------------ 6. done

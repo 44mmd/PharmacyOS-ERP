@@ -128,8 +128,13 @@ function guard(contents, localPages = []) {
 	// links and location changes of the window itself (frames inside a server page are the page's own)
 	contents.on("will-frame-navigate", (details) => details.isMainFrame && leave(details, details.url));
 	contents.on("will-navigate", (details) => leave(details, details.url));
-	// a server-side redirect cannot take the window off the server either (also for the app's own loads)
-	contents.on("will-redirect", (details) => details.isMainFrame && leave(details, details.url));
+	// a server-side redirect cannot take the window off the server either (also for the app's own loads);
+	// when the app was loading the server from its startup screen, show the recovery screen, not a spinner
+	contents.on("will-redirect", (details) => {
+		if (!details.isMainFrame || isServerUrl(details.url) || guards.isLocalPage(details.url, localPages)) return;
+		leave(details, details.url);
+		if (win && contents === win.webContents && onLocalScreen()) showScreen("recovery");
+	});
 	contents.setWindowOpenHandler(({ url }) => {
 		if (isServerUrl(url)) {
 			return {
@@ -317,7 +322,9 @@ function registerIpc() {
 		openApp();
 		return cfg;
 	}));
-	ipcMain.handle("connect:retry", local(() => openApp()));
+	// leaving the local screen while a backup or restore runs would start the server and hide the result
+	const openWhenFree = () => (busy && busy !== "start" ? { ok: false, busy: true, operation: busy } : openApp());
+	ipcMain.handle("connect:retry", local(openWhenFree));
 	ipcMain.handle("printers:list", async (event) =>
 		fromLocalScreen(event) ? (await event.sender.getPrintersAsync()).map((p) => p.name) : []
 	);
@@ -379,7 +386,7 @@ function registerIpc() {
 		return { ok: r.code === 0 && r.result && r.result.status === "restored", error: r.code === 0 ? null : r.output.slice(-600) };
 	})));
 	ipcMain.handle("backups:open", local(() => shell.openPath(path.join(process.env.ProgramData || "C:\\ProgramData", "PharmacyOS", "Backups"))));
-	ipcMain.handle("app:open", local(() => openApp()));
+	ipcMain.handle("app:open", local(openWhenFree));
 
 	// the POS screen's native printing (platform adapter): the server's print view only, asked by a frame
 	// of the server itself — the only print that goes silently to the receipt printer
