@@ -11,6 +11,11 @@ name: PharmacyOS Desktop (Windows)
 
 on:
   workflow_dispatch:
+    inputs:
+      publish_evidence:
+        description: "Commit the Windows screenshots and the installer checksum to this branch (QA evidence)"
+        type: boolean
+        default: false
   push:
     tags: ["pharmacyos-local-v*", "pharmacyos-desktop-v*"]
     branches: ["claude/**"]
@@ -199,6 +204,46 @@ jobs:
             pharmacyos/desktop/dist/first-run.png
             pharmacyos/desktop/dist/screens/
           if-no-files-found: error
+
+  evidence:
+    # The run's artifacts as files in the branch (docs/qa/local/screenshots/windows): for reviewers who cannot
+    # download artifacts. On request only, on development branches; never on tags or the default branch.
+    name: Publish the Windows QA evidence to the branch (on request)
+    needs: windows-installer
+    if: github.event_name == 'workflow_dispatch' && inputs.publish_evidence && startsWith(github.ref, 'refs/heads/claude/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: PharmacyOS-Setup
+          path: art
+      - name: Commit the screenshots and the installer checksum
+        env:
+          SIGNED: ${{ secrets.WINDOWS_CSC_LINK != '' && 'yes' || 'no' }}
+        run: |
+          dest=pharmacyos/docs/qa/local/screenshots/windows
+          mkdir -p "$dest"
+          cp art/screens/*.png "$dest/"
+          cp art/first-run.png "$dest/00-first-run-smoke.png"
+          exe="$(ls art/PharmacyOS-Setup-*.exe | head -n 1)"
+          {
+            echo "Built and checked on Windows by $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            echo "commit: $GITHUB_SHA"
+            echo "file: $(basename "$exe")"
+            echo "bytes: $(stat -c %s "$exe")"
+            echo "sha256: $(sha256sum "$exe" | cut -d' ' -f1)"
+            echo "signed: $SIGNED"
+          } > "$dest/INSTALLER.txt"
+          cat "$dest/INSTALLER.txt"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$dest"
+          git diff --cached --quiet && exit 0
+          git commit -m "qa(local): Windows CI screenshots and installer checksum (run $GITHUB_RUN_ID) [skip ci]"
+          git push origin "HEAD:$GITHUB_REF_NAME"
 
   draft-release:
     name: Draft release (tags only — publish by hand)
