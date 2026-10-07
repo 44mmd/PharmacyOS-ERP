@@ -113,23 +113,23 @@
  },
  {
   "screen": "15-sale-detail",
-  "url": "http://127.0.0.1/desk/sales-invoice/ACC-SINV-2026-00093",
+  "url": "http://127.0.0.1/desk/sales-invoice/ACC-SINV-2026-00096",
   "note": "the voided sale in the ERP: items, batch, payments, status Cancelled",
   "visible_text": "الصفحة الرئيسية ERPNext بحث Ctrl+K الإشعارات الصنف الصفحة الرئيسية الزبون المورد فاتورة بيع QO QA Owner owner@qa-pharmacy.test الصفحة الرئيسية فاتورة بيع زبون نقدي ملغى عرض تعديل التفاصيل المدفوعات معلومات الاتصال والعنو",
   "page_errors": []
  },
  {
   "screen": "10-receipt-80mm",
-  "url": "http://127.0.0.1/printview?doctype=Sales%20Invoice&name=ACC-SINV-2026-00093&format=PharmacyOS%20Receipt&no_letterhead=1",
-  "note": "PharmacyOS Receipt print format, 80 mm paper (Arabic + English names, discount, change)",
-  "visible_text": "لا يسمح لا يسمح لطباعة الوثائق الملغاة دخول",
+  "url": "http://127.0.0.1/printview?doctype=Sales%20Invoice&name=ACC-SINV-2026-00097&format=PharmacyOS%20Receipt&no_letterhead=1",
+  "note": "PharmacyOS Receipt print format, 80 mm paper (Arabic + English names, cash and change)",
+  "visible_text": "طباعة احصل على ملف PDF QA TEST Pharmacy صيدلية الاختبار (QA) Main Branch 07700000000 فاتورة ACC-SINV-2026-00097 التاريخ 7 تشرين الأول 2026 20:22 أمين الصندوق QA Cashier Sara الزبون زبون نقدي Vitamin C 1000mg Effervescent",
   "page_errors": []
  },
  {
   "screen": "11-receipt-58mm",
-  "url": "http://127.0.0.1/printview?doctype=Sales%20Invoice&name=ACC-SINV-2026-00093&format=PharmacyOS%20Receipt&no_letterhead=1",
+  "url": "http://127.0.0.1/printview?doctype=Sales%20Invoice&name=ACC-SINV-2026-00097&format=PharmacyOS%20Receipt&no_letterhead=1",
   "note": "the same receipt on 58 mm paper (PharmacyOS Settings → Receipt Paper Width)",
-  "visible_text": "لا يسمح لا يسمح لطباعة الوثائق الملغاة دخول",
+  "visible_text": "طباعة احصل على ملف PDF QA TEST Pharmacy صيدلية الاختبار (QA) Main Branch 07700000000 فاتورة ACC-SINV-2026-00097 التاريخ 7 تشرين الأول 2026 20:22 أمين الصندوق QA Cashier Sara الزبون زبون نقدي Vitamin C 1000mg Effervescent",
   "page_errors": []
  },
  {
@@ -168,9 +168,16 @@
   "page_errors": []
  },
  {
+  "screen": "24b-expired-batches",
+  "url": "http://127.0.0.1/desk/batches-expiry",
+  "note": "expired batches: never sellable, value at risk, Dispose",
+  "visible_text": "نظرة عامة PharmacyOS بحث Ctrl+K الإشعارات لوحة التحكم تقرير الصيدلية يحتاج انتباهك الوجبات وتواريخ الانتهاء صحة المخزون اقتراحات إعادة الطلب QO QA Owner owner@qa-pharmacy.test الوجبات وتواريخ الانتهاء قائمة الوجبات سجل ا",
+  "page_errors": []
+ },
+ {
   "screen": "25-expired-disposal",
   "url": "http://127.0.0.1/desk/batches-expiry",
-  "note": "disposing of an expired batch: quantity and reason, recorded as a stock write-off",
+  "note": "disposing of an expired batch: quantity and reason, recorded as a stock write-off (the A12 test disposes of it for real)",
   "visible_text": "نظرة عامة PharmacyOS بحث Ctrl+K الإشعارات لوحة التحكم تقرير الصيدلية يحتاج انتباهك الوجبات وتواريخ الانتهاء صحة المخزون اقتراحات إعادة الطلب QO QA Owner owner@qa-pharmacy.test الوجبات وتواريخ الانتهاء قائمة الوجبات سجل ا",
   "page_errors": []
  },
@@ -190,7 +197,7 @@
  },
  {
   "screen": "28-receiving",
-  "url": "http://127.0.0.1/desk/purchase-receipt/MAT-PRE-2026-00011",
+  "url": "http://127.0.0.1/desk/purchase-receipt/MAT-PRE-2026-00012",
   "note": "receiving: purchase receipt with batch numbers, expiry and cost",
   "visible_text": "المخزون ERPNext بحث Ctrl+K الإشعارات الصفحة الرئيسية لوحة التحكم حركة مخزون استلام مشتريات وصل تسليم طلب مواد قائمة الانتقاء الأدوات الإعدادات التقارير الإعدادات QO QA Owner owner@qa-pharmacy.test المخزون استلام مشتريات ",
   "page_errors": []

@@ -16,7 +16,7 @@ signed, merged or deployed.
 | 6 | Setup scripts run on Windows PowerShell 5.1 (BOM, helpers, data-folder lock, planted link removed) | Done | Windows CI step "Setup scripts work in Windows PowerShell 5.1" |
 | 7 | Fresh server install from nothing in the exact Ubuntu 24.04 WSL image | Done | QA server (chroot of the WSL rootfs), resumed after a forced failure |
 | 8 | Production mode on the installed server (no developer mode, sign-up off, password policy) | Done | FINAL_QA_REPORT § A3 |
-| 9 | QA pharmacy: every workflow A5–A22 PASS over HTTP as real users | Done | `qa/local/results.json`, FINAL_QA_REPORT |
+| 9 | QA pharmacy: every workflow A3–A22 PASS over HTTP as real users (301 / 301) | Done | `qa/local/results.json`, FINAL_QA_REPORT |
 | 10 | Permission matrix by real sign-in, every cell as designed | Done | `qa/local/permissions-matrix.md` |
 | 11 | Security pass: P0 = P1 = P2 = 0 (exploits replayed and refused) | Done | FINAL_QA_REPORT § A21, § Issues |
 | 12 | Backup → restore round trip through the app; tampered / planted backups refused; failed restore reverted | Done | [34](screenshots/34-backups.png)–[35c](screenshots/35c-restore-result.png), A15 rows |

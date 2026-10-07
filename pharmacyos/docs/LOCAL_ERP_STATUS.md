@@ -95,7 +95,7 @@ PharmacyOS screens, verified (`test_localization`); ~26 % of upstream ERPNext st
 The full evidence is `docs/qa/local/FINAL_QA_REPORT.md` (every check: expected, actual, PASS/FAIL,
 screenshot, automated test) and `docs/qa/local/RELEASE_CHECKLIST.md`.
 
-* Full PharmacyOS suite on Frappe 16.36.1 / ERPNext 16.37.0 — see the report for the final count.
+* Full PharmacyOS suite on Frappe 16.36.1 / ERPNext 16.37.0: **260 tests, OK**; 301 / 301 QA checks over HTTP.
 * Desktop unit tests 29 / 29 (Linux and Windows CI).
 * A QA pharmacy on a server installed from nothing in the Ubuntu 24.04 WSL image: owner, manager, pharmacist,
   cashier, purchasing, inventory and accountant accounts; two suppliers; 17 medicines with categories,

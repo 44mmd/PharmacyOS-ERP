@@ -60,6 +60,7 @@ const scan = async (p, code, suffix = "Enter") => {
 	await p.waitForTimeout(1000);
 };
 async function api(p, method, args = {}) {
+	if (!(await p.evaluate(() => Boolean(window.frappe && window.frappe.csrf_token)).catch(() => false))) await desk(p, "pharmacy-dashboard", 1500);
 	return p.evaluate(
 		async ([m, a]) => {
 			const r = await fetch("/api/method/" + m, { method: "POST", headers: { "Content-Type": "application/json", "X-Frappe-CSRF-Token": window.frappe?.csrf_token || window.csrf_token || "" }, body: JSON.stringify(a) });
@@ -71,8 +72,11 @@ async function api(p, method, args = {}) {
 	);
 }
 
+const OWNER_ONLY = process.env.OWNER_ONLY || "";
+if (OWNER_ONLY) [globalThis.keptSale, globalThis.saleName] = OWNER_ONLY.split(",");
+
 // ------------------------------------------------------------------ guest
-{
+if (!OWNER_ONLY) {
 	const p = await session(null);
 	await p.goto(B + "/login");
 	await shot(p, "05-login", "Frappe sign-in page, PharmacyOS branded");
@@ -81,7 +85,7 @@ async function api(p, method, args = {}) {
 
 // ------------------------------------------------------------------ cashier: a counter shift
 const cashier = await session("cashier@qa-pharmacy.test", PWD);
-{
+if (!OWNER_ONLY) {
 	const p = cashier;
 	await p.goto(B + "/pos");
 	await p.waitForTimeout(3000);
@@ -226,6 +230,17 @@ const owner = await session(...OWNER);
 	await shot(p, "23-batches", "Batches & Expiry: every batch with its expiry and quantity (FEFO order)");
 	await desk(p, "expiry-intelligence", 4000);
 	await shot(p, "24-expiry", "Expiry Intelligence: expired and near-expiry stock");
+	const expiredLeft = await api(p, "pharmacyos_erp.pharmacy.expiry.get_batches", { bucket: "expired", page_length: 5 });
+	if (!expiredLeft.rows.length) {
+		// a delivery received months ago, while valid, that has expired since (as the QA seed records it)
+		const wh = (await api(p, "frappe.client.get_list", { doctype: "Branch", fields: ["pharmacyos_warehouse"], limit_page_length: 1 }))[0].pharmacyos_warehouse;
+		const day = (n) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
+		const b = await api(p, "pharmacyos_erp.pharmacy.receiving.create_receiving_batch", { item_code: "QA-AMOXSYR", batch_id: "AMX-QA-SHOT", expiry_date: day(-3) });
+		const company = (await api(p, "frappe.client.get_list", { doctype: "Company", fields: ["name"], limit_page_length: 1 }))[0].name;
+		const pr = await api(p, "frappe.client.insert", { doc: { doctype: "Purchase Receipt", supplier: "QA Basra Medical Trading", company, set_warehouse: wh, set_posting_time: 1, posting_date: day(-120), items: [{ item_code: "QA-AMOXSYR", qty: 4, rate: 3000, warehouse: wh, batch_no: b.name, use_serial_batch_fields: 1 }] } });
+		await api(p, "frappe.client.submit", { doc: pr });
+		console.log("expired batch for the screenshot:", pr.name);
+	}
 	await desk(p, "batches-expiry", 3500);
 	const expiredTab = await p.$('[data-slot="buckets"] [data-value="expired"]');
 	if (expiredTab) {
@@ -287,6 +302,20 @@ const owner = await session(...OWNER);
 	const p = cashier;
 	await p.goto(B + "/pos");
 	await p.waitForTimeout(3000);
+	if (await p.isVisible(".px-dialog input[data-mode]")) {
+		// no shift open (owner-only run): open one and make a sale, as a counter day would
+		await p.fill(".px-dialog input[data-mode]", "25000");
+		await p.click(".px-dialog .px-btn-primary");
+		await p.waitForTimeout(3000);
+		await p.click("body", { position: { x: 1200, y: 650 } });
+		await scan(p, "6291100000011");
+		await p.keyboard.press("F9");
+		await p.waitForTimeout(1300);
+		await p.keyboard.press("Enter");
+		await p.waitForTimeout(4000);
+		await p.keyboard.press("Escape");
+		await p.waitForTimeout(800);
+	}
 	await p.click("[data-action=close-shift]");
 	await p.waitForTimeout(2500);
 	const cells = await p.$$eval(".px-dialog table tbody tr td", (tds) => tds.map((t) => t.innerText));
@@ -299,5 +328,8 @@ const owner = await session(...OWNER);
 	await shot(p, "20b-shift-closed", "shift closed; the next sign-in asks for a new opening float");
 }
 
-fs.writeFileSync(path.join(OUT, "screens.json"), JSON.stringify(record, null, 1));
+// merged with earlier runs by screen name (an owner-only run keeps the counter screens' records)
+const logFile = path.join(OUT, "screens.json");
+const previous = fs.existsSync(logFile) ? JSON.parse(fs.readFileSync(logFile, "utf8")) : [];
+fs.writeFileSync(logFile, JSON.stringify([...previous.filter((r) => !record.some((x) => x.screen === r.screen)), ...record], null, 1));
 await browser.close();

@@ -184,7 +184,7 @@ reboot/auto-start, scanners, thermal printers, SmartScreen with a signed install
 | Verification | Each backup is checksummed and test-decompressed, and is only marked *Success* once verified. |
 | Encryption | Turn on System Settings → **Encrypt Backups** (gpg, AES). The passphrase is generated into the server's `site_config.json` and is never in source code. **Store a copy offline: without it an encrypted backup cannot be restored on a new machine.** |
 | Retention | PharmacyOS Settings: every backup is kept for *Keep Hourly Backups (Days)* (default 2). The last backup of each day is kept for *Keep Daily Backups (Days)* (default 30). The newest verified backup is never deleted. Spreadsheets follow the daily retention. |
-| Health | **System → System Status**: last success, next run, size, folder, free disk, last error. A dashboard alert appears only on a problem. A backup is skipped with a warning below *Minimum Free Disk*. Failures are logged and never interrupt a sale. |
+| Health | **System → System Status**: last success, next run, size, folder, free disk, last error. A dashboard alert appears only on a problem. A backup is skipped with a warning below *Minimum Free Disk*. Failures are logged and never interrupt a sale. Scheduled jobs are re-armed whenever their stored times lie in the future (time zone set at first run or changed later, a clock put back, a restored database), at every server start and after every migrate. |
 | Audit | *PharmacyOS Backup Log* is read-only in the UI. Rows left "Running" by a power cut or restore are reconciled against the files on disk. |
 | Access | Back up now: Owner / System Manager. Status: Owner, Manager, System Manager. Cashiers have no access (tested). |
 

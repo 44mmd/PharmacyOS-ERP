@@ -116,6 +116,9 @@ update() {
 	# result says exactly whether that rollback itself succeeded.
 	local bundle new_version new_build old_release new_release safety
 	bundle="$(cd "${1:?bundle folder}" && pwd)"
+	# the lock first: while another update runs, the release link already points at its new release, and
+	# the check below would answer "current" for an update that may still roll back
+	take_lock 5
 	new_version="$(cat "$bundle/VERSION")"
 	new_build="$(cat "$bundle/BUILD_ID" 2>/dev/null || true)"
 	old_release="$(readlink -f "$OPT/app")"
@@ -127,7 +130,6 @@ update() {
 		result "{\"status\": \"current\", \"version\": \"$new_version\"}"
 		return 0
 	fi
-	take_lock 5
 	echo "== Maintenance mode on"
 	as_bench "bench --site '$SITE' set-maintenance-mode on"
 	echo "== Safety backup"

@@ -122,5 +122,33 @@ def broken_import():
 	shutil.rmtree(folder, ignore_errors=True)
 
 
+def one_at_a_time():
+	"""A second server operation while one runs (another window, a reload) is refused as busy, never run
+	alongside. The long operation is an update whose new release fails (backup, failed migrate, rollback);
+	a second update is asked for meanwhile."""
+	import shutil
+	import time
+
+	root, bundle = "/var/tmp/wslroot", "/mnt/c/Program Files/PharmacyOS ERP/resources/server"
+	broken = root + "/tmp/busy-bundle"
+	shutil.rmtree(broken, ignore_errors=True)
+	shutil.copytree(root + bundle, broken)
+	with open(broken + "/apps/pharmacyos_erp/pharmacyos_erp/hooks.py", "a") as f:
+		f.write("\nraise Exception('QA: a broken release that fails on purpose')\n")
+	with open(broken + "/BUILD_ID", "w") as f:
+		f.write("qa0busy0" + "0" * 56)
+	os.system(f"chown -R 1000 {broken}")
+	first = subprocess.Popen([SRV, "update", "/tmp/busy-bundle"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+	time.sleep(4)
+	code, res, _log = srv("update", "/tmp/busy-bundle")
+	out, _ = first.communicate(timeout=1800)
+	first_res = next((json.loads(l.split(" ", 1)[1]) for l in reversed(out.splitlines()) if l.startswith("##PHARMACYOS-RESULT")), None)
+	R.add("A16 Update / rollback", "one server operation at a time (a second update while one runs)", "the second is refused as busy (exit 75); the first finishes (rolled back)",
+		{"second_exit": code, "second": res, "first": first_res}, code == 75 and (res or {}).get("status") == "busy" and (first_res or {}).get("status") == "rolled_back")
+	shutil.rmtree(broken, ignore_errors=True)
+
+
 if __name__ == "__main__" and os.environ.get("QA_BROKEN"):
 	broken_import()
+if __name__ == "__main__" and os.environ.get("QA_BUSY"):
+	one_at_a_time()
