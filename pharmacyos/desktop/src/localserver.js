@@ -1,7 +1,9 @@
 // The pharmacy server on THIS computer (single-PC mode): the "PharmacyOS" WSL2 environment.
 // Everything here goes through /opt/pharmacyos/bin/pharmacyos-server inside that environment, so the
 // desktop app never touches the database itself. On a developer machine (not Windows) the command can
-// be replaced with PHARMACYOS_SERVER_CMD (e.g. a script that enters a test container).
+// be replaced with PHARMACYOS_SERVER_CMD (e.g. a script that enters a test container) and the bundle with
+// PHARMACYOS_BUNDLE_DIR — in an unpackaged app only: an installed app always runs its own command and its
+// own bundle (the setup runs the bundle's script with administrator rights).
 const { spawn } = require("child_process");
 const fs = require("fs");
 const path = require("path");
@@ -9,15 +11,43 @@ const path = require("path");
 const DISTRO = "PharmacyOS";
 const CONTROL = "/opt/pharmacyos/bin/pharmacyos-server";
 
+// Running as the installed app (not `electron .` on a developer machine). Outside Electron (unit tests)
+// require("electron") is the npm package, not the API: never packaged.
+function isPackaged() {
+	try {
+		const { app } = require("electron");
+		return Boolean(app && app.isPackaged);
+	} catch {
+		return false;
+	}
+}
+
+// A developer hook from the environment, ignored by the installed app.
+function devHook(name, packaged = isPackaged()) {
+	return packaged ? "" : process.env[name] || "";
+}
+
 // Where the server bundle shipped with this app lives (resources/server when installed).
 function bundleDir(app) {
-	if (process.env.PHARMACYOS_BUNDLE_DIR) return process.env.PHARMACYOS_BUNDLE_DIR;
-	return app && app.isPackaged ? path.join(process.resourcesPath, "server") : path.join(__dirname, "..", "server-bundle");
+	const packaged = app ? Boolean(app.isPackaged) : isPackaged();
+	const dev = devHook("PHARMACYOS_BUNDLE_DIR", packaged);
+	if (dev) return dev;
+	return packaged ? path.join(process.resourcesPath, "server") : path.join(__dirname, "..", "server-bundle");
 }
 
 function bundleVersion(app) {
 	try {
 		return fs.readFileSync(path.join(bundleDir(app), "VERSION"), "utf8").trim();
+	} catch {
+		return null;
+	}
+}
+
+// The bundle's build identity (BUILD_ID, written by scripts/prepare-server-bundle.js): tells apart two
+// bundles of the same version built from different files.
+function bundleBuild(app) {
+	try {
+		return fs.readFileSync(path.join(bundleDir(app), "BUILD_ID"), "utf8").trim() || null;
 	} catch {
 		return null;
 	}
@@ -46,8 +76,9 @@ function compareVersions(a, b) {
 	return 0;
 }
 
-function command(args) {
-	if (process.env.PHARMACYOS_SERVER_CMD) return { file: process.env.PHARMACYOS_SERVER_CMD, args };
+function command(args, packaged = isPackaged()) {
+	const dev = devHook("PHARMACYOS_SERVER_CMD", packaged);
+	if (dev) return { file: dev, args };
 	return { file: "wsl.exe", args: ["-d", DISTRO, "--user", "root", "--exec", CONTROL, ...args] };
 }
 
@@ -115,4 +146,37 @@ async function installedVersion() {
 	return r.code === 0 && parseVersion(v) ? v : null;
 }
 
-module.exports = { DISTRO, bundleDir, bundleVersion, toWslPath, parseVersion, compareVersions, run, startKeepAlive, installedVersion };
+// The installed server's BUILD_ID; "unknown" when it has none or is too old to tell (no build-id command).
+async function installedBuild() {
+	const r = await run(["build-id"], { timeoutMs: 60000 });
+	const v = (r.output || "").trim().split("\n").pop().trim().toLowerCase();
+	return r.code === 0 && /^[0-9a-f]{64}$/.test(v) ? v : "unknown";
+}
+
+// Whether this app's server bundle is offered as an update of the installed server: a newer version, or
+// the same version built from other files (a corrected installer). An installed build that cannot be told
+// ("unknown", an older server) counts as different only when the versions are equal; an older bundle, or
+// an unreadable version, never offers an update.
+function offersUpdate({ bundled, installed, bundledBuild, installedBuild }) {
+	if (!parseVersion(bundled) || !parseVersion(installed)) return false;
+	const c = compareVersions(bundled, installed);
+	if (c !== 0) return c > 0;
+	return Boolean(bundledBuild) && String(bundledBuild).toLowerCase() !== String(installedBuild || "unknown").toLowerCase();
+}
+
+module.exports = {
+	DISTRO,
+	isPackaged,
+	bundleDir,
+	bundleVersion,
+	bundleBuild,
+	toWslPath,
+	parseVersion,
+	compareVersions,
+	command,
+	run,
+	startKeepAlive,
+	installedVersion,
+	installedBuild,
+	offersUpdate,
+};

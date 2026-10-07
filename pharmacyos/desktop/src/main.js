@@ -8,10 +8,12 @@
 //   screen if it does not, and — when this app brings a newer server — a guided server update (backup
 //   first, automatic rollback). Backups can be taken, found and restored from the app's menu.
 // Security: context isolation + sandbox, no Node in pages, navigation locked to the server origin,
-// external links open in the system browser; privileged calls are accepted only from the local screens.
+// web and e-mail links open in the system browser; privileged calls are accepted only from the local
+// screen's own frame (guards.js), never from a server page.
 const { app, BrowserWindow, Menu, ipcMain, shell, dialog, session } = require("electron");
 const path = require("path");
 const config = require("./config");
+const guards = require("./guards");
 const server = require("./server");
 const pos = require("./pos");
 const setup = require("./setup");
@@ -19,6 +21,7 @@ const localserver = require("./localserver");
 
 const CONNECT_PAGE = path.join(__dirname, "connect.html");
 const TEST_RECEIPT = path.join(__dirname, "test-receipt.html");
+const LOCAL_PAGES = [CONNECT_PAGE, TEST_RECEIPT]; // the only files the main window may show
 const PING_EVERY_MS = 30000; // quiet health check; only a failure is shown
 const START_ATTEMPTS = Number(process.env.PHARMACYOS_START_ATTEMPTS) || 90; // × 2 s: a cold Windows boot can take a few minutes to bring the server up
 let win = null;
@@ -26,7 +29,7 @@ let cfg = null;
 let online = null;
 let lastAppUrl = null;
 let monitor = null;
-let busy = false; // an update/restore is running: no navigation away from the local screen
+let busy = null; // the server operation running ("update", "restore", "backup", "start"): one at a time, no navigation away from the local screen
 
 if (!app.requestSingleInstanceLock()) {
 	app.quit(); // a second launch focuses the existing window instead of opening another
@@ -44,16 +47,24 @@ if (!app.requestSingleInstanceLock()) {
 app.on("window-all-closed", () => app.quit());
 
 function isServerUrl(url) {
-	try {
-		return cfg && new URL(url).origin === new URL(cfg.serverUrl).origin;
-	} catch {
-		return false;
-	}
+	return Boolean(cfg) && guards.sameOrigin(url, cfg.serverUrl);
 }
 
-function isLocalScreen(contents) {
-	const url = contents.getURL();
-	return url.startsWith("file://") && url.includes("connect.html");
+// The main window shows the local screen (startup, recovery, settings…), not a server page.
+function onLocalScreen() {
+	return guards.isLocalPage(win.webContents.getURL(), [CONNECT_PAGE]);
+}
+
+// A privileged IPC call: from the local screen's own main frame, in the main window — not from a server
+// page (also not one being navigated away, nor after history.back()).
+function fromLocalScreen(event) {
+	return Boolean(win) && event.sender === win.webContents && guards.isFromLocalScreen(event, CONNECT_PAGE);
+}
+
+// Web and e-mail links only; any other scheme (search-ms:, ms-word:, file:…) is dropped.
+function openExternal(url) {
+	const safe = guards.externalUrl(url);
+	if (safe) shell.openExternal(safe);
 }
 
 function webPreferences() {
@@ -84,16 +95,18 @@ function createWindow() {
 		win.maximize();
 		win.show();
 	});
-	guard(win.webContents);
+	guard(win.webContents, LOCAL_PAGES);
 	win.webContents.on("did-navigate", (_e, url) => {
-		if (isServerUrl(url)) lastAppUrl = url;
+		if (!isServerUrl(url)) return;
+		lastAppUrl = url;
+		forgetLocalScreens(win.webContents);
 	});
 	win.webContents.on("did-fail-load", (_e, code, _desc, url, isMainFrame) => {
 		if (isMainFrame && code !== -3 && isServerUrl(url)) showScreen("recovery");
 	});
 	win.on("page-title-updated", (e) => e.preventDefault()); // the window is always "PharmacyOS ERP"
 	win.on("close", (e) => {
-		if (!busy) return;
+		if (!busy || busy === "start") return;
 		e.preventDefault(); // never interrupt an update or a restore
 		dialog.showMessageBox(win, {
 			type: "warning",
@@ -103,14 +116,20 @@ function createWindow() {
 	});
 }
 
-// Lock navigation to the PharmacyOS server; print previews open as in-app windows.
-function guard(contents) {
-	contents.on("will-navigate", (event, url) => {
-		if (!isServerUrl(url) && !url.startsWith("file://")) {
-			event.preventDefault();
-			shell.openExternal(url);
-		}
-	});
+// Lock a window to the PharmacyOS server (the main window also to the app's own pages, exactly); links
+// elsewhere go to the system browser. Print previews open as in-app windows and print with the normal
+// dialog: only the POS receipt (pos:print-receipt) prints silently to the receipt printer.
+function guard(contents, localPages = []) {
+	const leave = (event, url) => {
+		if (isServerUrl(url) || guards.isLocalPage(url, localPages)) return;
+		event.preventDefault();
+		openExternal(url);
+	};
+	// links and location changes of the window itself (frames inside a server page are the page's own)
+	contents.on("will-frame-navigate", (details) => details.isMainFrame && leave(details, details.url));
+	contents.on("will-navigate", (details) => leave(details, details.url));
+	// a server-side redirect cannot take the window off the server either (also for the app's own loads)
+	contents.on("will-redirect", (details) => details.isMainFrame && leave(details, details.url));
 	contents.setWindowOpenHandler(({ url }) => {
 		if (isServerUrl(url)) {
 			return {
@@ -118,24 +137,17 @@ function guard(contents) {
 				overrideBrowserWindowOptions: { autoHideMenuBar: true, title: "PharmacyOS ERP", webPreferences: webPreferences() },
 			};
 		}
-		if (/^https?:/i.test(url)) shell.openExternal(url);
+		openExternal(url);
 		return { action: "deny" };
 	});
-	contents.on("did-create-window", (child) => {
-		guard(child.webContents);
-		child.webContents.on("did-finish-load", () => maybeSilentPrint(child));
-	});
+	contents.on("did-create-window", (child) => guard(child.webContents));
 }
 
-// Receipts: with a receipt printer chosen in Settings, print previews of POS receipts print
-// directly to it; otherwise the normal print dialog is used.
-function maybeSilentPrint(child) {
-	const url = child.webContents.getURL();
-	if (!cfg.silentReceipts || !cfg.receiptPrinter || !url.includes("/printview")) return;
-	child.webContents.print({ silent: true, deviceName: cfg.receiptPrinter, printBackground: true }, (ok, reason) => {
-		if (!ok) dialog.showErrorBox("PharmacyOS ERP", `Receipt was not printed: ${reason}`);
-		else child.close();
-	});
+// history.back() on a server page must never return to a local screen: once a server page is shown,
+// the window's history holds no local screen.
+function forgetLocalScreens(contents) {
+	const history = contents.navigationHistory;
+	if (history.getAllEntries().some((entry) => !isServerUrl(entry.url))) history.clear();
 }
 
 // Prints a page from a hidden window that shares the signed-in session (same partition), so the
@@ -143,7 +155,7 @@ function maybeSilentPrint(child) {
 function printPage(url, { local = false } = {}) {
 	return new Promise((resolve) => {
 		const printer = new BrowserWindow({ show: false, webPreferences: webPreferences() });
-		if (!local) guard(printer.webContents);
+		guard(printer.webContents);
 		const done = (result) => {
 			if (!printer.isDestroyed()) printer.close();
 			resolve(result);
@@ -192,19 +204,27 @@ async function openApp() {
 	win.loadURL(lastAppUrl && isServerUrl(lastAppUrl) ? lastAppUrl : new URL(pos.startPath(cfg), cfg.serverUrl).href);
 }
 
-// A newer PharmacyOS ERP bundled with this app than the one installed on this PC's server.
+// A newer PharmacyOS ERP bundled with this app than the one installed on this PC's server — or the same
+// version built from other files (a corrected installer; see localserver.offersUpdate).
 async function serverUpdateAvailable() {
 	const bundled = localserver.bundleVersion(app);
 	if (!bundled) return null;
 	const installed = await localserver.installedVersion();
 	if (!installed) return null;
-	return localserver.compareVersions(bundled, installed) > 0 ? { installed, bundled } : null;
+	const bundledBuild = localserver.bundleBuild(app);
+	const sameVersion = localserver.compareVersions(bundled, installed) === 0;
+	const installedBuild = sameVersion && bundledBuild ? await localserver.installedBuild() : null;
+	if (!localserver.offersUpdate({ bundled, installed, bundledBuild, installedBuild })) return null;
+	if (!sameVersion) return { installed, bundled };
+	// the same version on both sides: the update screen tells the builds apart
+	const short = (build) => (/^[0-9a-f]{64}$/i.test(build || "") ? build.slice(0, 8) : "?");
+	return { installed: `${installed} (${short(installedBuild)})`, bundled: `${bundled} (${short(bundledBuild)})` };
 }
 
 function startMonitor() {
 	clearInterval(monitor);
 	monitor = setInterval(async () => {
-		if (!cfg || !config.isConfigured(cfg) || isLocalScreen(win.webContents)) return;
+		if (!cfg || !config.isConfigured(cfg) || onLocalScreen()) return;
 		const ok = await server.ping(cfg.serverUrl);
 		if (ok !== online) {
 			online = ok;
@@ -231,6 +251,8 @@ async function showAbout() {
 }
 
 function buildMenu() {
+	// no Reload in the installed app: reloading the local screen during an update or a restore would offer
+	// to start it again (the main process refuses that too: one server operation at a time)
 	const template = [
 		{
 			label: "PharmacyOS ERP",
@@ -244,7 +266,6 @@ function buildMenu() {
 				{ type: "separator" },
 				{ label: "About PharmacyOS ERP", click: showAbout },
 				{ type: "separator" },
-				{ role: "reload" },
 				{ role: "togglefullscreen" },
 				{ role: "resetZoom" },
 				{ role: "zoomIn" },
@@ -255,7 +276,7 @@ function buildMenu() {
 		},
 		{ label: "Edit", submenu: [{ role: "undo" }, { role: "redo" }, { type: "separator" }, { role: "cut" }, { role: "copy" }, { role: "paste" }, { role: "selectAll" }] },
 	];
-	if (!app.isPackaged) template.push({ label: "Developer", submenu: [{ role: "toggleDevTools" }] });
+	if (!app.isPackaged) template.push({ label: "Developer", submenu: [{ role: "reload" }, { role: "toggleDevTools" }] });
 	Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
 
@@ -265,8 +286,22 @@ function windowsPath(p) {
 	return m && process.platform === "win32" ? `${m[1].toUpperCase()}:\\${m[2].replace(/\//g, "\\")}` : p;
 }
 
+// One server operation at a time. A second request while one runs — a double click, or the local screen
+// opened again meanwhile — is refused without starting anything; the screen then asks to wait.
+function exclusive(operation, handler) {
+	return async (...args) => {
+		if (busy) return { ok: false, busy: true, operation: busy };
+		busy = operation;
+		try {
+			return await handler(...args);
+		} finally {
+			busy = null;
+		}
+	};
+}
+
 function registerIpc() {
-	const local = (handler) => (event, ...args) => (isLocalScreen(event.sender) ? handler(...args) : null);
+	const local = (handler) => (event, ...args) => (fromLocalScreen(event) ? handler(...args) : null);
 
 	// connection and printer settings
 	ipcMain.handle("config:get", local(() => cfg));
@@ -284,7 +319,7 @@ function registerIpc() {
 	}));
 	ipcMain.handle("connect:retry", local(() => openApp()));
 	ipcMain.handle("printers:list", async (event) =>
-		isLocalScreen(event.sender) ? (await event.sender.getPrintersAsync()).map((p) => p.name) : []
+		fromLocalScreen(event) ? (await event.sender.getPrintersAsync()).map((p) => p.name) : []
 	);
 	ipcMain.handle("printers:test", local(() => printPage(TEST_RECEIPT, { local: true })));
 	ipcMain.handle("app:info", () => ({
@@ -293,12 +328,14 @@ function registerIpc() {
 		serverVersion: localserver.bundleVersion(app),
 		mode: cfg && cfg.mode,
 	}));
+	ipcMain.handle("app:busy", local(() => ({ busy: Boolean(busy), operation: busy })));
 
 	// first-run setup of this PC as the pharmacy server
 	ipcMain.handle("setup:check", local(() => setup.systemCheck(app)));
 	ipcMain.handle("setup:start", local((values) => setup.start(app, values)));
 	ipcMain.handle("setup:resume", local(() => setup.resume(app)));
 	ipcMain.handle("setup:state", local(() => ({ state: setup.readState(), log: setup.logTail(30) })));
+	ipcMain.handle("setup:forget", local(() => setup.forgetRequest(app)));
 	ipcMain.handle("setup:reboot", local(() => {
 		require("child_process").spawn("shutdown.exe", ["/r", "/t", "10", "/c", "PharmacyOS setup continues after the restart."], { windowsHide: true, detached: true }).unref();
 		return true;
@@ -310,19 +347,14 @@ function registerIpc() {
 	}));
 
 	// server on this PC: start, update, back up, restore
-	ipcMain.handle("server:start", local(async () => {
+	ipcMain.handle("server:start", local(exclusive("start", async () => {
 		await localserver.run(["start"], { timeoutMs: 180000 });
 		openApp();
-	}));
-	ipcMain.handle("server:update", local(async () => {
-		busy = true;
-		try {
-			const bundle = localserver.toWslPath(localserver.bundleDir(app));
-			return await localserver.run(["update", bundle], { onLine: (line) => win.webContents.send("server:line", line) });
-		} finally {
-			busy = false;
-		}
-	}));
+	})));
+	ipcMain.handle("server:update", local(exclusive("update", async () => {
+		const bundle = localserver.toWslPath(localserver.bundleDir(app));
+		return await localserver.run(["update", bundle], { onLine: (line) => win.webContents.send("server:line", line) });
+	})));
 	ipcMain.handle("server:continue", local(() => {
 		online = true;
 		win.loadURL(new URL(pos.startPath(cfg), cfg.serverUrl).href);
@@ -336,32 +368,24 @@ function registerIpc() {
 			return { ok: false, error: r.output.slice(-400) };
 		}
 	}));
-	ipcMain.handle("backups:create", local(async () => {
-		busy = true;
-		try {
-			const r = await localserver.run(["backup"], { timeoutMs: 900000 });
-			return { ok: r.code === 0, folder: r.result && windowsPath(r.result.folder), error: r.code === 0 ? null : r.output.slice(-400) };
-		} finally {
-			busy = false;
-		}
-	}));
-	ipcMain.handle("backups:restore", local(async (folder, withFiles) => {
-		busy = true;
-		try {
-			const args = ["restore", String(folder)];
-			if (withFiles) args.push("--with-files");
-			const r = await localserver.run(args, { onLine: (line) => win.webContents.send("server:line", line) });
-			return { ok: r.code === 0 && r.result && r.result.status === "restored", error: r.code === 0 ? null : r.output.slice(-600) };
-		} finally {
-			busy = false;
-		}
-	}));
+	ipcMain.handle("backups:create", local(exclusive("backup", async () => {
+		const r = await localserver.run(["backup"], { timeoutMs: 900000 });
+		return { ok: r.code === 0, folder: r.result && windowsPath(r.result.folder), error: r.code === 0 ? null : r.output.slice(-400) };
+	})));
+	ipcMain.handle("backups:restore", local(exclusive("restore", async (folder, withFiles) => {
+		const args = ["restore", String(folder)];
+		if (withFiles) args.push("--with-files");
+		const r = await localserver.run(args, { onLine: (line) => win.webContents.send("server:line", line) });
+		return { ok: r.code === 0 && r.result && r.result.status === "restored", error: r.code === 0 ? null : r.output.slice(-600) };
+	})));
 	ipcMain.handle("backups:open", local(() => shell.openPath(path.join(process.env.ProgramData || "C:\\ProgramData", "PharmacyOS", "Backups"))));
 	ipcMain.handle("app:open", local(() => openApp()));
 
-	// the POS screen's native printing (platform adapter): the server's print view only
+	// the POS screen's native printing (platform adapter): the server's print view only, asked by a frame
+	// of the server itself — the only print that goes silently to the receipt printer
 	ipcMain.handle("pos:print-receipt", (event, url) => {
-		if (!cfg || !isServerUrl(event.sender.getURL()) || !pos.isReceiptUrl(url, cfg.serverUrl)) {
+		const frame = event.senderFrame;
+		if (!cfg || !frame || frame.detached || !isServerUrl(frame.url) || !pos.isReceiptUrl(url, cfg.serverUrl)) {
 			return { ok: false, error: "not allowed" };
 		}
 		return printPage(url);
