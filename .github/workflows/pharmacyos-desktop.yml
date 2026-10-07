@@ -18,7 +18,7 @@ on:
       - "pharmacyos/desktop/**"
       - "pharmacyos/deploy/**"
       - "pharmacyos/dev/setup-dev-bench.sh"
-      - "pharmacyos/apps/pharmacyos_erp/pharmacyos_erp/__init__.py"
+      - "pharmacyos/apps/pharmacyos_erp/**"
       - ".github/workflows/pharmacyos-desktop.yml"
 
 permissions:
