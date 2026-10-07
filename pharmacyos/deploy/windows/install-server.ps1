@@ -6,10 +6,12 @@
 #   %ProgramData%\PharmacyOS\Logs\install.log       (full technical log)
 #
 # What it does (each step is skipped when already done, so it can always be run again):
-#   1. checks Windows (build 19041+, 64-bit, virtualization, free disk);
+#   1. checks Windows (build 19041+, 64-bit, virtualization, free disk); %ProgramData%\PharmacyOS is
+#      restricted to SYSTEM, Administrators and this Windows user first;
 #   2. turns on WSL2 — if Windows must restart, it registers itself to continue after the next sign-in
 #      (no second permission prompt) and asks the app to show "Restart now";
-#   3. downloads Ubuntu 24.04 and imports it as the "PharmacyOS" environment (systemd on);
+#   3. downloads Ubuntu 24.04 (checked against the SHA-256 Ubuntu publishes) and imports it as the
+#      "PharmacyOS" environment (systemd on);
 #   4. runs deploy/server/install-server.sh inside it (MariaDB, Redis, pinned Frappe 16.36.1 / ERPNext
 #      16.37.0, PharmacyOS ERP, the pharmacy and its owner account), relaying its progress;
 #   5. registers the "PharmacyOS Server" task: the server starts with Windows, before anyone signs in,
@@ -113,6 +115,96 @@ function ConvertTo-WslPath([string]$WindowsPath) {
 	return "/mnt/" + $full.Substring(0, 1).ToLower() + ($full.Substring(2) -replace "\\", "/")
 }
 
+# The bash script that runs install-server.sh with the pharmacy's values. It is started with
+# "wsl.exe --exec bash -c <script>", so exactly one shell (that bash) reads it: without --exec, root's
+# default shell would expand it first and bash would then re-read the decoded values as code. Each value
+# is base64 (letters, digits, + / =: nothing a shell acts on) decoded into a plain assignment, which bash
+# never splits or globs: spaces, quotes, $, #, ; and Arabic arrive byte for byte. The script has no double
+# quote and no backslash (but in '\'' for a path with a quote), so it is one Windows argument as it is.
+function ConvertTo-InstallScript([System.Collections.IDictionary]$Values, [string]$InstallScript) {
+	$parts = @()
+	foreach ($name in $Values.Keys) {
+		if ($name -notmatch "^[A-Z_][A-Z0-9_]*$") { throw "Not a variable name: $name" }
+		$parts += "$name=`$(printf %s $(ConvertTo-B64 $Values[$name]) | base64 -d); export $name"
+	}
+	$parts += "bash '" + ($InstallScript -replace "'", "'\''") + "' 2>&1"
+	return $parts -join "; "
+}
+
+# The wsl.exe command line (ProcessStartInfo.Arguments) that runs that script as root in the environment.
+function Get-InstallArguments([string]$DistroName, [System.Collections.IDictionary]$Values, [string]$InstallScript) {
+	return "-d $DistroName --user root --exec bash -c `"$(ConvertTo-InstallScript $Values $InstallScript)`""
+}
+
+# The SHA-256 Ubuntu publishes for a download, from the SHA256SUMS file in the same folder (over HTTPS).
+function Get-PublishedSha256([string]$Url) {
+	$slash = $Url.LastIndexOf("/")
+	$name = $Url.Substring($slash + 1)
+	$sums = (Invoke-WebRequest ($Url.Substring(0, $slash + 1) + "SHA256SUMS") -UseBasicParsing).Content
+	if ($sums -is [byte[]]) { $sums = [Text.Encoding]::ASCII.GetString($sums) }
+	foreach ($line in ([string]$sums -split "`n")) {
+		if ($line.Trim() -match "^([0-9a-fA-F]{64})\s+\*?(\S+)$" -and $Matches[2] -eq $name) { return $Matches[1].ToUpper() }
+	}
+	return ""
+}
+
+# %ProgramData%\PharmacyOS holds the pharmacy's backups, sales spreadsheets, daily reports, logs and the
+# server environment. ProgramData lets every local user read it and create files in it, so the folder gets
+# its own ACL: full control for SYSTEM, Administrators and this Windows user (who runs the PharmacyOS
+# Server task and the app), nothing inherited from ProgramData. Whatever is already inside is given to
+# Administrators and set to inherit exactly that, so nothing another user put there before (a fake backup,
+# a "cached" Ubuntu image) keeps entries of its own. Well-known SIDs (any Windows language); links are never
+# followed; the files in Server\wsl (the environment's disk, made by wsl --import) keep what WSL set on
+# them. Safe to re-run (resume after a restart, repair): an already restricted folder is left as it is.
+$DataOwnerSid = "S-1-5-32-544"   # BUILTIN\Administrators
+
+function Test-DataFolderLocked([string[]]$Sids) {
+	try {
+		$acl = Get-Acl -LiteralPath $Root
+		if (-not $acl.AreAccessRulesProtected -or $acl.GetOwner([Security.Principal.SecurityIdentifier]).Value -ne $DataOwnerSid) { return $false }
+		$rules = @($acl.GetAccessRules($true, $true, [Security.Principal.SecurityIdentifier]))
+		if (@($rules | Where-Object { $_.AccessControlType -ne "Allow" -or $Sids -notcontains $_.IdentityReference.Value }).Count) { return $false }
+		foreach ($sid in $Sids) {
+			$full = @($rules | Where-Object { $_.IdentityReference.Value -eq $sid -and $_.FileSystemRights -eq "FullControl" -and $_.InheritanceFlags -eq "ContainerInherit, ObjectInherit" -and $_.PropagationFlags -eq "None" })
+			if (-not $full.Count) { return $false }
+		}
+		return $true
+	} catch { return $false }
+}
+
+function Protect-DataItems([string]$Dir, [string[]]$Sids) {
+	foreach ($item in @(Get-ChildItem -LiteralPath $Dir -Force -ErrorAction SilentlyContinue)) {
+		if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) { Write-Log "Not followed (a link): $($item.FullName)"; continue }
+		$clean = $false
+		try {
+			$acl = Get-Acl -LiteralPath $item.FullName
+			$clean = (-not $acl.AreAccessRulesProtected) -and ($Sids -contains $acl.GetOwner([Security.Principal.SecurityIdentifier]).Value) -and
+				(@($acl.GetAccessRules($true, $false, [Security.Principal.SecurityIdentifier])).Count -eq 0)
+		} catch { $clean = $false }
+		if (-not $clean) {
+			Write-Log "Resetting the permissions of $($item.FullName)"
+			Invoke-Native "icacls.exe" @($item.FullName, "/setowner", "*$DataOwnerSid", "/C", "/Q") | Out-Null
+			Invoke-Native "icacls.exe" @($item.FullName, "/reset", "/C", "/Q") | Out-Null
+		}
+		if ($item.PSIsContainer -and $item.FullName -ne (Join-Path $Root "Server\wsl")) { Protect-DataItems $item.FullName $Sids }
+	}
+}
+
+function Protect-DataFolder {
+	$me = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+	$sids = @(@("S-1-5-18", $DataOwnerSid, $me) | Select-Object -Unique)
+	if ((Get-Item -LiteralPath $Root -Force).Attributes -band [IO.FileAttributes]::ReparsePoint) { return $false }
+	if (-not (Test-DataFolderLocked $sids)) {
+		Write-Log "Restricting $Root to SYSTEM, Administrators and $me"
+		Invoke-Native "icacls.exe" @($Root, "/setowner", "*$DataOwnerSid", "/C", "/Q") | Out-Null
+		Invoke-Native "icacls.exe" @($Root, "/reset", "/C", "/Q") | Out-Null   # drops entries anyone added to the folder itself
+		$grants = @($sids | ForEach-Object { "*$($_):(OI)(CI)F" })
+		Invoke-Native "icacls.exe" (@($Root, "/inheritance:r", "/grant:r") + $grants + @("/C", "/Q")) | Out-Null
+	}
+	Protect-DataItems $Root $sids
+	return (Test-DataFolderLocked $sids)
+}
+
 function Test-DistroInstalled {
 	$old = $ErrorActionPreference; $ErrorActionPreference = "Continue"
 	try { $names = (& wsl.exe -l -q 2>$null) -replace "`0", "" } finally { $ErrorActionPreference = $old }
@@ -143,6 +235,9 @@ function Unregister-Continuation {
 if (-not (Test-Admin)) { Write-Error "Run as administrator."; exit 5 }
 Add-Content -Path $LogFile -Value "" -Encoding UTF8
 Write-Log "===== PharmacyOS server setup $(if ($Resume) { '(continuing)' }) — $([Environment]::OSVersion.VersionString)"
+$locked = $false
+try { $locked = Protect-DataFolder } catch { Write-Log "Protecting $Root failed: $($_.Exception.Message)" }
+if (-not $locked) { Fail "check" "The PharmacyOS data folder ($Root) could not be protected from other Windows users. Retry; if it fails again, send the log to support." }
 $Bundle = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 $Version = (Get-Content (Join-Path $Bundle "VERSION") -ErrorAction SilentlyContinue | Select-Object -First 1)
 $request = $null
@@ -216,12 +311,25 @@ Invoke-Native "wsl.exe" @("--set-default-version", "2") | Out-Null
 if (-not (Test-DistroInstalled)) {
 	Write-State "distro" "running" "Downloading Ubuntu 24.04 (about 350 MB)"
 	$rootfs = Join-Path $Root "Server\ubuntu-24.04-rootfs.tar.gz"
-	if (-not (Test-Path $rootfs) -or (Get-Item $rootfs).Length -lt 100MB) {
-		$ProgressPreference = "SilentlyContinue"   # the progress bar makes Invoke-WebRequest very slow in 5.1
-		[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+	$ProgressPreference = "SilentlyContinue"   # the progress bar makes Invoke-WebRequest very slow in 5.1
+	[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+	# the image is imported only when its SHA-256 matches the one Ubuntu publishes for it: a copy already
+	# in the Server folder (an interrupted setup) is checked like a fresh download, never trusted by size
+	$expected = ""
+	try { $expected = Get-PublishedSha256 $RootfsUrl } catch { Fail "distro" "Ubuntu could not be downloaded. Check the internet connection and retry. ($($_.Exception.Message))" }
+	if (-not $expected) { Fail "distro" "Ubuntu's checksum list (SHA256SUMS) has no entry for the server image. Retry later; if it fails again, send the log to support." }
+	$verified = (Test-Path $rootfs) -and ((Get-FileHash -LiteralPath $rootfs -Algorithm SHA256).Hash -eq $expected)
+	for ($try = 1; -not $verified -and $try -le 2; $try++) {
+		if (Test-Path $rootfs) { Write-Log "$rootfs does not match the published SHA-256: downloading it again"; Remove-Item -Force $rootfs }
 		try { Invoke-WebRequest $RootfsUrl -OutFile "$rootfs.part" -UseBasicParsing } catch { Fail "distro" "Ubuntu could not be downloaded. Check the internet connection and retry. ($($_.Exception.Message))" }
 		Move-Item -Force "$rootfs.part" $rootfs
+		$verified = (Get-FileHash -LiteralPath $rootfs -Algorithm SHA256).Hash -eq $expected
 	}
+	if (-not $verified) {
+		Remove-Item -Force $rootfs -ErrorAction SilentlyContinue
+		Fail "distro" "The downloaded Ubuntu image did not match its published SHA-256 checksum, so it was not used. Check the internet connection and retry; if it fails again, send the log to support."
+	}
+	Write-Log "Ubuntu image verified (SHA-256 $expected)"
 	Write-State "distro" "running" "Creating the PharmacyOS environment" 0.8
 	Invoke-Native "wsl.exe" @("--import", $Distro, (Join-Path $Root "Server\wsl"), $rootfs, "--version", "2") | Out-Null
 	if (-not (Test-DistroInstalled)) { Fail "distro" "The PharmacyOS environment could not be created (wsl --import failed). Is virtualization turned on in the BIOS?" }
@@ -249,11 +357,10 @@ if ($request -and -not $serverDone) {
 	$values["OWNER_FULL_NAME"] = [string]$request.owner_full_name
 	$values["PHARMACY_PHONE"] = [string]$request.phone
 }
-$exports = ($values.GetEnumerator() | ForEach-Object { "export $($_.Key)=`$(printf %s '$(ConvertTo-B64 $_.Value)' | base64 -d)" }) -join "; "
 $total = $ServerSteps.Count
 $psi = New-Object Diagnostics.ProcessStartInfo
 $psi.FileName = "wsl.exe"
-$psi.Arguments = "-d $Distro --user root -- bash -c `"$exports; bash '$src/deploy/server/install-server.sh' 2>&1`""
+$psi.Arguments = Get-InstallArguments $Distro $values "$src/deploy/server/install-server.sh"
 $psi.UseShellExecute = $false
 $psi.RedirectStandardOutput = $true
 $psi.StandardOutputEncoding = [Text.Encoding]::UTF8
