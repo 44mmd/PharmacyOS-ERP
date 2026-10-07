@@ -139,3 +139,21 @@ class TestBackupAccess(IntegrationTestCase):
 			self.assertRaises(frappe.PermissionError, service.get_backup_status)
 		finally:
 			frappe.set_user("Administrator")
+
+
+class TestSchedulerClock(IntegrationTestCase):
+	def test_jobs_left_in_the_future_by_a_clock_put_back_run_again(self):
+		# the computer's clock was a day ahead, then corrected: Frappe would wait a day for every job
+		# (no hourly backups, no error). repair_job_clock puts them back to now.
+		from frappe.utils import add_days, now_datetime
+
+		job = frappe.db.get_value("Scheduled Job Type", {"method": "pharmacyos_erp.backup.service.hourly"}, "name")
+		self.assertTrue(job)
+		frappe.db.set_value("Scheduled Job Type", job, "last_execution", add_days(now_datetime(), 1))
+		self.assertFalse(frappe.get_doc("Scheduled Job Type", job).is_event_due(add_days(now_datetime(), 0)))
+		self.assertGreaterEqual(service.repair_job_clock(), 1)
+		doc = frappe.get_doc("Scheduled Job Type", job)
+		self.assertLessEqual(frappe.utils.get_datetime(doc.last_execution), now_datetime())
+		# due again within the hour, as an hourly job should be
+		self.assertTrue(doc.is_event_due(frappe.utils.add_to_date(now_datetime(), hours=1, minutes=1)))
+		self.assertEqual(service.repair_job_clock(), 0)  # nothing left to repair

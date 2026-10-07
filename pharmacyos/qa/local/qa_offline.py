@@ -27,7 +27,11 @@ RULES = [
 	["OUTPUT", "-m", "owner", "--uid-owner", UID, "!", "-o", "lo", "-j", "REJECT"],
 ]
 UNREACHABLE = "https://cloud-unreachable.pharmacyos-qa.example"
-CHECK = "for u in https://github.com https://pypi.org; do curl -sS -m 8 -o /dev/null -w '%{http_code} ' $u 2>/dev/null || printf 'FAIL '; done"
+# through the proxy (as the server's tools are configured) and direct, to two sites
+CHECK = (
+	"for u in https://github.com https://pypi.org; do curl -sS -m 8 -o /dev/null -w '%{http_code} ' $u 2>/dev/null || printf 'FAIL '; done; "
+	"for u in https://github.com https://pypi.org; do curl -sS -m 8 --noproxy '*' -o /dev/null -w '%{http_code} ' $u 2>/dev/null || printf 'FAIL '; done"
+)
 
 
 def iptables(op, rule):
@@ -36,8 +40,8 @@ def iptables(op, rule):
 
 def as_server_user(cmd):
 	"""A shell command run inside the test server as its frappe user, with this sandbox's proxy settings."""
-	env = " ".join(f"{k}={v}" for k, v in os.environ.items() if k.lower() in ("https_proxy", "http_proxy"))
-	return subprocess.run(["chroot", ROOT, "su", "frappe", "-s", "/bin/bash", "-c", f"{env} {cmd}"], capture_output=True, text=True, timeout=60).stdout.strip()
+	env = "".join(f"export {k}='{v}'; " for k, v in os.environ.items() if k.lower() in ("https_proxy", "http_proxy"))
+	return subprocess.run(["chroot", ROOT, "su", "frappe", "-s", "/bin/bash", "-c", env + cmd], capture_output=True, text=True, timeout=90).stdout.strip()
 
 
 def on_server(code):
@@ -49,7 +53,8 @@ def on_server(code):
 
 
 def reachable(codes: str) -> bool:
-	return any(c[:1] in "23" for c in codes.split())
+	"""Any HTTP answer at all (2xx-5xx) means the request left the machine and came back."""
+	return any(c[:1] in "2345" for c in codes.split())
 
 
 def main():
@@ -58,6 +63,7 @@ def main():
 	R.add(A, "the server reaches the internet before the test", "HTTP answers", before, reachable(before))
 	keys = ("enable_outbound_events", "outbound_endpoint", "cloud_base_url", "outbound_timeout")
 	saved = {k: owner.value("PharmacyOS Settings", "PharmacyOS Settings", k) for k in keys}
+	published = None
 	start = on_server("print('OUT=' + json.dumps(str(frappe.utils.now_datetime())))")
 	for rule in RULES:
 		iptables("-I", rule)
@@ -66,6 +72,9 @@ def main():
 		R.add(A, "internet cut for the pharmacy server (direct and through the proxy)", "no answer from any site", cut, not reachable(cut))
 		owner.call("frappe.client.set_value", doctype="PharmacyOS Settings", name="PharmacyOS Settings",
 			fieldname={"enable_outbound_events": 1, "outbound_endpoint": "", "cloud_base_url": UNREACHABLE, "outbound_timeout": 5, "outbound_secret": "qa-offline-secret"})
+		# the medicine sold below is on the pharmacy's website: every stock change queues an availability event
+		published = owner.value("Item", "QA-PAN500", "pharmacyos_publish")
+		owner.call("frappe.client.set_value", doctype="Item", name="QA-PAN500", fieldname="pharmacyos_publish", value=1)
 		cashier = Session("cashier").login("cashier@qa-pharmacy.test", STAFF_PWD)
 		ctx = cashier.call(POS + "get_context")
 		if ctx.get("shift"):
@@ -108,6 +117,10 @@ def main():
 		closed = cashier.call(POS + "close_shift", counted=[{"mode_of_payment": p["mode_of_payment"], "closing_amount": p["expected_amount"]} for p in summary["payments"]])
 		R.add(A, "shift closes offline", "closing entry submitted", closed.get("name"), bool(closed.get("name")))
 	finally:
+		try:
+			owner.call("frappe.client.set_value", doctype="Item", name="QA-PAN500", fieldname="pharmacyos_publish", value=published or 0)
+		except Exception:
+			pass
 		for rule in RULES:
 			while iptables("-D", rule) == 0:
 				pass

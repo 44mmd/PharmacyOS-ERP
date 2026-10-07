@@ -2,11 +2,11 @@
 
 ## Version
 
-| Part | Where | 1.0.0-rc.1 |
+| Part | Where | 1.0.0-rc.2 |
 |---|---|---|
-| Desktop app and installer | `desktop/package.json` `version` (SemVer) | `1.0.0-rc.1` |
-| Server app (`pharmacyos_erp`) | `apps/pharmacyos_erp/pharmacyos_erp/__init__.py` (PEP 440) | `1.0.0rc1` |
-| Server bundle | `VERSION` written by `scripts/prepare-server-bundle.js` from the app version | `1.0.0rc1` |
+| Desktop app and installer | `desktop/package.json` `version` (SemVer) | `1.0.0-rc.2` |
+| Server app (`pharmacyos_erp`) | `apps/pharmacyos_erp/pharmacyos_erp/__init__.py` (PEP 440) | `1.0.0rc2` |
+| Server bundle | `VERSION` written by `scripts/prepare-server-bundle.js` from the app version | `1.0.0rc2` |
 
 Both move together for a release. The app shows its version on every setup/startup screen and in
 *PharmacyOS → About*; the POS context returns the server version; System Status lists app versions.
@@ -50,7 +50,7 @@ generated from the repository each time.
   on real Windows; build; SHA-256; silent install → installed server bundle present → first launch captured
   (`first-run.png`) → silent uninstall keeps pharmacy data. Artifact **PharmacyOS-Setup** (installer,
   `SHA256SUMS.txt`, `first-run.png`), kept 90 days.
-* **draft-release**: on a tag `pharmacyos-local-v<version>` (e.g. `pharmacyos-local-v1.0.0-rc.1`) the installer
+* **draft-release**: on a tag `pharmacyos-local-v<version>` (e.g. `pharmacyos-local-v1.0.0-rc.2`) the installer
   is attached to a **draft** GitHub release. Nothing is published until a person presses *Publish*.
 
 ## Code signing (external dependency)

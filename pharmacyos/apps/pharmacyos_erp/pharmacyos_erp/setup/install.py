@@ -135,6 +135,9 @@ def after_install():
 def after_migrate():
 	ensure_structure()
 	compile_translations()
+	from pharmacyos_erp.backup.service import repair_job_clock
+
+	repair_job_clock()  # a restored backup can carry job times from a machine whose clock was ahead
 	from pharmacyos_erp.setup.first_run import ensure_counter, is_initialized
 
 	if is_initialized():

@@ -1,4 +1,4 @@
-# LOCAL ERP v1 — status map (October 2026, 1.0.0-rc.1)
+# LOCAL ERP v1 — status map (October 2026, 1.0.0-rc.2)
 
 **LOCAL ERP** = the standalone PharmacyOS ERP that runs at the pharmacy: a Frappe/ERPNext server (this fork's
 `pharmacyos_erp` app on upstream Frappe 16.36.1 / ERPNext 16.37.0, MariaDB 10.11) inside a WSL2 environment on
@@ -78,28 +78,35 @@ PharmacyOS screens, verified (`test_localization`); ~26 % of upstream ERPNext st
 
 | Area | Status | Evidence |
 |---|---|---|
-| One Setup.exe (desktop + server bundle), version 1.0.0-rc.1 | COMPLETE | CI (build, silent install, first launch, uninstall keeps data) |
+| One Setup.exe (desktop + server bundle), version 1.0.0-rc.2 | COMPLETE | CI (build, silent install, first launch, uninstall keeps data) |
 | Setup screens: pharmacy details, system check, elevated install, progress | COMPLETE | verified (Electron/Playwright); system check CI |
 | WSL2 + distro + server install, reboot and continue | COMPLETE in code | server part verified on a fresh Ubuntu 24.04 WSL image; WSL2 on Windows = hardware |
 | Server auto-start (scheduled task), startup screen, recovery | COMPLETE in code | verified (Electron); boot task = hardware |
-| Offline operation | COMPLETE | by architecture; every journey ran with no Cloud and no internet use |
-| Backups (hourly/daily, verified), restore from the app | COMPLETE | verified (`test_backup`, app restore round trip on the fresh server) |
+| Offline operation | COMPLETE | verified (A18: the server's internet cut by firewall, Cloud unreachable — a full shift sold, returned, printed and closed; Cloud events waited in the outbox) |
+| Backups (hourly/daily, verified), restore from the app | COMPLETE | verified (`test_backup`, app restore round trip on the fresh server); scheduled jobs recover when the clock is put back (`TestSchedulerClock`) |
 | Server update with automatic rollback | COMPLETE | verified (rc1 → rc6; a real failure rolled back) |
 | Desktop update over the old version, data kept | COMPLETE | code (NSIS upgrade; uninstall-on-upgrade skips the server) |
 | Reproducible build, CI artifact, draft-only releases | COMPLETE | CI |
 | Code signing | READY, not signed | hooks in CI/package.json; the certificate is an external dependency |
 | Scanners / thermal printers / cash drawer | COMPLETE in software, UNKNOWN on hardware | test receipt in the app; hardware |
 
-## Verified in this pass
+## Verified in this pass (final certification, 1.0.0-rc.2)
 
-* Full PharmacyOS suite on Frappe 16.36.1 / ERPNext 16.37.0: **247 / 247 pass**.
-* Desktop unit tests: 12 / 12. Electron screens driven with Playwright (Linux + Xvfb).
-* Fresh install of the server in the Ubuntu 24.04 WSL image the setup imports; backup/restore; 5 updates and
-  one rollback.
-* Browser walkthrough on that fresh pharmacy: open shift → scans → hold → second sale → resume → return →
-  void (refused with a wrong manager password, then approved) → close shift with variance → report → expired
-  batch disposal → backup.
-* Windows CI: PowerShell 5.1 parse and helpers, system check, build, install, first launch, uninstall.
+The full evidence is `docs/qa/local/FINAL_QA_REPORT.md` (every check: expected, actual, PASS/FAIL,
+screenshot, automated test) and `docs/qa/local/RELEASE_CHECKLIST.md`.
+
+* Full PharmacyOS suite on Frappe 16.36.1 / ERPNext 16.37.0 — see the report for the final count.
+* Desktop unit tests 29 / 29 (Linux and Windows CI).
+* A QA pharmacy on a server installed from nothing in the Ubuntu 24.04 WSL image: owner, manager, pharmacist,
+  cashier, purchasing, inventory and accountant accounts; two suppliers; 17 medicines with categories,
+  batches, expired / near-expiry / low / out-of-stock items and several barcodes; then purchasing, inventory,
+  a 25,000 IQD shift with ≥ 10 sales, returns, voids, a −500 close, disposal, reports, permissions, backup /
+  restore, update / rollback, offline, barcode simulation, security exploits replayed and stress — all over
+  HTTP as the real users (`qa/local/*.py`).
+* 40+ screenshots of the running product (`docs/qa/local/screenshots/`), including the real Windows setup
+  screens from CI (`screenshots/windows/`).
+* Windows CI on the final commit: PowerShell 5.1, build, silent install, first launch, setup screens,
+  uninstall keeps data.
 
 ## Production validation still needed (not code)
 

@@ -274,6 +274,27 @@ def reconcile_running(older_than_minutes: int = 120) -> int:
 	return count
 
 
+def repair_job_clock(margin_minutes: int = 5) -> int:
+	"""Scheduled jobs whose last run lies in the future start running again now.
+
+	Frappe runs a job when its next time after the last run (or, never run, after its creation) has come.
+	When the computer's clock was ahead and is put back (a flat CMOS battery, a manual correction, a
+	restored backup from a machine with a wrong clock), every job waits until that future time: the hourly
+	backups would stop without an error. Run at every start of the server and after every migrate."""
+	now = now_datetime()
+	ahead = now + timedelta(minutes=margin_minutes)
+	names = frappe.db.sql_list(
+		"select name from `tabScheduled Job Type` where coalesce(last_execution, creation) > %s", (ahead,)
+	)
+	if names:
+		frappe.db.sql(
+			"update `tabScheduled Job Type` set last_execution = %s where name in %s", (now, tuple(names))
+		)
+		frappe.db.commit()
+		frappe.logger("pharmacyos").warning(f"{len(names)} scheduled jobs were set in the future (clock put back): reset to now")
+	return len(names)
+
+
 def hourly():
 	from pharmacyos_erp.backup.snapshots import prune_snapshots, write_sales_snapshot
 

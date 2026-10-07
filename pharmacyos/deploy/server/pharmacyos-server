@@ -186,6 +186,8 @@ case "${1:-status}" in
 		# boot task: start everything, then stay in the foreground so Windows keeps the environment running
 		start
 		wait_web 90 || echo "web not answering yet" >&2
+		# scheduled jobs (hourly backups) left in the future by a clock that was put back run again now
+		as_bench "bench --site '$SITE' execute pharmacyos_erp.backup.service.repair_job_clock" >/dev/null 2>&1 || true
 		exec sleep infinity ;;
 	health)
 		web_ok && echo "web ok" || { echo "web down"; exit 1; }

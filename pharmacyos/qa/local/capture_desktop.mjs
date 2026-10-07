@@ -50,6 +50,15 @@ function screenX(name, note) {
 	console.log("shot", name, "(display)");
 }
 
+// the record first: closing can hang while a native dialog is open
+async function closeApp(app) {
+	saveLog();
+	await Promise.race([app.close().catch(() => {}), new Promise((r) => setTimeout(r, 8000))]);
+	try {
+		app.process().kill("SIGKILL");
+	} catch {}
+}
+
 const visible = (win, sel) => win.locator(sel).first().isVisible().catch(() => false);
 async function until(fn, ms, step = 1000) {
 	const t = Date.now();
@@ -82,7 +91,7 @@ if (phase === "update") {
 	setTimeout(() => screenX("39-about-version", "About PharmacyOS ERP: desktop app, bundled server and installed server versions"), 2500);
 	await menuClick(app, "About PharmacyOS ERP").catch(() => {});
 	await win.waitForTimeout(5000);
-	await app.close().catch(() => {});
+	await closeApp(app);
 } else if (phase === "backups") {
 	const { app, win } = await launch("/var/tmp/srv.sh");
 	await until(async () => !(await view(win)) || win.url().startsWith(SERVER), 120000);
@@ -102,7 +111,7 @@ if (phase === "update") {
 	await shot(win, "35b-restore-running", "restore running (maintenance mode on, safety backup, restore, migrate, health check)");
 	await until(async () => /✓|تعذّر|failed/i.test(await win.textContent('[data-slot="backup-status"]')) && !/جارٍ/.test(await win.textContent('[data-slot="backup-status"]')), 1500000, 3000);
 	await shot(win, "35c-restore-result", "restore finished: the result the server reported");
-	await app.close().catch(() => {});
+	await closeApp(app);
 } else if (phase === "recovery") {
 	// a server that does not come up by itself (the keep-alive does nothing); Start the server works
 	const { app, win } = await launch("/var/tmp/srv-dead.sh", { PHARMACYOS_START_ATTEMPTS: "3" });
@@ -114,9 +123,13 @@ if (phase === "update") {
 	await until(async () => win.url().startsWith(SERVER), 300000);
 	await win.waitForTimeout(4000);
 	await shot(win, "38c-recovered", "the server answered: the app continues to the pharmacy server");
-	await app.close().catch(() => {});
+	await closeApp(app);
 }
 
-const log = path.join(OUT, "desktop-screens.json");
-const prev = fs.existsSync(log) ? JSON.parse(fs.readFileSync(log, "utf8")) : [];
-fs.writeFileSync(log, JSON.stringify([...prev.filter((r) => !record.some((x) => x.screen === r.screen)), ...record], null, 1));
+process.exit(0);
+
+function saveLog() {
+	const log = path.join(OUT, "desktop-screens.json");
+	const prev = fs.existsSync(log) ? JSON.parse(fs.readFileSync(log, "utf8")) : [];
+	fs.writeFileSync(log, JSON.stringify([...prev.filter((r) => !record.some((x) => x.screen === r.screen)), ...record], null, 1));
+}

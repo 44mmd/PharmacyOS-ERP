@@ -1,0 +1,32 @@
+[
+ {
+  "screen": "34-backups",
+  "url": "file:///home/user/PharmacyOS-ERP/pharmacyos/desktop/src/connect.html?view=backups",
+  "note": "Backups: hourly and daily backups on this PC, Back up now, Restore",
+  "visible_text": "PharmacyOS ERP نظام تشغيل الصيدلية · Pharmacy Operating System v1.0.0-rc.2 النسخ الاحتياطية · Backups يأخذ PharmacyOS نسخة احتياطية تلقائيًا كل ساعة ونسخة كاملة يوميًا، في المجلد C:\\ProgramData\\PharmacyOS\\Backups. انسخ هذا المجلد إلى قرص خارجي بانتظام. Pharmac"
+ },
+ {
+  "screen": "34b-backup-now-done",
+  "url": "file:///home/user/PharmacyOS-ERP/pharmacyos/desktop/src/connect.html?view=backups",
+  "note": "Back up now: verified backup folder created",
+  "visible_text": "PharmacyOS ERP نظام تشغيل الصيدلية · Pharmacy Operating System v1.0.0-rc.2 النسخ الاحتياطية · Backups يأخذ PharmacyOS نسخة احتياطية تلقائيًا كل ساعة ونسخة كاملة يوميًا، في المجلد C:\\ProgramData\\PharmacyOS\\Backups. انسخ هذا المجلد إلى قرص خارجي بانتظام. Pharmac"
+ },
+ {
+  "screen": "35-restore-confirm",
+  "url": "file:///home/user/PharmacyOS-ERP/pharmacyos/desktop/src/connect.html?view=backups",
+  "note": "Restore: typed confirmation; the current state is backed up before the restore",
+  "visible_text": "PharmacyOS ERP نظام تشغيل الصيدلية · Pharmacy Operating System v1.0.0-rc.2 النسخ الاحتياطية · Backups يأخذ PharmacyOS نسخة احتياطية تلقائيًا كل ساعة ونسخة كاملة يوميًا، في المجلد C:\\ProgramData\\PharmacyOS\\Backups. انسخ هذا المجلد إلى قرص خارجي بانتظام. Pharmac"
+ },
+ {
+  "screen": "35b-restore-running",
+  "url": "file:///home/user/PharmacyOS-ERP/pharmacyos/desktop/src/connect.html?view=backups",
+  "note": "restore running (maintenance mode on, safety backup, restore, migrate, health check)",
+  "visible_text": "PharmacyOS ERP نظام تشغيل الصيدلية · Pharmacy Operating System v1.0.0-rc.2 النسخ الاحتياطية · Backups يأخذ PharmacyOS نسخة احتياطية تلقائيًا كل ساعة ونسخة كاملة يوميًا، في المجلد C:\\ProgramData\\PharmacyOS\\Backups. انسخ هذا المجلد إلى قرص خارجي بانتظام. Pharmac"
+ },
+ {
+  "screen": "35c-restore-result",
+  "url": "file:///home/user/PharmacyOS-ERP/pharmacyos/desktop/src/connect.html?view=backups",
+  "note": "restore finished: the result the server reported",
+  "visible_text": "PharmacyOS ERP نظام تشغيل الصيدلية · Pharmacy Operating System v1.0.0-rc.2 النسخ الاحتياطية · Backups يأخذ PharmacyOS نسخة احتياطية تلقائيًا كل ساعة ونسخة كاملة يوميًا، في المجلد C:\\ProgramData\\PharmacyOS\\Backups. انسخ هذا المجلد إلى قرص خارجي بانتظام. Pharmac"
+ }
+]

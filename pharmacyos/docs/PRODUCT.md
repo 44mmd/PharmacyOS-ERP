@@ -66,9 +66,18 @@ Login lands on the PharmacyOS dashboard (`System Settings → default app`).
 | Pharmacist | **only** the Pharmacist role: counter permissions (Sales/POS Invoice create & submit, own POS shift, batch bundles, walk-in customers, read of the masters the POS uses) + read of Batch and Stock Ledger |
 | Cashier | **only** the Cashier role: counter permissions |
 | Inventory Manager | Stock Manager, Stock User, Item Manager, Purchase User + creates/edits prices (no delete) |
-| Purchasing Officer | Purchase User/Manager, Stock User; reads prices |
+| Purchasing Officer | Purchase User/Manager; suppliers, purchase orders and receipts (creates the supplier's batch with its expiry on receipt), supplier returns; reads prices. **Not** Stock User: no stock write-off, no disposal, no adjustments |
 | Pharmacy Accountant | Accounts User/Manager; cancels sales (incl. batch medicines); reads prices |
 | PharmacyOS Integration | API only (`api/v1`): **no ERPNext document role**. Sees only its own User record. |
+
+**Counter rules (Cashier and Pharmacist, enforced on every Sales/POS Invoice whatever sends it — the POS,
+the desk form or the document API; `pharmacy/counter_sales.py`):** a sale or counter return is a POS invoice
+in the user's **own open shift** on that counter (ERPNext allows one open shift per counter), **dated today**,
+at the **counter's price list** (a customer's or group's cheaper list is refused) and at ERPNext's own prices;
+discounts only where the counter allows them and at most **PharmacyOS Settings → Maximum Counter Discount (%)**
+(default 10 %) per line and on the sale. Automatic offers (ERPNext Pricing Rules) always apply and do not
+count toward the ceiling. Above it a manager or the owner completes the sale. Managers, the owner and the
+accountant are not limited.
 
 Cashier, Pharmacist and the integration user hold none of ERPNext's broad roles: Accounts User (Journal and
 Payment Entries, GL), Stock User (arbitrary Stock Entries) and Sales User (Sales Orders, Stock Reservation

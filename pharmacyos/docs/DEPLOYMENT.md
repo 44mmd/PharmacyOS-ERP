@@ -207,7 +207,15 @@ It runs these steps:
 9. write an audit entry;
 10. then restart the services.
 
-This was tested onto a fresh site and in place, including with an encrypted backup. On the pharmacy PC the
+Exit status, reported exactly by `pharmacyos-server restore` and the app's Backups screen: **0** restored;
+**3** nothing changed (bad folder, checksum, or the safety backup failed — then nothing is restored);
+**4** the restore failed and the safety backup was put back automatically (data as before); **5** the restore
+failed and putting the safety backup back failed too — the site **stays in maintenance mode** (no sales on a
+half-restored database) until the safety folder printed is restored by hand. Only folders inside the
+PharmacyOS Backups folder whose name matches a PharmacyOS backup are accepted.
+
+This was tested onto a fresh site and in place, including with an encrypted backup, a tampered backup
+(refused, exit 3) and a failing import (reverted, exit 4). On the pharmacy PC the
 owner restores from **PharmacyOS → Backups…** (typed confirmation; runs `pharmacyos-server restore`, which takes
 the safety backup first) — tested end-to-end on the fresh-install server.
 
@@ -217,8 +225,11 @@ the safety backup first) — tested end-to-end on the fresh-install server.
 * **Server**: at the next start the app offers **Update now / Later** when the bundled server is newer.
   `pharmacyos-server update` takes a verified safety backup, turns maintenance mode on, installs the new release
   next to the old one, runs `bench migrate` and `bench build`, restarts and checks health. **Any failure rolls
-  back**: previous release, safety backup restored, services restarted — tested with a real failed update and
-  with five successful updates (rc1 → rc6) on the fresh-install server.
+  back**: previous release, its exact version and build, safety backup restored, services restarted — tested
+  with a real failed update and with five successful updates (rc1 → rc6) on the fresh-install server. The app
+  shows the outcome the server reports: updated, already current, rolled back (data as before), or rollback
+  failed (the site stays in maintenance mode; the safety backup's folder is shown). One server operation runs
+  at a time (`flock`): a second update, restore or backup started meanwhile is refused as busy.
 * Nothing updates unattended; there is no update feed (`RELEASE.md`).
 
 ## Disaster recovery

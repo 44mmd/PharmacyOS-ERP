@@ -56,7 +56,11 @@ PharmacyOS ERP server (ERPNext + pharmacyos_erp)   ← the only business logic a
     (FEFO). Expired stock is shown as not sellable, and ERPNext refuses it regardless;
   * **stricter than the ERPNext POS screen, never looser:** the counter's `allow_discount_change` /
     `allow_rate_change` switches and its user list are enforced on the server (the ERPNext POS checks
-    them only in the browser);
+    them only in the browser). For counter staff every invoice must also be in their own open shift,
+    dated today, at the counter's price list and prices, within the Maximum Counter Discount (default
+    10 %, counted on top of automatic Pricing Rule offers) — refused on the invoice itself, so the desk
+    form and the document API cannot go around the POS (`pharmacy/counter_sales.py`); the POS shows the
+    ceiling before payment (`quote`);
   * **idempotent checkout:** each cart attempt carries a client request ID stored in the new DB-unique,
     hidden, no-copy field `pharmacyos_pos_request_id` (Sales Invoice, POS Invoice). A repeat (double
     click, network retry, page reload, two tabs) returns the first invoice. On failure the facade rolls
@@ -89,8 +93,9 @@ Arabic first (RTL; English when the user's language is English), IQD, PharmacyOS
 * **Customer:** walk-in by default; search; quick new customer (name + mobile).
 * **Hold (F8) / Held sales:** parks the current cart (customer and discount included) to serve another
   customer; *Held sales* lists them with *Resume* / *Discard*. Resuming while a cart is open parks that one in
-  its place. Held carts are kept per user on that computer (localStorage, at most 20), never reserve stock, and
-  are re-quoted by the server when resumed. A cart whose checkout is in flight cannot be held.
+  its place. Held carts are kept per user on that computer (localStorage, at most 20) until the end of the day they
+  were parked and are cleared when the shift closes; they never reserve stock and are re-quoted by the server
+  when resumed. A cart whose checkout is in flight cannot be held.
 * **Payment (F9 / ⌘↵ / Ctrl+Enter):** the counter's payment methods, quick cash notes, change aid;
   the receipt shows ERPNext's change.
 * **Receipt:** the ERP's `PharmacyOS Receipt` print view in a preview; Print (browser dialog / native).
