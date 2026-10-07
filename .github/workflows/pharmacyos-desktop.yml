@@ -1,22 +1,60 @@
-# PharmacyOS ERP — Windows desktop installer (PharmacyOS-ERP-Setup-<version>.exe).
-# Manual / tag-triggered only, so it never runs on ordinary ERPNext pushes.
+# PharmacyOS LOCAL ERP — Windows installer (PharmacyOS-Setup-<version>.exe), built and checked on Windows.
+#
+# Runs on PharmacyOS branch pushes that touch the desktop app, its server bundle or this workflow, by hand
+# (workflow_dispatch), and on tags "pharmacyos-local-v*". A tag only creates a DRAFT GitHub release: nothing
+# is published without a person pressing "Publish".
+#
+# Code signing: add the repository secrets WINDOWS_CSC_LINK (base64 of the .pfx code-signing certificate)
+# and WINDOWS_CSC_KEY_PASSWORD. Without them the installer is built unsigned (and says so in the summary);
+# a tag build requires them.
 name: PharmacyOS Desktop (Windows)
 
 on:
   workflow_dispatch:
   push:
-    tags: ["pharmacyos-desktop-v*"]
-    # PharmacyOS feature branches, only when the desktop app or this workflow changes
+    tags: ["pharmacyos-local-v*", "pharmacyos-desktop-v*"]
     branches: ["claude/**"]
     paths:
       - "pharmacyos/desktop/**"
+      - "pharmacyos/deploy/**"
+      - "pharmacyos/dev/setup-dev-bench.sh"
+      - "pharmacyos/apps/pharmacyos_erp/pharmacyos_erp/__init__.py"
       - ".github/workflows/pharmacyos-desktop.yml"
 
 permissions:
   contents: read
 
 jobs:
+  checks:
+    name: Scripts and desktop tests (Linux)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: pharmacyos
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Shell scripts parse
+        run: for f in deploy/server/install-server.sh deploy/server/pharmacyos-server deploy/restore-backup.sh dev/setup-dev-bench.sh; do bash -n "$f"; done
+      - name: PowerShell scripts parse (PowerShell 7)
+        shell: pwsh
+        run: |
+          $failed = 0
+          foreach ($f in Get-ChildItem deploy/windows/*.ps1) {
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($f.FullName, [ref]$null, [ref]$errors) | Out-Null
+            if ($errors) { $failed++; $errors | ForEach-Object { Write-Error "$($f.Name): $($_.Message)" } }
+          }
+          exit $failed
+      - name: Desktop unit tests
+        working-directory: pharmacyos/desktop
+        run: npm ci --no-audit --no-fund && npm test
+
   windows-installer:
+    name: Windows installer
+    needs: checks
     runs-on: windows-latest
     defaults:
       run:
@@ -26,11 +64,117 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+
+      - name: Setup scripts work in Windows PowerShell 5.1 (the version every pharmacy PC has)
+        shell: powershell
+        working-directory: pharmacyos/deploy/windows
+        run: |
+          $ErrorActionPreference = "Stop"
+          foreach ($f in Get-ChildItem *.ps1) {
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($f.FullName, [ref]$null, [ref]$errors) | Out-Null
+            if ($errors) { throw "$($f.Name): $($errors[0].Message)" }
+          }
+          # helper functions of the installer: paths and value passing behave on 5.1
+          $ast = [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path install-server.ps1), [ref]$null, [ref]$null)
+          $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true) |
+            Where-Object { $_.Name -in "ConvertTo-B64", "ConvertTo-WslPath" } | ForEach-Object { Invoke-Expression $_.Extent.Text }
+          $wsl = ConvertTo-WslPath $env:ProgramFiles
+          if ($wsl -ne "/mnt/c/Program Files") { throw "ConvertTo-WslPath gave $wsl" }
+          $value = "Al Noor `"x`" صيدلية p@ss'word"
+          $back = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String((ConvertTo-B64 $value)))
+          if ($back -ne $value) { throw "base64 round trip failed" }
+          # the system check the setup screen runs, on real Windows
+          $check = powershell -NoProfile -ExecutionPolicy Bypass -File system-check.ps1 | ConvertFrom-Json
+          $check.checks | Format-Table key, ok, level, value | Out-String | Write-Host
+          if (-not ($check.checks | Where-Object { $_.key -eq "windows" })) { throw "system-check returned no Windows check" }
+
       - run: npm ci --no-audit --no-fund
       - run: npm test
-      - run: npx electron-builder --win nsis --x64 --publish never
+
+      - name: Code-signing certificate (when configured)
+        shell: bash
+        env:
+          CSC_LINK_SECRET: ${{ secrets.WINDOWS_CSC_LINK }}
+          CSC_PASSWORD_SECRET: ${{ secrets.WINDOWS_CSC_KEY_PASSWORD }}
+        run: |
+          if [ -n "$CSC_LINK_SECRET" ]; then
+            echo "CSC_LINK=$CSC_LINK_SECRET" >> "$GITHUB_ENV"
+            echo "CSC_KEY_PASSWORD=$CSC_PASSWORD_SECRET" >> "$GITHUB_ENV"
+            echo "SIGNED=yes" >> "$GITHUB_ENV"
+          else
+            echo "SIGNED=no" >> "$GITHUB_ENV"
+            echo "::warning::No code-signing certificate configured (WINDOWS_CSC_LINK): the installer is unsigned."
+            if [[ "$GITHUB_REF" == refs/tags/* ]]; then echo "::error::Release tags must be signed."; exit 1; fi
+          fi
+
+      - name: Build the installer (server bundle + Electron + NSIS)
+        run: npm run dist:win
+
+      - name: Installer exists
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem dist/PharmacyOS-Setup-*.exe | Select-Object -First 1
+          if (-not $exe) { throw "No installer was produced." }
+          $hash = (Get-FileHash $exe.FullName -Algorithm SHA256).Hash
+          "$hash  $($exe.Name)" | Set-Content dist/SHA256SUMS.txt
+          "INSTALLER=$($exe.FullName)" >> $env:GITHUB_ENV
+          "### PharmacyOS installer`n`n| | |`n|---|---|`n| File | $($exe.Name) |`n| Size | $([math]::Round($exe.Length / 1MB, 1)) MB |`n| SHA-256 | ``$hash`` |`n| Signed | $env:SIGNED |" >> $env:GITHUB_STEP_SUMMARY
+
+      - name: Install silently, open the app, uninstall (data kept)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          Start-Process -Wait -FilePath $env:INSTALLER -ArgumentList "/S"
+          $app = Join-Path $env:ProgramFiles "PharmacyOS ERP\PharmacyOS ERP.exe"
+          if (-not (Test-Path $app)) { throw "PharmacyOS ERP.exe was not installed" }
+          $bundle = Join-Path $env:ProgramFiles "PharmacyOS ERP\resources\server"
+          foreach ($f in "VERSION", "deploy\windows\install-server.ps1", "deploy\server\install-server.sh", "apps\pharmacyos_erp\pharmacyos_erp\hooks.py") {
+            if (-not (Test-Path (Join-Path $bundle $f))) { throw "missing in the installed server bundle: $f" }
+          }
+          "Server bundle version: $(Get-Content (Join-Path $bundle VERSION))" | Write-Host
+          if (-not (Test-Path (Join-Path $env:ProgramData "PharmacyOS\Backups"))) { throw "ProgramData folders were not created" }
+          # first launch: the setup welcome screen, captured to a PNG
+          $env:PHARMACYOS_SMOKE = Join-Path $env:RUNNER_TEMP "first-run.png"
+          $env:PHARMACYOS_USER_DATA = Join-Path $env:RUNNER_TEMP "pharmacyos-user"
+          $p = Start-Process -FilePath $app -PassThru
+          if (-not $p.WaitForExit(120000)) { $p.Kill(); throw "The app did not finish its smoke run" }
+          if (-not (Test-Path $env:PHARMACYOS_SMOKE)) { throw "No first-run screenshot" }
+          Copy-Item $env:PHARMACYOS_SMOKE dist/first-run.png
+          # a marker file stands for pharmacy data: uninstalling must keep it
+          Set-Content (Join-Path $env:ProgramData "PharmacyOS\Backups\keep.txt") "pharmacy data"
+          $uninstaller = Join-Path $env:ProgramFiles "PharmacyOS ERP\Uninstall PharmacyOS ERP.exe"
+          Start-Process -Wait -FilePath $uninstaller -ArgumentList "/S"
+          Start-Sleep -Seconds 5
+          if (Test-Path $app) { throw "The app was not uninstalled" }
+          if (-not (Test-Path (Join-Path $env:ProgramData "PharmacyOS\Backups\keep.txt"))) { throw "Uninstall removed pharmacy data" }
+          "Install, first launch and uninstall: OK (pharmacy data kept)" | Write-Host
+
       - uses: actions/upload-artifact@v4
         with:
-          name: PharmacyOS-ERP-Setup
-          path: pharmacyos/desktop/dist/*.exe
+          name: PharmacyOS-Setup
+          path: |
+            pharmacyos/desktop/dist/PharmacyOS-Setup-*.exe
+            pharmacyos/desktop/dist/SHA256SUMS.txt
+            pharmacyos/desktop/dist/first-run.png
           if-no-files-found: error
+
+  draft-release:
+    name: Draft release (tags only — publish by hand)
+    if: startsWith(github.ref, 'refs/tags/pharmacyos-local-v')
+    needs: windows-installer
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: PharmacyOS-Setup
+          path: dist
+      - uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          prerelease: ${{ contains(github.ref, 'rc') }}
+          files: |
+            dist/PharmacyOS-Setup-*.exe
+            dist/SHA256SUMS.txt
