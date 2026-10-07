@@ -10,7 +10,8 @@ Rights: whoever may create and submit Stock Entries (Pharmacy Owner, Pharmacy Ma
 the documents are inserted and submitted as that user, never with raised rights. Counter staff cannot.
 
 Expired stock never becomes sellable again: ERPNext refuses expired batches in every sale, and
-`guard_batch_expiry` stops anyone but the owner from moving a batch's expiry date later once it holds stock.
+`guard_batch_expiry` never lets an expired batch be re-dated (by anyone), and lets only the owner correct a
+not-yet-expired batch's date later (recorded in the Batch's version history).
 """
 
 import frappe
@@ -132,7 +133,9 @@ def get_disposals(limit: int = 50) -> list[dict]:
 
 def guard_batch_expiry(doc, method=None):
 	"""Batch.validate: moving an existing batch's expiry date later (or clearing it) would make expired
-	stock sellable again — only the pharmacy owner may do that."""
+	stock sellable again. A batch that has already expired is never re-dated — by anyone: expired stock is
+	disposed of. Before it expires, only the pharmacy owner may correct a mistyped date later (the Batch
+	keeps a version history, so the correction is recorded)."""
 	if doc.is_new():
 		return
 	before = frappe.db.get_value("Batch", doc.name, "expiry_date")
@@ -141,6 +144,13 @@ def guard_batch_expiry(doc, method=None):
 	after = doc.expiry_date
 	if after and getdate(after) <= getdate(before):
 		return
+	if getdate(before) < getdate(nowdate()):
+		frappe.throw(
+			_("Batch {0} expired on {1}. An expired batch cannot be re-dated: dispose of it instead.").format(
+				frappe.bold(doc.batch_id or doc.name), frappe.format(before, {"fieldtype": "Date"})
+			),
+			frappe.PermissionError,
+		)
 	if set(frappe.get_roles()) & set(EXPIRY_CHANGE_ROLES):
 		return
 	frappe.throw(

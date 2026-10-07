@@ -183,10 +183,26 @@ class TestV1Operations(IntegrationTestCase):
 		doc = frappe.get_doc("Batch", batch)
 		doc.expiry_date = add_days(nowdate(), -30)  # earlier is always allowed
 		doc.save()
+		# an EXPIRED batch is never re-dated, not even by the owner: it is disposed of
 		frappe.set_user(OWNER)
 		doc = frappe.get_doc("Batch", batch)
-		doc.expiry_date = add_days(nowdate(), 5)  # the owner may correct a typing mistake
+		doc.expiry_date = add_days(nowdate(), 5)
+		with self.assertRaises(frappe.PermissionError):
+			doc.save()
+		# a batch that has not expired yet: only the owner may correct a mistyped date later, and the
+		# correction is kept in the batch's history
+		fresh = make_batch(item.name, "V1-RD-02", 20)
+		frappe.set_user(INVENTORY)
+		doc = frappe.get_doc("Batch", fresh)
+		doc.expiry_date = add_days(nowdate(), 400)
+		with self.assertRaises(frappe.PermissionError):
+			doc.save()
+		frappe.set_user(OWNER)
+		doc = frappe.get_doc("Batch", fresh)
+		doc.expiry_date = add_days(nowdate(), 400)
 		doc.save()
+		frappe.set_user("Administrator")
+		self.assertTrue(frappe.db.exists("Version", {"ref_doctype": "Batch", "docname": fresh}), "expiry correction recorded")
 
 	# ------------------------------------------------------------------ reporting
 

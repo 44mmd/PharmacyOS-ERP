@@ -77,6 +77,8 @@ _sales_validate = [
 	"pharmacyos_erp.pharmacy.returns.validate_return",
 	"pharmacyos_erp.pharmacy.stock_guard.protect_reservations",
 ]
+# counter staff sell at the pharmacy's prices, whatever made the invoice (pharmacy/counter_pricing.py)
+_invoice_validate = [*_sales_validate, "pharmacyos_erp.pharmacy.counter_pricing.guard_counter_pricing"]
 _receipt_validate = [_branch, "pharmacyos_erp.pharmacy.receiving.validate_receipt"]
 # cumulative returned quantities on the original sale (read under its row lock; see pharmacy/returns.py)
 _record_return = "pharmacyos_erp.pharmacy.returns.record_return"
@@ -125,13 +127,13 @@ doc_events = {
 	"Sales Invoice": {
 		# `is_consolidated` only from POS closing (controlled error instead of ERPNext's TypeError)
 		"before_validate": ["pharmacyos_erp.pharmacy.consolidation.guard_consolidated_flag", _lock_stock],
-		"validate": _sales_validate,
+		"validate": _invoice_validate,
 		"on_submit": [_record_return, _fulfilment],
 		"on_cancel": [_record_return, _fulfilment],
 	},
 	"POS Invoice": {
 		"before_validate": _lock_stock,
-		"validate": _sales_validate,
+		"validate": _invoice_validate,
 		"on_submit": _record_return,
 		"on_cancel": _record_return,
 	},

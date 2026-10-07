@@ -261,6 +261,7 @@ class TestRound4MessagesAreTranslated(IntegrationTestCase):
 		# LOCAL ERP v1: voids, disposal, the pharmacy report
 		"pharmacy/disposal.py",
 		"pharmacy/reports.py",
+		"pharmacy/counter_pricing.py",
 	)
 
 	def test_user_facing_strings_have_arabic_entries(self):

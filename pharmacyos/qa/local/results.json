@@ -1,0 +1,938 @@
+[
+ {
+  "area": "A6 Purchasing",
+  "check": "partial receiving against the PO",
+  "expected": "PO partly received (0 < per_received < 100)",
+  "actual": "{\"receipt\": \"MAT-PRE-2026-00001\", \"per_received\": 41.891892, \"status\": \"To Receive and Bill\"}",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:19:27"
+ },
+ {
+  "area": "A6 Purchasing",
+  "check": "full receiving completes the PO",
+  "expected": "per_received = 100, status To Bill",
+  "actual": "{\"receipt\": \"MAT-PRE-2026-00002\", \"per_received\": 100.0, \"status\": \"To Bill\"}",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:19:28"
+ },
+ {
+  "area": "A6 Purchasing",
+  "check": "second supplier PO received in full",
+  "expected": "PO2 100% received",
+  "actual": "MAT-PRE-2026-00003",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:19:30"
+ },
+ {
+  "area": "A6 Purchasing",
+  "check": "back-dated delivery (now expired / near-expiry batches) + fresh batch",
+  "expected": "receipts submitted",
+  "actual": "[\"MAT-PRE-2026-00004\", \"MAT-PRE-2026-00005\"]",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:19:32"
+ },
+ {
+  "area": "A6 Purchasing",
+  "check": "receiving an expired batch today is refused",
+  "expected": "server refuses an expired batch on today's receipt",
+  "actual": "refused HTTP 417: الصف رقم 1: انتهت صلاحية الوجبة AMX-QA-EXPIRED بالفعل.",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:19:32"
+ },
+ {
+  "area": "A5 QA pharmacy",
+  "check": "owner signs in",
+  "expected": "the owner created by setup can sign in",
+  "actual": "owner@qa-pharmacy.test",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:19:38"
+ },
+ {
+  "area": "A5 QA pharmacy",
+  "check": "owner creates employee records linked to staff accounts",
+  "expected": "7 employees linked to the staff users",
+  "actual": "[[\"QA Manager Omar\", \"manager@qa-pharmacy.test\"], [\"QA Pharmacist Huda\", \"pharmacist@qa-pharmacy.test\"], [\"QA Cashier Sara\", \"cashier@qa-pharmacy.test\"], [\"QA Cashier Ali\", \"cashier2@qa-pharmacy.test\"], [\"QA Purchasing Karim\", \"purchasing@qa-pharmacy.test\"], [\"QA Stock Zainab\", \"stock@qa-pharmacy.test\"], [\"QA Accountant Noor\", \"accountant@qa-pharmacy.test\"]]",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:19:38"
+ },
+ {
+  "area": "A6 Purchasing",
+  "check": "supplier creation by the Purchasing Officer",
+  "expected": "2 suppliers created by purchasing@",
+  "actual": "[{\"name\": \"QA Baghdad Pharma Supply\", \"owner\": \"purchasing@qa-pharmacy.test\"}, {\"name\": \"QA Basra Medical Trading\", \"owner\": \"purchasing@qa-pharmacy.test\"}]",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:19:40"
+ },
+ {
+  "area": "A5 QA pharmacy",
+  "check": "20 medicines in 7 categories, batch + expiry tracked",
+  "expected": "20 items, all has_batch_no and has_expiry_date",
+  "actual": "20 items, groups=['Analgesics', 'Antibiotics', 'Chronic Care', 'Gastrointestinal', 'Personal Care', 'Respiratory & Allergy', 'Vitamins & Supplements']",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:19:40"
+ },
+ {
+  "area": "A5 QA pharmacy",
+  "check": "multiple barcodes on one medicine",
+  "expected": "Panadol 500 has 2 barcodes",
+  "actual": "[\"6291100000011\", \"5000158062474\"]",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:19:40"
+ },
+ {
+  "area": "A6 Purchasing",
+  "check": "purchase order created and submitted by the Purchasing Officer",
+  "expected": "PO with 8 lines, submitted, owner purchasing@",
+  "actual": "[\"PUR-ORD-2026-00001\", \"purchasing@qa-pharmacy.test\"]",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:19:40"
+ },
+ {
+  "area": "A6 Purchasing",
+  "check": "purchase return to supplier takes stock out of the received batch",
+  "expected": "BRU-QA-2601 goes 50 → 48",
+  "actual": "{\"return\": \"MAT-PRE-2026-00006\", \"before\": 50.0, \"after\": 48.0}",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:19:40"
+ },
+ {
+  "area": "A6 Purchasing",
+  "check": "received cost becomes the stock valuation",
+  "expected": "incoming rate 1500 for Panadol",
+  "actual": "[{\"incoming_rate\": 1500.0, \"actual_qty\": 50.0, \"valuation_rate\": 1500.0}]",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:19:40"
+ },
+ {
+  "area": "A6 Purchasing",
+  "check": "two batches of one medicine with different expiry",
+  "expected": "Panadol 50 + 50 in two batches",
+  "actual": "{\"PAN-QA-2601\": 50.0, \"PAN-QA-2602\": 50.0}",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:19:41"
+ },
+ {
+  "area": "A6 Purchasing",
+  "check": "inventory after purchasing (Bin = received − returned)",
+  "expected": "Brufen 48, Panadol 100, Insulin none",
+  "actual": "{\"QA-PAN500\": 100.0, \"QA-BRUF400\": 48.0, \"QA-AUG1G\": 30.0, \"QA-AZI500\": 20.0, \"QA-PANEXT\": 40.0, \"QA-ZYRTEC\": 30.0, \"QA-GLUCO500\": 60.0, \"QA-OMEP20\": 40.0, \"QA-VITC1000\": 30.0, \"QA-SENSO\": 12.0, \"QA-CIPRO500\": 3.0, \"QA-GAVISCON\": 15.0, \"QA-VITD3\": 20.0, \"QA-LIPITOR20\": 20.0, \"QA-NIVEA\": 10.0, \"QA-CONCOR5\": 25.0, \"QA-VENTOLIN\": 12.0, \"QA-AMOXSYR\": 20.0, \"QA-VOLT50\": 10.0}",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:19:41"
+ },
+ {
+  "area": "A7 Inventory",
+  "check": "stock per batch (Batches & Expiry)",
+  "expected": "every received batch listed with qty and expiry",
+  "actual": "22 batches; counts={'expired': 1, '30': 1, '60': 1, '90': 1, 'all': 22}",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:16"
+ },
+ {
+  "area": "A7 Inventory",
+  "check": "expired batch identified",
+  "expected": "AMX-QA-2509 flagged Expired",
+  "actual": "[[\"AMX-QA-2509\", 8.0, \"2026-10-01\"]]",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:16"
+ },
+ {
+  "area": "A7 Inventory",
+  "check": "near-expiry batch identified",
+  "expected": "VOL-QA-2510 within 30 days",
+  "actual": "[[\"VOL-QA-2510\", 25, \"critical\"]]",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:16"
+ },
+ {
+  "area": "A7 Inventory",
+  "check": "FEFO order",
+  "expected": "Augmentin: AUG-QA-2600 (earlier expiry) before AUG-QA-2601",
+  "actual": "[[\"AUG-QA-2600\", \"2027-02-04\"], [\"AUG-QA-2601\", \"2027-08-03\"]]",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:16"
+ },
+ {
+  "area": "A7 Inventory",
+  "check": "expired batch excluded from sellable stock",
+  "expected": "Amoxil sellable = AMX-QA-2604 only (12)",
+  "actual": "[[\"AMX-QA-2604\", 10.0]]",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:16"
+ },
+ {
+  "area": "A7 Inventory",
+  "check": "low stock / out of stock (Inventory Health)",
+  "expected": "Cipro low (3 < 5), Insulin out of stock",
+  "actual": "{\"rows\": [{\"item_code\": \"QA-INSULIN\", \"item_name\": \"Insulin Glargine Pen (cold chain)\", \"name_ar\": \"\\u0642\\u0644\\u0645 \\u0625\\u0646\\u0633\\u0648\\u0644\\u064a\\u0646 \\u063a\\u0644\\u0627\\u0631\\u062c\\u064a\\u0646\", \"uom\": \"Nos\", \"is_medicine\": 1, \"qty\": 0.0, \"available\": 0.0, \"projected\": 0.0, \"value\": 0.0, \"warehouses\": 0, \"reorder_level\": 2.0, \"batches\": 0, \"expired_qty\": 0.0, \"nearest_expiry\": null, \"n",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:16"
+ },
+ {
+  "area": "A7 Inventory",
+  "check": "stock adjustment (count) by the Inventory Manager",
+  "expected": "Nivea 10 → 9, ledger entry written",
+  "actual": "{\"reconciliation\": \"MAT-RECO-2026-00003\", \"before\": 8.0, \"after\": 7.0}",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:16"
+ },
+ {
+  "area": "A7 Inventory",
+  "check": "cashier cannot adjust stock",
+  "expected": "Stock Reconciliation refused for a cashier",
+  "actual": "refused HTTP 403: لا يملك المستخدم cashier@qa-pharmacy.test حق الوصول إلى النمط عبر إذن دور للمستند جرد المخزون",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:16"
+ },
+ {
+  "area": "A8 POS shift",
+  "check": "open shift with 25,000 IQD",
+  "expected": "an open POS Opening Entry for the cashier",
+  "actual": "{\"name\": \"POS-OPE-2026-00001\", \"company\": \"QA TEST Pharmacy\", \"pos_profile\": \"Main Counter\", \"period_start_date\": \"2026-10-07 17:19:56.060389\"}",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:16"
+ },
+ {
+  "area": "A19 Barcode (simulated HID)",
+  "check": "scan EAN of Panadol (first barcode)",
+  "expected": "Panadol found, barcode-scan mode",
+  "actual": "[[\"QA-PAN500\", 92.0]]",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:16"
+ },
+ {
+  "area": "A19 Barcode (simulated HID)",
+  "check": "scan the second barcode of the same medicine",
+  "expected": "also Panadol",
+  "actual": "[\"QA-PAN500\"]",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:16"
+ },
+ {
+  "area": "A19 Barcode (simulated HID)",
+  "check": "unknown barcode",
+  "expected": "no item (the screen says not found)",
+  "actual": "{\"items\": [], \"barcode_scan\": false}",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:16"
+ },
+ {
+  "area": "A19 Barcode (simulated HID)",
+  "check": "out-of-stock item scanned",
+  "expected": "found with 0 sellable",
+  "actual": "[[\"QA-INSULIN\", 0]]",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:16"
+ },
+ {
+  "area": "A19 Barcode (simulated HID)",
+  "check": "expired batch barcode scanned",
+  "expected": "batch recognised and flagged expired",
+  "actual": "[[\"QA-AMOXSYR\", {\"batch_id\": \"AMX-QA-2509\", \"expiry_date\": \"2026-10-01\", \"expired\": true}]]",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:16"
+ },
+ {
+  "area": "A8 POS shift",
+  "check": "T1 scan + exact cash",
+  "expected": "2 × 2,500 = 5,000",
+  "actual": "[\"ACC-SINV-2026-00024\", 5000.0]",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:16"
+ },
+ {
+  "area": "A8 POS shift",
+  "check": "T2 item discount 10% + cash received 10,000 + change",
+  "expected": "2,500 + 2,700 = 5,200; change 4,800",
+  "actual": "[\"ACC-SINV-2026-00025\", 5200.0, 4800.0, 10000.0]",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:17"
+ },
+ {
+  "area": "A8 POS shift",
+  "check": "Arabic search",
+  "expected": "بنادول اكسترا finds Panadol Extra (أ/ا normalised)",
+  "actual": "[\"QA-PANEXT\"]",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:17"
+ },
+ {
+  "area": "A8 POS shift",
+  "check": "T3 transaction discount 5%",
+  "expected": "7,000 − 5% = 6,650",
+  "actual": "[\"ACC-SINV-2026-00026\", 6650.0, 350.0]",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:17"
+ },
+ {
+  "area": "A8 POS shift",
+  "check": "English search (partial)",
+  "expected": "omepra finds Omeprazole",
+  "actual": "[\"QA-OMEP20\"]",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:17"
+ },
+ {
+  "area": "A8 POS shift",
+  "check": "T4 quantity 3",
+  "expected": "3 × 3,500 = 10,500",
+  "actual": "[\"ACC-SINV-2026-00027\", 10500.0]",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:18"
+ },
+ {
+  "area": "A8 POS shift",
+  "check": "T5 FEFO batch picked automatically",
+  "expected": "AUG-QA-2600",
+  "actual": "[[\"QA-AUG1G\", 1.0, \"AUG-QA-2600\"]]",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:18"
+ },
+ {
+  "area": "A8 POS shift",
+  "check": "T6 expired batch skipped automatically",
+  "expected": "AMX-QA-2604, never AMX-QA-2509",
+  "actual": "[[\"QA-AMOXSYR\", 1.0, \"AMX-QA-2604\"]]",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:18"
+ },
+ {
+  "area": "A8 POS shift",
+  "check": "T7 five-line sale, change from 40,000",
+  "expected": "5,500+8,000+4,500+6,500+6,000 = 30,500; change 9,500",
+  "actual": "[\"ACC-SINV-2026-00030\", 30500.0, 9500.0]",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:19"
+ },
+ {
+  "area": "A8 POS shift",
+  "check": "T8 sale later partly returned",
+  "expected": "4 × 4,000 + 2 × 5,500 = 27,000",
+  "actual": "[\"ACC-SINV-2026-00031\", 27000.0]",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:20"
+ },
+ {
+  "area": "A8 POS shift",
+  "check": "T9 sale later voided",
+  "expected": "2 × 4,000 = 8,000",
+  "actual": "[\"ACC-SINV-2026-00032\", 8000.0]",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:20"
+ },
+ {
+  "area": "A8 POS shift",
+  "check": "T10 duplicate submission → one sale",
+  "expected": "the retry returns the same invoice; 1 invoice for the request",
+  "actual": "{\"first\": \"ACC-SINV-2026-00033\", \"retry\": \"ACC-SINV-2026-00033\", \"replayed\": true, \"invoices\": 1}",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:21"
+ },
+ {
+  "area": "A8 POS shift",
+  "check": "T11 cash 20,000 with change",
+  "expected": "12,000; change 8,000",
+  "actual": "[\"ACC-SINV-2026-00034\", 12000.0, 8000.0]",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:21"
+ },
+ {
+  "area": "A8 POS shift",
+  "check": "T12 scanned near-expiry batch sold",
+  "expected": "VOL-QA-2510 (not expired) sells",
+  "actual": "ACC-SINV-2026-00035",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:22"
+ },
+ {
+  "area": "A8 POS shift",
+  "check": "overselling refused",
+  "expected": "Cipro qty 10 > 3 in stock",
+  "actual": "refused HTTP 417: For the item QA-CIPRO500, the Available qty 3.0 is less than the Required Qty 10.0 in the warehouse Main Branch - QTP. Please add sufficient qty in the warehouse.",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:22"
+ },
+ {
+  "area": "A8 POS shift",
+  "check": "out-of-stock item cannot be sold",
+  "expected": "Insulin (never received)",
+  "actual": "refused HTTP 417: Serial No / Batch No are mandatory for Item QA-INSULIN",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:22"
+ },
+ {
+  "area": "A8 POS shift",
+  "check": "selling the expired batch refused",
+  "expected": "AMX-QA-2509 refused at checkout",
+  "actual": "refused HTTP 417: الصف رقم 1: انتهت صلاحية الوجبة AMX-QA-2509 بالفعل.",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:22"
+ },
+ {
+  "area": "A8 POS shift",
+  "check": "price change refused on Main Counter",
+  "expected": "rate override refused (counter switch)",
+  "actual": "refused HTTP 403: تغيير السعر غير مسموح على هذا الكاونتر.",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:22"
+ },
+ {
+  "area": "A8 POS shift",
+  "check": "discount over 100% refused",
+  "expected": "discount 150% refused",
+  "actual": "refused HTTP 417: يجب أن يكون الخصم بين 0 و100%.",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:22"
+ },
+ {
+  "area": "A8 POS shift",
+  "check": "foreign payment method refused",
+  "expected": "a mode not on the counter is refused",
+  "actual": "refused HTTP 417: طريقة الدفع Wire Transfer غير متاحة على هذا الكاونتر.",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:22"
+ },
+ {
+  "area": "A8 POS shift",
+  "check": "sales history (own sales, newest first)",
+  "expected": "≥ 12 sales listed",
+  "actual": "35",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:22"
+ },
+ {
+  "area": "A8 POS shift",
+  "check": "sales history search by invoice number",
+  "expected": "finds T8",
+  "actual": "[\"ACC-SINV-2026-00031\"]",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:22"
+ },
+ {
+  "area": "A8 POS shift",
+  "check": "another cashier does not see these sales",
+  "expected": "cashier2 history excludes cashier's sales",
+  "actual": "0",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:22"
+ },
+ {
+  "area": "A8 POS shift",
+  "check": "receipt (reprint) of a sale",
+  "expected": "the PharmacyOS Receipt print view renders",
+  "actual": "<!DOCTYPE html>\n<html lang=\"ar\" dir=\"rtl\">\n<head>\n\t<meta charset=\"utf-8\">\n\t<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n\t<title>زبون نقدي</title>\n\t<meta name=\"generator\" content=\"frappe\">\n\t<link type=\"text/css\" rel=\"stylesheet\" href=\"/assets/frappe/dist/css-rtl/print.bundle.DKDUTT6Z.css\">\n\t<script type=\"text/javascript\" src=\"/assets/frappe/dist/js/print.bundle.27VKHZQE.js\"></script>\n\t\n\t\t<style>\n\t\t@media screen {\n\t.print-format-gutter {\n\t\tbackground-color: #d1d8dd;\n\t\tpadding: 30px 0px;\n\t}\n\t.print-format {\n\t\tbackground-color: white;\n\t\tborder-radius: 8px;\n\t\tmax-width: 8.3in;\n\t\tmin-height: 11.69in;\n\t\tpadding: 0.75in;\n\t\tmargin: auto;\n\t\tcolor: var(--gray-900);\n\t}\n\n\t.print-format.landscape {\n\t\tmax-width: 11.69in;\n\t\tpadding: 0.2in;\n\t}\n\n\t.page-break {\n\t\t/* padding: 15px 0px; */\n\t\tborder-bottom: 1px dashed #888;\n\t}\n\n\t/* .page-break:first-child {\n\t\tpadding-top: 0px;\n\t} */\n\n\t.page-break:last-child {\n\t\tborder-bottom: 0px;\n\t}\n\n\t/* mozilla hack for images in table */\n\tbody:last-child .print-format td img {\n\t\twidth: 100% !important;\n\t}\n\n\t@media(max-width: 767px) {\n\t\t.print-format {\n\t\t\tpadding: 0.2in;\n\t\t}\n\t}\n}\n\n@media print {\n\t.print-format p {\n\t\tmargin-left: 1px;\n\t\tmargin-right: 1px;\n\t}\n}\n\n.disabled-check {\n\tcolor: #eee;\n}\n\n.data-field {\n\tmargin-top: 5px;\n\tmargin-bottom: 5px;\n}\n\n.data-field .value {\n\tword-wrap: break-word;\n}\n\n.important .value {\n\tfont-size: 120%;\n\tfont-weight: bold;\n}\n\n.important label {\n\tline-height: 1.8;\n\tmargin: 0px;\n}\n\n.table {\n\tfont-size: inherit;\n\tmargin: 20px 0px;\n}\n\n.checkbox-options {\n\tcolumns: var(--checkbox-options-columns);\n}\n\n.square-image {\n\twidth: 100%;\n\theight: 0;\n\tpadding: 50% 0;\n\tbackground-size: contain;\n\t/*background-size: cover;*/\n\tbackground-repeat: no-repeat !important;\n\tbackground-position: center center;\n\tborder-radius: 4px;\n}\n\n.print-item-image {\n\tobject-fit: contain;\n}\n\n.pdf-variables,\n.pdf-variable,\n.visible-pdf {\n\tdisplay: none !important;\n}\n\n.print-format {\n\tfont-size: 9pt;\n\tfont-family: \n\t\"InterVariable\", \"Inter\", -apple-system\", \"BlinkMacSystemFont\",\n\t\t\"Segoe UI\", \"Roboto\", \"Oxygen\", \"Ubuntu\", \"Cantarell\", \"Fira Sans\", \"Droid Sans\",\n\t\t\"Helvetica Neue\", sans-serif;\n\t;\n\t-webkit-print-color-adjust:exact;\n}\n\n.page-break {\n\tpage-break-after: always;\n}\n\n.print-heading {\n\tborder-bottom: 1px solid #aaa;\n\tmargin-bottom: 10px;\n}\n\n.print-heading h2 {\n\tmargin: 0px;\n}\n.print-heading h4 {\n\tmargin-top: 5px;\n}\n\ntable.no-border, table.no-border td {\n\tborder: 0px;\n}\n\n.print-format label {\n\t/* wkhtmltopdf breaks label into multiple lines when it is inline-block */\n\tdisplay: block;\n\tfont-weight: 700;\n}\n\n.print-format img {\n\tmax-width: 100%;\n}\n\n.print-format table td > .primary:first-child {\n\tfont-weight: bold;\n}\n\n.print-format td, .print-format th {\n\tvertical-align: top !important;\n\tpadding: 6px !important;\n}\n\n.print-format p {\n\tmargin: 3px 0px 3px;\n}\n\n.print-format .ql-snow p {\n\tmargin-top: 0px;\n}\n\n.print-format table td pre {\n\twhite-space: normal;\n\tword-break: normal;\n}\n\ntable td div {\n\t\n\t/* needed to avoid partial cutting of text between page break in wkhtmltopdf */\n\tpage-break-inside: avoid !important;\n\t\n}\n\n/* hack for webkit specific browser */\n@media (-webkit-min-device-pixel-ratio:0) {\n\tthead, tfoot {\n\t\tdisplay: table-header-group;\n\t}\n}\n\n[document-status] {\n\tmargin-bottom: 5mm;\n}\n\n.signature-img {\n\tbackground: #fff;\n\tborder-radius: 3px;\n\tmargin-top: 5px;\n\tmax-height: 150px;\n}\n\n.print-format-preview [data-fieldtype=\"Table\"] {\n\toverflow: auto;\n}\n.print-format {\n    font-size: 13px;\n    background: white;\n}\n\n.print-heading {\n    border-bottom: 1px solid #f4f5f6;\n    padding-bottom: 5px;\n    margin-bottom: 10px;\n}\n\n.print-heading h2 {\n    font-size: 24px;\n}\n\n.print-heading h2 div {\n    font-weight: 600;\n}\n\n.print-heading small {\n    font-size: 13px !important;\n    font-weight: normal;\n    line-height: 2.5;\n    color: #4c5a67;\n}\n\n.print-format .letter-head {\n    margin-bottom: 30px;\n}\n\n.print-format label {\n    font-weight: normal;\n    font-size: 13px;\n    color: #4C5A67;\n    margin-bottom: 0;\n}\n\n.print-format .data-field {\n    margin-top: 0;\n    margin-bottom: 0;\n}\n\n.print-format .value {\n    color: #192734;\n    line-height: 1.8;\n}\n\n.print-format .section-break:not(:last-child) {\n    margin-bottom: 0;\n}\n\n.print-format .row:not(.section-break) {\n    line-height: 1.6;\n    margin-top: 15px !important;\n}\n\n.print-format .important .value {\n    font-size: 13px;\n    font-weight: 600;\n}\n\n.print-format th {\n    color: #74808b;\n    font-weight: normal;\n    border-bottom-width: 1px !important;\n}\n\n.print-format .table-bordered td, .print-format .table-bordered th {\n    border: 1px solid #f4f5f6;\n}\n\n.print-format .table-bordered {\n    border: 1px solid #f4f5f6;\n}\n\n.print-format td, .print-format th {\n    padding: 10px !important;\n}\n\n.print-format .primary.compact-item {\n    font-weight: normal;\n}\n\n.print-format table td .value {\n    font-size: 12px;\n    line-height: 1.8;\n}\n.print-format table tr td.table-sr{\n\tline-height: 1.8;\n\tfont-size: 12px;\n}\n\n\n.print-format { padding: 0 !important; max-width: 80mm; }\n.pos-receipt { width: 72mm; margin: 0 auto; font-family: \"Inter\", \"Tajawal\", \"Noto Sans Arabic\", Arial, sans-serif; font-size: 11.5px; color: #10231f; line-height: 1.35; }\n.pos-receipt table { width: 100%; border-collapse: collapse; }\n.pos-receipt td { padding: 1px 0; vertical-align: top; }\n.pos-receipt .r-head { text-align: center; }\n.pos-receipt .r-logo { max-height: 40px; max-width: 60mm; margin-bottom: 4px; }\n.pos-receipt .r-name { font-size: 15px; font-weight: 700; }\n.pos-receipt .r-name-ar { font-size: 13px; font-weight: 600; }\n.pos-receipt .r-meta { font-size: 10.5px; color: #45554f; }\n.pos-receipt .r-rule { border-top: 1px dashed #8a9a95; margin: 6px 0; }\n.pos-receipt .r-end { text-align: end; white-space: nowrap; }\n.pos-receipt .r-sub { color: #45554f; }\n.pos-receipt .r-batch { font-size: 10px; color: #63736f; padding-bottom: 3px; }\n.pos-receipt .r-grand td { font-size: 14px; font-weight: 700; padding-top: 3px; }\n.pos-receipt .r-flag { text-align: center; font-weight: 700; letter-spacing: 0.08em; }\n.pos-receipt .r-foot { text-align: center; font-size: 10.5px; white-space: pre-line; }\n.pos-receipt .r-powered { text-align: center; font-size: 9px; color: #8a9a95; margin-top: 6px; }\n@media print { @page { size: 80mm auto; margin: 3mm; } }\n\n\t\t</style>\n\t\n</head>\n<body>\n\t<div class=\"action-banner print-hide\">\n\t\t<a class=\"p-2\" onclick=\"window.print();\">\n\t\t\tطباعة\n\t\t</a>\n\t\t<a class=\"p-2\"\n\t\t\thref=\"/api/method/frappe.utils.print_format.download_pdf?doctype=Sales Invoice&name=ACC-SINV-2026-00024&format=PharmacyOS Receipt&no_letterhead=1&_lang=ar\">\n\t\t\tاحصل على ملف PDF\n\t\t</a>\n\t</div>\n\t<div class=\"print-format-gutter\">\n\t\t<div class=\"print-format\">\n\t\t\t\n<div class=\"pos-receipt\" dir=\"ltr\">\n\t<header class=\"r-head\">\n\t\t<div class=\"r-name\">QA TEST Pharmacy</div><div class=\"r-name-ar\" dir=\"rtl\">صيدلية الاختبار (QA)</div><div class=\"r-meta\">Main Branch</div><div class=\"r-meta\" dir=\"ltr\">07700000000</div>\n\t</header>\n\t<div class=\"r-rule\"></div>\n\t<table class=\"r-info\">\n\t\t<tr><td>فاتورة</td><td class=\"r-end\" dir=\"ltr\">ACC-SINV-2026-00024</td></tr>\n\t\t<tr><td>التاريخ</td><td class=\"r-end\"><bdi>7 تشرين الأول 2026</bdi> <span dir=\"ltr\">17:21</span></td></tr><tr><td>أمين الصندوق</td><td class=\"r-end\">QA Cashier Sara</td></tr><tr><td>الزبون</td><td class=\"r-end\">زبون نقدي</td></tr>\n\t</table>\n\t<div class=\"r-rule\"></div>\n\t<table class=\"r-items\">\n\t\t<tr class=\"r-item\">\n\t\t\t<td colspan=\"2\"><strong>Panadol 500mg Tablets</strong></td>\n\t\t</tr>\n\t\t<tr>\n\t\t\t<td class=\"r-sub\" dir=\"ltr\">2 × 2,500 د.ع</td>\n\t\t\t<td class=\"r-end\">5,000 د.ع</td>\n\t\t</tr>\n\t\t<tr><td colspan=\"2\" class=\"r-batch\">الوجبة <span dir=\"ltr\">PAN-QA-2601</span> · تنتهي <span dir=\"ltr\">03/2028</span></td></tr>\n\t</table>\n\t<div class=\"r-rule\"></div>\n\t<table class=\"r-totals\">\n\t\t<tr class=\"r-grand\"><td>الإجمالي</td><td class=\"r-end\">5,000 د.ع</td></tr><tr><td>نقد</td><td class=\"r-end\">5,000 د.ع</td></tr>\n\t</table><div class=\"r-powered\">مدعوم بواسطة PharmacyOS</div>\n</div>\n\t\t</div>\n\t</div>\n\t<script>\n\t\tdocument.addEventListener('DOMContentLoaded', () => {\n\t\t\tconst page_div = document.querySelector('.page-break');\n\n\t\t\tif (page_div) {\n\t\t\t\tpage_div.style.display = 'flex';\n\t\t\t\tpage_div.style.flexDirection = 'column';\n\t\t\t}\n\n\t\t\tconst footer_html = document.getElementById('footer-html');\n\t\t\tif (footer_html)  {\n\t\t\t\tfooter_html.classList.add('hidden-pdf');\n\t\t\t\tfooter_html.classList.remove('visible-pdf');\n\t\t\t\tfooter_html.style.order = 1;\n\t\t\t\tfooter_html.style.marginTop = '20px';\n\t\t\t}\n\t\t\tdocument.querySelectorAll(\"svg[data-barcode-value]\").forEach(render_barcode)\n\t\t});\n\t</script>\n</body><!-- cashier@qa-pharmacy.test --></html>",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:23"
+ },
+ {
+  "area": "A9 Returns",
+  "check": "partial return: 1 of 4 Glucophage, refund 4,000",
+  "expected": "refund −4,000; return invoice submitted",
+  "actual": "[\"ACC-SINV-2026-00036\", -4000.0, -4000.0]",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:23"
+ },
+ {
+  "area": "A9 Returns",
+  "check": "stock restored to the SAME batch",
+  "expected": "GLU-QA-2601 +1",
+  "actual": "{\"before\": 49.0, \"after\": 50.0}",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:23"
+ },
+ {
+  "area": "A9 Returns",
+  "check": "returnable quantity decreases",
+  "expected": "Glucophage 3 left, Zyrtec 2",
+  "actual": "[[\"QA-GLUCO500\", 3.0], [\"QA-ZYRTEC\", 2.0]]",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:23"
+ },
+ {
+  "area": "A9 Returns",
+  "check": "cannot return more than sold",
+  "expected": "4 more Glucophage refused (3 left)",
+  "actual": "refused HTTP 417: الصف # 1: لا يمكن الارجاع أكثر من 3.0 للبند QA-GLUCO500",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:23"
+ },
+ {
+  "area": "A9 Returns",
+  "check": "a return cannot be returned",
+  "expected": "return-of-return refused",
+  "actual": "refused HTTP 417: ACC-SINV-2026-00036 هي نفسها مرتجع. استخدم البيع الأصلي.",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:23"
+ },
+ {
+  "area": "A9 Returns",
+  "check": "return audit: who / when / against",
+  "expected": "owner = cashier, return_against = T8",
+  "actual": "[\"cashier@qa-pharmacy.test\", \"2026-10-07 17:21:23.244941\", \"ACC-SINV-2026-00031\"]",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:23"
+ },
+ {
+  "area": "A10 Void",
+  "check": "cashier cannot approve their own void",
+  "expected": "self-approval refused",
+  "actual": "refused HTTP 403: يجب أن يوافق شخص آخر على الإلغاء.",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:23"
+ },
+ {
+  "area": "A10 Void",
+  "check": "wrong manager password refused",
+  "expected": "refused, nothing changes",
+  "actual": "refused HTTP 403: رُفضت الموافقة: البريد أو كلمة المرور غير صحيحة.",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:23"
+ },
+ {
+  "area": "A10 Void",
+  "check": "another cashier cannot approve",
+  "expected": "cashier2 (no cancel right) refused as approver",
+  "actual": "refused HTTP 403: غير مسموح لـ cashier2@qa-pharmacy.test بإلغاء المبيعات.",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:23"
+ },
+ {
+  "area": "A10 Void",
+  "check": "reason required",
+  "expected": "empty reason refused",
+  "actual": "refused HTTP 417: أدخل سبب الإلغاء.",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:23"
+ },
+ {
+  "area": "A10 Void",
+  "check": "cashier cannot void another cashier's sale",
+  "expected": "cashier2 asking to void cashier's sale refused",
+  "actual": "refused HTTP 403: يمكنك طلب إلغاء مبيعاتك فقط.",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:23"
+ },
+ {
+  "area": "A10 Void",
+  "check": "sale untouched after refusals",
+  "expected": "T9 still submitted (docstatus 1)",
+  "actual": "1",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:23"
+ },
+ {
+  "area": "A10 Void",
+  "check": "correct manager approval voids the sale",
+  "expected": "Void Log written, approved_by manager",
+  "actual": "{\"name\": \"VOID-00002\", \"invoice\": \"ACC-SINV-2026-00032\", \"amount\": 8000.0, \"reason\": \"customer changed mind\", \"requested_by\": \"cashier@qa-pharmacy.test\", \"approved_by\": \"manager@qa-pharmacy.test\", \"voided_on\": \"2026-10-07 17:21:24.302094\", \"status\": \"voided\"}",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:24"
+ },
+ {
+  "area": "A10 Void",
+  "check": "cashier stays signed in after the approval",
+  "expected": "get_context still answers as the cashier",
+  "actual": "cashier@qa-pharmacy.test",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:24"
+ },
+ {
+  "area": "A10 Void",
+  "check": "voided sale stays visible, marked voided",
+  "expected": "in history with voided = true",
+  "actual": "[{\"name\": \"ACC-SINV-2026-00032\", \"customer_name\": \"زبون نقدي\", \"grand_total\": 8000.0, \"rounded_total\": 8000.0, \"currency\": \"IQD\", \"posting_date\": \"2026-10-07\", \"posting_time\": \"17:21:20.399233\", \"is_return\": 0, \"return_against\": null, \"status\": \"Cancelled\", \"docstatus\": 2, \"voided\": true, \"can_void\": false}]",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:24"
+ },
+ {
+  "area": "A10 Void",
+  "check": "never deleted: invoice exists as Cancelled",
+  "expected": "docstatus 2",
+  "actual": "{\"docstatus\": 2, \"status\": \"Cancelled\"}",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:24"
+ },
+ {
+  "area": "A10 Void",
+  "check": "stock reversed into the batch",
+  "expected": "VTC-QA-2601 +2",
+  "actual": "{\"before\": 26.0, \"after\": 28.0}",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:24"
+ },
+ {
+  "area": "A10 Void",
+  "check": "financial correction: ledger entries cancelled",
+  "expected": "all GL entries of T9 is_cancelled = 1",
+  "actual": "[{\"account\": \"Debtors - QTP\", \"debit\": 0.0, \"credit\": 8000.0, \"is_cancelled\": 1}, {\"account\": \"Stock In Hand - QTP\", \"debit\": 4800.0, \"credit\": 0.0, \"is_cancelled\": 1}, {\"account\": \"Cost of Goods Sold - QTP\", \"debit\": 0.0, \"credit\": 4800.0, \"is_cancelled\": 1}, {\"account\": \"Cash - QTP\", \"debit\": 0.0, \"credit\": 8000.0, \"is_cancelled\": 1}, {\"account\": \"Sales - QTP\", \"debit\": 8000.0, \"credit\": 0.0, \"is_cancelled\": 1}, {\"account\": \"Stock In Hand - QTP\", \"debit\": 0.0, \"credit\": 4800.0, \"is_cancelled\": 1}, {\"account\": \"Debtors - QTP\", \"debit\": 8000.0, \"credit\": 0.0, \"is_cancelled\": 1}, {\"account\": \"S",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:24"
+ },
+ {
+  "area": "A10 Void",
+  "check": "audit log readable by the manager",
+  "expected": "1 Void Log row with amount 8,000",
+  "actual": "[{\"name\": \"VOID-00002\", \"amount\": 8000.0, \"requested_by\": \"cashier@qa-pharmacy.test\", \"approved_by\": \"manager@qa-pharmacy.test\", \"reason\": \"customer changed mind\", \"voided_on\": \"2026-10-07 17:21:24.302094\", \"pos_profile\": \"Main Counter\"}]",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:24"
+ },
+ {
+  "area": "A10 Void",
+  "check": "cashier cannot read the void log",
+  "expected": "PharmacyOS Void Log list refused",
+  "actual": "refused HTTP 403: عدم كفاية الإذن PharmacyOS Void Log",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:24"
+ },
+ {
+  "area": "A10 Void",
+  "check": "voiding twice is idempotent",
+  "expected": "returns the same void record",
+  "actual": "VOID-00002",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:24"
+ },
+ {
+  "area": "A10 Void",
+  "check": "a returned sale cannot be voided",
+  "expected": "T8 (partly returned) refused",
+  "actual": "refused HTTP 417: أُرجعت مواد من هذا البيع، فلم يعد بالإمكان إلغاؤه.",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:24"
+ },
+ {
+  "area": "A10 Void",
+  "check": "repeated wrong approvals lock the requester out",
+  "expected": "6th attempt (correct password) refused: too many failed approvals",
+  "actual": "refused HTTP 403: محاولات موافقة فاشلة كثيرة. انتظر بضع دقائق ثم أعد المحاولة.",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:21:27"
+ },
+ {
+  "area": "A10 Void",
+  "check": "previous-day sale cannot be voided",
+  "expected": "refused: use a return",
+  "actual": "refused HTTP 417: يمكن إلغاء مبيعات اليوم فقط. استخدم الإرجاع للمبيعات الأقدم.",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:22:29"
+ },
+ {
+  "area": "A11 Shift close",
+  "check": "expected cash = 25,000 + takings − refunds (voided excluded)",
+  "expected": "25,000 + 365,550 (sum of the shift's submitted sales and returns)",
+  "actual": "{\"mode_of_payment\": \"Cash\", \"label\": \"نقد\", \"opening_amount\": 25000.0, \"expected_amount\": 390550.0, \"closing_amount\": 0.0, \"difference\": 0.0}",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:22:29"
+ },
+ {
+  "area": "A11 Shift close",
+  "check": "voided sale not in expected cash",
+  "expected": "T9's 8,000 excluded",
+  "actual": "390550.0",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:22:29"
+ },
+ {
+  "area": "A11 Shift close",
+  "check": "counted 500 short → variance −500 recorded",
+  "expected": "difference −500, closing entry submitted",
+  "actual": "{\"name\": \"POS-CLO-2026-00001\", \"shift\": \"POS-OPE-2026-00001\", \"pos_profile\": \"Main Counter\", \"sales\": 34, \"grand_total\": 365550.0, \"net_total\": 365550.0, \"payments\": [{\"mode_of_payment\": \"Cash\", \"label\": \"نقد\", \"opening_amount\": 25000.0, \"expected_amount\": 390550.0, \"closing_amount\": 390050.0, \"difference\": -500.0}]}",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:22:29"
+ },
+ {
+  "area": "A11 Shift close",
+  "check": "a closed shift cannot be closed twice",
+  "expected": "second close refused",
+  "actual": "refused HTTP 417: ليست لديك وردية مفتوحة.",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:22:29"
+ },
+ {
+  "area": "A10 Void",
+  "check": "sale of a closed shift cannot be voided",
+  "expected": "refused: use a return",
+  "actual": "refused HTTP 417: هذا البيع ضمن وردية مغلقة (POS-CLO-2026-00001). استخدم الإرجاع بدلًا من ذلك.",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:22:29"
+ },
+ {
+  "area": "A11 Shift close",
+  "check": "closing entry audit",
+  "expected": "owner = cashier, submitted, 11 sales",
+  "actual": "[\"cashier@qa-pharmacy.test\", 1, 34]",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:22:29"
+ },
+ {
+  "area": "A12 Expired disposal",
+  "check": "expired batch blocked at the POS",
+  "expected": "see A8: selling AMX-QA-2509 refused",
+  "actual": "",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:22:29"
+ },
+ {
+  "area": "A12 Expired disposal",
+  "check": "cashier cannot dispose",
+  "expected": "disposal refused for a cashier",
+  "actual": "refused HTTP 403: غير مسموح لك بإتلاف المخزون.",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:22:29"
+ },
+ {
+  "area": "A12 Expired disposal",
+  "check": "cannot dispose more than the batch holds",
+  "expected": "9 > 8 refused",
+  "actual": "refused HTTP 417: يوجد 8 فقط من الوجبة AMX-QA-2509 في Main Branch - QTP.",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:22:29"
+ },
+ {
+  "area": "A12 Expired disposal",
+  "check": "a healthy batch cannot be disposed as 'Expired'",
+  "expected": "AMX-QA-2604 refused",
+  "actual": "refused HTTP 417: الوجبة AMX-QA-2604 لم تنتهِ صلاحيتها بعد. اختر سببًا آخر إذا وجب إتلافها.",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:22:29"
+ },
+ {
+  "area": "A12 Expired disposal",
+  "check": "re-dating the expired batch refused (stock user)",
+  "expected": "expiry change refused",
+  "actual": "refused HTTP 403: Batch AMX-QA-2509 expired on 01-10-2026. An expired batch cannot be re-dated: dispose of it instead.",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:22:29"
+ },
+ {
+  "area": "A12 Expired disposal",
+  "check": "re-dating the expired batch refused (manager)",
+  "expected": "expiry change refused",
+  "actual": "refused HTTP 403: Batch AMX-QA-2509 expired on 01-10-2026. An expired batch cannot be re-dated: dispose of it instead.",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:22:29"
+ },
+ {
+  "area": "A12 Expired disposal",
+  "check": "re-dating the expired batch refused (owner)",
+  "expected": "an expired batch cannot be re-dated by anyone",
+  "actual": "refused HTTP 403: Batch AMX-QA-2509 expired on 01-10-2026. An expired batch cannot be re-dated: dispose of it instead.",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:22:29"
+ },
+ {
+  "area": "A12 Expired disposal",
+  "check": "dispose the whole expired batch (8)",
+  "expected": "Stock Entry 'Expired Stock Disposal' submitted",
+  "actual": "{\"name\": \"MAT-STE-2026-00001\", \"qty\": 8.0, \"batch_id\": \"AMX-QA-2509\", \"warehouse\": \"Main Branch - QTP\", \"reason\": \"Expired\"}",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:22:29"
+ },
+ {
+  "area": "A12 Expired disposal",
+  "check": "stock deducted",
+  "expected": "AMX-QA-2509 → 0",
+  "actual": "0",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:22:30"
+ },
+ {
+  "area": "A12 Expired disposal",
+  "check": "history: batch, qty, reason, user, time",
+  "expected": "row with reason Expired by stock@",
+  "actual": "{\"name\": \"MAT-STE-2026-00001\", \"posting_date\": \"2026-10-07\", \"posting_time\": \"17:22:29.874725\", \"owner\": \"stock@qa-pharmacy.test\", \"remarks\": \"إتلاف (منتهي الصلاحية) للوجبة AMX-QA-2509، انتهاء الصلاحية 2026-10-01. QA disposal\", \"reason\": \"Expired\", \"user\": \"QA Zainab\", \"items\": [{\"item_code\": \"QA-AMOXSYR\", \"item_name\": \"Amoxil 250mg/5ml Suspension\", \"qty\": 8.0, \"warehouse\": \"Main Branch - QTP\", \"batch_id\": \"AMX-QA-2509\"}]}",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:22:30"
+ },
+ {
+  "area": "A12 Expired disposal",
+  "check": "the disposal entry cannot be cancelled by the stock user",
+  "expected": "cancel refused (stock would come back)",
+  "actual": "ACCEPTED (should be refused): {'name': 'MAT-STE-2026-00001', 'owner': 'stock@qa-pharmacy.test', 'creation': '2026-10-07 17:22:29.830674', 'modified': '2026-10-07 17:22:30.082909', 'modified_by': 'stock@qa-pharmacy.test', 'docstatus': 2, 'idx': 0, 'company': 'QA TEST Pharmacy', 'naming_series': 'MAT-STE-.YYYY.-', 'stock_entry_type': 'Expired Stock Disposal', 'pharmacyos_disposal_reason': 'Expired', 'purpose': 'Material Issue', 'set_posting_time': 0, 'posting_date': '2026-10-07', 'posting_time': '17:22:29.874725', 'add_to_transit': 0, 'apply_putaway_rule': 0, 'inspection_required': 0, 'work_order': None, 'subcontracting_order': None, 'outgoing_stock_entry': None, 'source_stock_entry': None, 'from_bom': 0, 'use_multi_level_bom': 1, 'bom_no': None, 'fg_completed_qty': 0.0, 'process_loss_percentage': 0.0, 'process_loss_qty': 0.0, 'from_warehouse': None, 'source_warehouse_address': None, 'source_address_display': None, 'to_warehouse': None, 'target_warehouse_address': None, 'target_address_display': None, 'scan_barcode': None, 'last_scanned_warehouse': None, 'total_outgoing_value': 25600.0, 'total_incoming_value': 0.0, 'value_difference': -25600.0, 'total_additional_costs': 0.0, 'supplier': None, 'supplier_name': None, 'supplier_address': None, 'address_display': None, 'project': None, 'cost_center': None, 'select_print_heading': None, 'letter_head': 'Company Letterhead - Grey', 'delivery_note_no': None, 'sales_invoice_no': None, 'job_card': None, 'pick_list': None, 'asset_repair': None, 'purchase_receipt_no': None, 'purchase_order': None, 'subcontracting_inward_order': None, 'is_additional_transfer_entry': 0, 'is_opening': 'No', 'remarks': 'إتلاف (منتهي الصلاحية) للوجبة AMX-QA-2509، انتهاء الصلاحية 2026-10-01. QA disposal', 'per_transferred': 0.0, 'total_amount': 25600.0, 'amended_from': None, 'credit_note': None, 'is_return': 0, 'branch': 'Main Branch', 'doctype': 'Stock Entry', 'items': [{'name': 'm3q27uvd3p', 'owner': 'stock@qa-pharmacy.test', 'creation': '2026-10-07 17:22:29.830674', 'modified': '2026-10-07 17:22:30.755250', 'modified_by': 'stock@qa-pharmacy.test', 'docstatus': 2, 'idx': 1, 'barcode': '6291100000066', 'has_item_scanned': 0, 's_warehouse': 'Main Branch - QTP', 't_warehouse': None, 'item_code': 'QA-AMOXSYR', 'item_name': 'Amoxil 250mg/5ml Suspension', 'is_finished_item': 0, 'valuation_type': '', 'secondary_item_type': '', 'quality_inspection': None, 'subcontracted_item': None, 'against_fg': None, 'description': None, 'item_group': 'Antibiotics', 'image': None, 'qty': 8.0, 'transfer_qty': 8.0, 'retain_sample': 0, 'uom': 'Nos', 'stock_uom': 'Nos', 'conversion_factor': 1.0, 'sample_quantity': 0, 'basic_rate': 3200.0, 'customer_provided_item_cost': 0.0, 'additional_cost': 0.0, 'landed_cost_voucher_amount': 0.0, 'valuation_rate': 3200.0, 'allow_zero_valuation_rate': 0, 'set_basic_rate_manually': 0, 'basic_amount': 25600.0, 'amount': 25600.0, 'use_serial_batch_fields': 1, 'serial_and_batch_bundle': None, 'serial_no': None, 'batch_no': None, 'expense_account': 'Stock Adjustment - QTP', 'cost_center': 'Main - QTP', 'project': None, 'branch': None, 'actual_qty': 0.0, 'transferred_qty': 0.0, 'bom_no': None, 'allow_alternative_item': 0, 'material_request': None, 'material_request_item': None, 'pick_list_item': None, 'original_item': None, 'against_stock_entry': None, 'ste_detail': None, 'po_detail': None, 'sco_rm_detail': None, 'scio_detail': None, 'putaway_rule': None, 'reference_purchase_receipt': None, 'job_card_item': None, 'bom_secondary_item': None, 'parent': 'MAT-STE-2026-00001', 'parentfield': 'items', 'parenttype': 'Stock Entry', 'doctype': 'Stock Entry Detail'}], 'additional_costs': []}",
+  "result": "FAIL",
+  "evidence": "",
+  "at": "2026-10-07 14:22:30"
+ },
+ {
+  "area": "A13 Reports",
+  "check": "period presets",
+  "expected": "today, yesterday, 7 days, month",
+  "actual": "{\"today\": [\"2026-10-07\", \"2026-10-07\"], \"yesterday\": [\"2026-10-06\", \"2026-10-06\"], \"week\": [\"2026-10-01\", \"2026-10-07\"], \"month\": [\"2026-10-01\", \"2026-10-07\"]}",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:22:30"
+ },
+ {
+  "area": "A13 Reports",
+  "check": "today: transactions, sales, returns, net",
+  "expected": "counts match the shift",
+  "actual": "{'from_date': '2026-10-07', 'to_date': '2026-10-07', 'sales': {'gross': 376050.0, 'returns': 8000.0, 'net': 368050.0, 'transactions': 33, 'returns_count': 2, 'average': 11395.45}, 'discounts': {'total': 1950.0, 'invoices': 6}, 'voids': {'count': 2, 'amount': 16000.0, 'rows': [{'name': 'VOID-00002', 'invoice': 'ACC-SINV-2026-00032', 'amount': 8000.0, 'reason': 'customer changed mind', 'requested_by': 'cashier@qa-pharmacy.test', 'approved_by': 'manager@qa-pharmacy.test', 'voided_on': '2026-10-07 1",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:22:30"
+ },
+ {
+  "area": "A13 Reports",
+  "check": "discounts, voids, payment methods, top sellers, cashiers, shifts",
+  "expected": "sections present",
+  "actual": "[\"cashiers\", \"costs_visible\", \"discounts\", \"from_date\", \"gross_profit\", \"payments\", \"purchases\", \"sales\", \"shifts\", \"stock_value\", \"to_date\", \"top_items\", \"voids\"]",
+  "result": "FAIL",
+  "evidence": "",
+  "at": "2026-10-07 14:22:30"
+ },
+ {
+  "area": "A13 Reports",
+  "check": "owner sees costs (purchases, stock value, profit)",
+  "expected": "costs_visible = 1",
+  "actual": "true",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:22:30"
+ },
+ {
+  "area": "A13 Reports",
+  "check": "manager: 7-day report",
+  "expected": "report returned",
+  "actual": "true",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:22:30"
+ },
+ {
+  "area": "A13 Reports",
+  "check": "yesterday: the back-dated desk sale",
+  "expected": "1 transaction yesterday",
+  "actual": "{\"from_date\": \"2026-10-06\", \"to_date\": \"2026-10-06\", \"sales\": {\"gross\": 0.0, \"returns\": 0.0, \"net\": 0.0, \"transactions\": 1, \"returns_count\": 0, \"average\": 0.0}, \"discounts\": {\"total\": 0.0, \"invoices\": 0}, \"voids\": {\"count\": 0, \"amount\": 0.0, \"rows\": []}, \"payments\": [], \"top_items\": [{\"item_code\": \"",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:22:30"
+ },
+ {
+  "area": "A13 Reports",
+  "check": "month to date",
+  "expected": "report returned",
+  "actual": "true",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:22:30"
+ },
+ {
+  "area": "A13 Reports",
+  "check": "custom range over 366 days refused",
+  "expected": "refused",
+  "actual": "refused HTTP 417: اختر فترة لا تتجاوز سنة واحدة.",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:22:31"
+ },
+ {
+  "area": "A13 Reports",
+  "check": "cashier cannot open the report",
+  "expected": "403",
+  "actual": "refused HTTP 403: تقرير الصيدلية لصاحب الصيدلية والمدراء والمحاسب.",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:22:31"
+ },
+ {
+  "area": "A13 Reports",
+  "check": "pharmacist cannot open the report",
+  "expected": "403",
+  "actual": "refused HTTP 403: تقرير الصيدلية لصاحب الصيدلية والمدراء والمحاسب.",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-07 14:22:31"
+ }
+]

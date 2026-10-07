@@ -429,7 +429,7 @@
 			amounts.textContent = "";
 			var p = ctx.profiles.filter(function (x) { return x.name === select.value; })[0];
 			(p ? p.payments : []).forEach(function (mode, i) {
-				append(amounts, h("label", { class: "px-field" }, h("span", { text: M.opening_cash + " — " + mode }), h("input", { class: "px-input px-num", inputmode: "decimal", "data-mode": mode, value: "0", "data-autofocus": i === 0 ? "" : null })));
+				append(amounts, h("label", { class: "px-field" }, h("span", { text: M.opening_cash + " — " + ((p.payment_labels || {})[mode] || mode) }), h("input", { class: "px-input px-num", inputmode: "decimal", "data-mode": mode, value: "0", "data-autofocus": i === 0 ? "" : null })));
 			});
 		}
 		select.addEventListener("change", drawAmounts);
@@ -753,6 +753,19 @@
 		});
 	}
 
+	// the largest discount this user may give (PharmacyOS Settings; managers 100) — the server enforces it
+	function maxDiscount() {
+		var m = S.ctx && S.ctx.max_discount;
+		return m === undefined || m === null ? 100 : Number(m);
+	}
+
+	function clampDiscount(n) {
+		var max = maxDiscount();
+		if (isNaN(n)) return 0;
+		if (n > max) toast(fmt(M.discount_limit, qtyText(max)), "error");
+		return Math.max(0, Math.min(max, n));
+	}
+
 	function discountInput(line, locked) {
 		var input = h("input", {
 			class: "px-input px-disc-input",
@@ -763,7 +776,7 @@
 			disabled: locked,
 			onchange: function () {
 				var n = parseNumber(input.value);
-				line.discount_percentage = isNaN(n) ? 0 : Math.max(0, Math.min(100, n));
+				line.discount_percentage = clampDiscount(n);
 				cartChanged();
 			},
 		});
@@ -787,7 +800,7 @@
 				"aria-label": M.discount_pct,
 				onchange: function () {
 					var n = parseNumber(disc.value);
-					S.discountPct = isNaN(n) ? 0 : Math.max(0, Math.min(100, n));
+					S.discountPct = clampDiscount(n);
 					cartChanged();
 				},
 			});
@@ -1058,7 +1071,7 @@
 					h("tbody", null, rows.map(function (l) {
 						var q = h("input", { class: "px-input px-qty-input", inputmode: "decimal", value: "0", "aria-label": M.return_qty, oninput: preview });
 						qtyInputs.push({ row: l.row, input: q, max: l.returnable_qty });
-						return h("tr", null, h("td", { text: l.item_name }), h("td", { text: qtyText(l.sold_qty) }), h("td", { text: qtyText(l.returnable_qty) }), h("td", { text: money(l.rate) }), h("td", null, q));
+						return h("tr", null, h("td", { text: itemTitle(l) }), h("td", { text: qtyText(l.sold_qty) }), h("td", { text: qtyText(l.returnable_qty) }), h("td", { text: money(l.rate) }), h("td", null, q));
 					}))
 				);
 				append(area, h("p", { class: "px-muted" }, h("bdi", { dir: "ltr", text: c.invoice }), " · ", c.customer_name || "", " · ", h("bdi", { dir: "ltr", text: c.posting_date }), " · ", money(c.grand_total)), table, refundBox);

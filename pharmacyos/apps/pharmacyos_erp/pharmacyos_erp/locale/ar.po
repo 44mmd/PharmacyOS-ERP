@@ -3353,3 +3353,36 @@ msgstr "تاريخ الإلغاء"
 
 msgid "Sold By"
 msgstr "البائع"
+
+msgid "Row {0}: {1}"
+msgstr "الصف {0}: {1}"
+
+msgid "{0}: the price must be the pharmacy's price ({1})."
+msgstr "{0}: يجب أن يكون السعر سعر الصيدلية ({1})."
+
+msgid "{0}: discounts are not allowed on this counter."
+msgstr "{0}: الخصم غير مسموح على هذا الكاونتر."
+
+msgid "{0}: changing the price is not allowed on this counter."
+msgstr "{0}: تغيير السعر غير مسموح على هذا الكاونتر."
+
+msgid "Row {0}: a discount above {1}% needs a pharmacy manager."
+msgstr "الصف {0}: الخصم أكثر من {1}% يحتاج إلى مدير الصيدلية."
+
+msgid "A discount above {0}% of the sale needs a pharmacy manager."
+msgstr "خصم أكثر من {0}% من قيمة البيع يحتاج إلى مدير الصيدلية."
+
+msgid "The largest discount you can give is {0}%. A pharmacy manager can give more."
+msgstr "أكبر خصم يمكنك منحه هو {0}%. يمكن لمدير الصيدلية منح أكثر من ذلك."
+
+msgid "Batch {0} expired on {1}. An expired batch cannot be re-dated: dispose of it instead."
+msgstr "انتهت صلاحية الوجبة {0} في {1}. لا يمكن تغيير تاريخ وجبة منتهية الصلاحية: أتلفها بدلًا من ذلك."
+
+msgid "Sales & Counter"
+msgstr "المبيعات والكاونتر"
+
+msgid "Maximum Counter Discount (%)"
+msgstr "أقصى خصم على الكاونتر (%)"
+
+msgid "The largest discount a cashier or pharmacist may give, per line and for the whole sale, on counters that allow discounts. A pharmacy manager or the owner can give more. Enforced on the server for every sale."
+msgstr "أكبر خصم يمكن للكاشير أو الصيدلاني منحه، لكل سطر وللبيع كاملًا، على الكاونترات التي تسمح بالخصم. يمكن لمدير الصيدلية أو المالك منح أكثر. يُطبَّق على الخادم في كل عملية بيع."

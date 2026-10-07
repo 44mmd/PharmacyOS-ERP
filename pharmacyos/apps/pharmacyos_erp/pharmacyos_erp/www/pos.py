@@ -173,4 +173,5 @@ def messages() -> dict:
 		"manager_password": _("Manager password"),
 		"void_confirm": _("Void sale"),
 		"voided_ok": _("Sale {0} voided (approved by {1})."),
+		"discount_limit": _("The largest discount you can give is {0}%. A pharmacy manager can give more."),
 	}

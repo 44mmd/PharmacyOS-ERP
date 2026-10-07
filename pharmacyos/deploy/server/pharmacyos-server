@@ -84,8 +84,10 @@ update() {
 	as_bench "bench build --app pharmacyos_erp"
 	install -m 0755 "$bundle/deploy/server/pharmacyos-server" "$OPT/bin/pharmacyos-server.new"
 	install -m 0755 "$bundle/deploy/restore-backup.sh" "$OPT/bin/restore-backup.sh"
+	echo "== Restarting"
 	supervisorctl restart all >/dev/null
 	as_bench "bench --site '$SITE' set-maintenance-mode off"
+	echo "== Health check"
 	wait_web 60
 	as_bench "bench --site '$SITE' execute pharmacyos_erp.backup.service.health_check" >/dev/null
 	trap - ERR

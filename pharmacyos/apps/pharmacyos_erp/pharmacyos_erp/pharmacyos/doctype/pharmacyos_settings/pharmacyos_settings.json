@@ -19,6 +19,8 @@
   "show_powered_by",
   "receipt_footer",
   "receipt_paper_width",
+  "sales_tab",
+  "max_counter_discount",
   "expiry_tab",
   "critical_days",
   "expiring_soon_days",
@@ -331,11 +333,24 @@
    "fieldtype": "Small Text",
    "label": "Last Connection Error",
    "read_only": 1
+  },
+  {
+   "fieldname": "sales_tab",
+   "fieldtype": "Tab Break",
+   "label": "Sales & Counter"
+  },
+  {
+   "default": "10",
+   "description": "The largest discount a cashier or pharmacist may give, per line and for the whole sale, on counters that allow discounts. A pharmacy manager or the owner can give more. Enforced on the server for every sale.",
+   "fieldname": "max_counter_discount",
+   "fieldtype": "Float",
+   "label": "Maximum Counter Discount (%)",
+   "non_negative": 1
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2026-10-07 01:00:00.000000",
+ "modified": "2026-10-07 18:00:00.000000",
  "modified_by": "Administrator",
  "module": "PharmacyOS",
  "name": "PharmacyOS Settings",

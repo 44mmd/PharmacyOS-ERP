@@ -24,13 +24,17 @@
 	<div class="r-rule"></div>
 	<table class="r-items">
 		{%- for row in doc.items %}
+		{%- set name_ar = frappe.db.get_value("Item", row.item_code, "pharma_name_ar") %}
 		<tr class="r-item">
-			<td colspan="2"><strong>{{ row.item_name|e }}</strong></td>
+			<td colspan="2"><strong>{{ (name_ar if ar and name_ar else row.item_name)|e }}</strong>{% if name_ar and name_ar != row.item_name %}<div class="r-batch" dir="{{ 'ltr' if ar else 'rtl' }}">{{ (row.item_name if ar else name_ar)|e }}</div>{% endif %}</td>
 		</tr>
 		<tr>
 			<td class="r-sub" dir="ltr">{{ "%g"|format(row.qty|float) }} × {{ format_money(row.rate, doc.currency) }}</td>
 			<td class="r-end">{{ format_money(row.amount, doc.currency) }}</td>
 		</tr>
+		{%- if row.price_list_rate and row.price_list_rate > row.rate %}
+		<tr><td colspan="2" class="r-batch">{{ _("Discount") }} <span dir="ltr">{{ "%g"|format(row.discount_percentage|float) ~ "%" if row.discount_percentage else format_money(row.price_list_rate - row.rate, doc.currency) }}</span> · {{ _("Price") }} <span dir="ltr">{{ format_money(row.price_list_rate, doc.currency) }}</span></td></tr>
+		{%- endif %}
 		{%- for b in get_item_batches(row) %}
 		<tr><td colspan="2" class="r-batch">{{ _("Batch") }} <span dir="ltr">{{ b.batch_id|e }}</span>{% if b.expiry_date %} · {{ _("Exp.") }} <span dir="ltr">{{ frappe.utils.format_date(b.expiry_date, "MM/yyyy") }}</span>{% endif %}</td></tr>
 		{%- endfor %}

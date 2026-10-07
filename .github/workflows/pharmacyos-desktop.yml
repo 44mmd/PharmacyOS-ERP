@@ -146,6 +146,12 @@ jobs:
           if (-not $p.WaitForExit(120000)) { $p.Kill(); throw "The app did not finish its smoke run" }
           if (-not (Test-Path $env:PHARMACYOS_SMOKE)) { throw "No first-run screenshot" }
           Copy-Item $env:PHARMACYOS_SMOKE dist/first-run.png
+          # the first-run screens on this real Windows machine: welcome, pharmacy details, the real system check,
+          # and the installer-state screens (installing / restart / ready). Install itself is never pressed.
+          Remove-Item Env:PHARMACYOS_SMOKE
+          npm install --no-save --no-audit --no-fund playwright-core@1.63.0
+          node test/ci-screens.mjs $app dist/screens
+          if (-not (Test-Path dist/screens/03-setup-system-check-windows.png)) { throw "No system-check screenshot" }
           # a marker file stands for pharmacy data: uninstalling must keep it
           Set-Content (Join-Path $env:ProgramData "PharmacyOS\Backups\keep.txt") "pharmacy data"
           $uninstaller = Join-Path $env:ProgramFiles "PharmacyOS ERP\Uninstall PharmacyOS ERP.exe"
@@ -162,6 +168,7 @@ jobs:
             pharmacyos/desktop/dist/PharmacyOS-Setup-*.exe
             pharmacyos/desktop/dist/SHA256SUMS.txt
             pharmacyos/desktop/dist/first-run.png
+            pharmacyos/desktop/dist/screens/
           if-no-files-found: error
 
   draft-release:

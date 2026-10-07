@@ -245,6 +245,10 @@ def ensure_roles():
 #   Reservation, Quotation, Journal/Payment Entry, Stock Entry or GL access. Pharmacists additionally
 #   read batches and the stock ledger.
 # * Branch (HR-only in ERPNext): read for every pharmacy role, maintained by the owner.
+# * Batch (ERPNext: Item Manager only): the Purchasing Officer creates the supplier's batch when receiving.
+# * Employee records (HR-only in ERPNext; first-run setup removes the HR roles from the owner): the owner
+#   keeps the staff directory (no delete: a person who leaves is set to Left, their history stays); the
+#   pharmacy manager reads it.
 
 _READ = ("read", "select")
 _SELECT = ("select",)
@@ -295,6 +299,7 @@ _COUNTER = {
 }
 
 _SUPPLIER_MASTER = ("read", "select", "create", "write", "report", "export")
+_STAFF_MASTER = ("read", "select", "create", "write", "report", "export", "print")
 
 CUSTOM_PERMISSIONS = {
 	"Cashier": _COUNTER,
@@ -305,16 +310,27 @@ CUSTOM_PERMISSIONS = {
 	},
 	# Suppliers: ERPNext keeps creating them for "Purchase Master Manager", a bundle that also grants full
 	# Item Price rights; the pharmacy's buyers get exactly the supplier master instead.
-	"Pharmacy Owner": {"Item Price": _PRICE_ADMIN, "Branch": ("read", "select", "create", "write"), "Supplier": _SUPPLIER_MASTER},
+	"Pharmacy Owner": {
+		"Item Price": _PRICE_ADMIN,
+		"Branch": ("read", "select", "create", "write"),
+		"Supplier": _SUPPLIER_MASTER,
+		"Employee": _STAFF_MASTER,
+		"Designation": ("read", "select", "create", "write"),
+		"Department": ("read", "select", "create", "write"),
+		"Employment Type": _READ,
+	},
 	"Pharmacy Manager": {
 		"Item Price": _PRICE_ADMIN,
 		"Supplier": _SUPPLIER_MASTER,
 		"Sales Invoice": ("read", "select", "cancel", "amend"),
 		"POS Invoice": ("read", "select", "cancel", "amend"),
 		"Branch": _READ,
+		"Employee": ("read", "select", "report"),
 	},
 	"Inventory Manager": {"Item Price": _PRICE_EDIT, "Branch": _READ},
-	"Purchasing Officer": {"Item Price": _READ, "Branch": _READ, "Supplier": _SUPPLIER_MASTER},
+	# Receiving a medicine records the supplier's batch number and expiry (ERPNext reserves Batch for Item
+	# Manager): buyers create batches on receipt; correcting a recorded batch stays with stock managers.
+	"Purchasing Officer": {"Item Price": _READ, "Branch": _READ, "Supplier": _SUPPLIER_MASTER, "Batch": ("read", "select", "create", "report")},
 	"Pharmacy Accountant": {
 		"Item Price": _READ,
 		# Frappe saves a cancelled document, which checks write as well as cancel (submitted bundles
@@ -408,6 +424,9 @@ def ensure_property_setters():
 	new_value = ",".join(fields)
 	if new_value != search_fields:
 		make_property_setter("Item", None, "search_fields", new_value, "Data", for_doctype=True)
+	# a batch's expiry date decides what is sellable: every change to a batch is kept in its history
+	if not frappe.get_meta("Batch").track_changes:
+		make_property_setter("Batch", None, "track_changes", 1, "Check", for_doctype=True)
 
 
 # Field help texts that name ERPNext on forms pharmacy staff use daily (presentation only).

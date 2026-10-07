@@ -93,6 +93,7 @@ def _user_profiles(user: str) -> list[dict]:
 				"name": name,
 				"company": profile.company,
 				"payments": [p.mode_of_payment for p in profile.payments],  # opening cash per method
+				"payment_labels": {p.mode_of_payment: _(p.mode_of_payment) for p in profile.payments},
 			}
 		)
 	return out
@@ -221,6 +222,11 @@ def _build_invoice(pos_profile: str, items, customer: str | None, additional_dis
 	if flt(additional_discount_percentage):
 		doc.additional_discount_percentage = flt(additional_discount_percentage)
 	doc.calculate_taxes_and_totals()
+	# priced by ERPNext here, with the counter's switches checked above: the invoice guard only re-checks
+	# the discount ceiling (an in-memory flag; a request cannot set it)
+	from pharmacyos_erp.pharmacy.counter_pricing import PRICED_FLAG
+
+	doc.flags[PRICED_FLAG] = True
 	return doc, profile
 
 
@@ -353,6 +359,8 @@ def get_context() -> dict:
 		"can_close_shift": cint(frappe.has_permission("POS Closing Entry", "create")),
 		# voiding needs the right to cancel sales; without it the counter asks a manager to approve
 		"can_void": cint(frappe.has_permission(doctype, "cancel")),
+		# the largest discount this user may give at the counter (100 for managers and the owner)
+		"max_discount": _max_discount(),
 		"version": _version(),
 		"shift": shift,
 		"profile": profile,
@@ -466,6 +474,9 @@ def quote(pos_profile: str, items: list | str, customer: str | None = None, addi
 	Nothing is saved."""
 	_require_user()
 	doc, _profile = _build_invoice(pos_profile, items, customer, flt(additional_discount_percentage))
+	from pharmacyos_erp.pharmacy.counter_pricing import check_discount_ceiling
+
+	check_discount_ceiling(doc)  # the same limit checkout applies, shown before payment
 	return _summary(doc)
 
 
@@ -550,6 +561,7 @@ def get_return_candidate(invoice: str) -> dict:
 				"row": src.name,
 				"item_code": src.item_code,
 				"item_name": src.item_name,
+				"item_name_ar": frappe.db.get_value("Item", src.item_code, "pharma_name_ar", cache=True),
 				"uom": src.uom,
 				"sold_qty": flt(src.qty),
 				"returnable_qty": returnable,
@@ -655,7 +667,27 @@ def recent_sales(limit: int = 20, search: str | None = None) -> list[dict]:
 	for row in rows:
 		row["voided"] = row.docstatus == 2
 		row["can_void"] = row.docstatus == 1 and not row.is_return and str(row.posting_date) == today
+	# a sale already counted in a closed shift is corrected by a return, not a void (void_sale refuses it)
+	closed = _closed_shift_sales(doctype, [r.name for r in rows if r["can_void"]])
+	for row in rows:
+		if row.name in closed:
+			row["can_void"] = False
 	return rows
+
+
+def _closed_shift_sales(doctype: str, names: list[str]) -> set[str]:
+	if not names:
+		return set()
+	child, field = ("POS Invoice Reference", "pos_invoice") if doctype == "POS Invoice" else ("Sales Invoice Reference", "sales_invoice")
+	refs = frappe.get_all(child, filters={field: ["in", names], "parenttype": "POS Closing Entry"}, fields=["parent", field])
+	submitted = set(frappe.get_all("POS Closing Entry", filters={"name": ["in", list({r.parent for r in refs}) or [""]], "docstatus": 1}, pluck="name"))
+	return {r[field] for r in refs if r.parent in submitted}
+
+
+def _max_discount() -> float:
+	from pharmacyos_erp.pharmacy.counter_pricing import is_counter_only, max_counter_discount
+
+	return max_counter_discount() if is_counter_only() else 100.0
 
 
 def _version() -> str:
