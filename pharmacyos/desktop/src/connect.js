@@ -13,7 +13,7 @@ const CHECK_TEXT = {
 	wsl: ["بيئة الخادم (WSL2)", "Server environment (WSL2)", "سيُفعَّل أثناء التثبيت (قد يتطلب إعادة تشغيل).", "Will be turned on during setup (may need one restart)."],
 	existing_server: ["خادم PharmacyOS سابق", "Existing PharmacyOS server", "يوجد خادم PharmacyOS على هذا الجهاز: سيُكمل الإعداد ما ينقصه دون حذف البيانات.", "A PharmacyOS server exists here: setup completes what is missing without deleting data."],
 	port80: ["المنفذ 80", "Port 80", "يستخدمه برنامج آخر: سيعمل PharmacyOS على المنفذ 8780.", "Used by another program: PharmacyOS will use port 8780."],
-	administrator: ["صلاحيات المسؤول", "Administrator", "سيطلب Windows كلمة مرور مسؤول الجهاز.", "Windows will ask for an administrator's password."],
+	administrator: ["صلاحيات المسؤول", "Administrator", "سجّل الدخول إلى Windows بحساب مسؤول (الحساب المستخدم عند الكاونتر) ثم شغّل الإعداد من جديد. يُثبَّت خادم الصيدلية لحساب Windows هذا.", "Sign in to Windows with an administrator account (the account used at the counter) and run setup again. The pharmacy server is installed for this Windows account."],
 	check_failed: ["الفحص", "Check", "تعذّر فحص الجهاز.", "The check could not run."],
 };
 const ERR_TEXT = {
@@ -24,6 +24,13 @@ const ERR_TEXT = {
 	phone: "رقم غير صالح · Invalid number",
 };
 const STEP_KEYS = ["check", "wsl", "distro", "server", "autostart", "finish"];
+const BUSY_TEXT = {
+	update: "يجري تحديث خادم الصيدلية · The pharmacy server is being updated",
+	restore: "تجري استعادة نسخة احتياطية · A backup is being restored",
+	backup: "يجري أخذ نسخة احتياطية · A backup is being taken",
+	start: "يجري تشغيل خادم الصيدلية · The pharmacy server is starting",
+};
+const BUSY_REFUSED = "عملية أخرى جارية على خادم الصيدلية — يرجى الانتظار حتى تنتهي · Another operation is already running — please wait until it finishes";
 
 let current = null;
 let pharmacyValues = null;
@@ -240,6 +247,27 @@ function confirmRestore(backup, when) {
 	slot("restore-word").focus();
 }
 
+// ------------------------------------------------------------------ one server operation at a time
+
+// An update, restore, backup or server start is already running (this screen was opened again
+// meanwhile): nothing can be started until it ends; then the screen continues by itself.
+async function waitWhileBusy(operation) {
+	show("busy");
+	let last = operation;
+	for (;;) {
+		slot("busy-what").textContent = BUSY_TEXT[last] || "";
+		await new Promise((resolve) => setTimeout(resolve, 2000));
+		const s = await api.busy();
+		if (!s || !s.busy) break;
+		last = s.operation;
+	}
+	if (last === "start") return; // the server start opens the app by itself
+	if (params.get("view") === "backups") {
+		show("backups");
+		loadBackups();
+	} else api.openApp(); // the app — or the update screen, if the server still needs the update
+}
+
 // ------------------------------------------------------------------ actions
 
 document.addEventListener("click", async (e) => {
@@ -269,9 +297,20 @@ document.addEventListener("click", async (e) => {
 		}
 	} else if (action === "install-retry") {
 		btn.disabled = true;
-		await api.setup.resume();
+		slot("retry-error").textContent = "";
+		const r = await api.setup.resume();
 		btn.disabled = false;
+		if (r && !r.ok) {
+			slot("retry-error").textContent = r.denied
+				? "لم يُمنح إذن المسؤول. أعد المحاولة ووافق على طلب Windows، أو أدخل البيانات من جديد. · Administrator permission was not given: retry and accept the Windows prompt, or enter the details again."
+				: `تعذّر بدء الإعداد · Setup could not start. ${r.error || ""}`;
+		}
 		pollInstall();
+	} else if (action === "install-restart") {
+		// leave the failed setup: its saved details (with the owner's password) are deleted; Install writes them anew
+		clearInterval(pollTimer);
+		await api.setup.forget();
+		show("pharmacy");
 	} else if (action === "reboot") api.setup.reboot();
 	else if (action === "reboot-later") window.close();
 	else if (action === "finish") api.setup.finish(btn.dataset.url);
@@ -281,7 +320,8 @@ document.addEventListener("click", async (e) => {
 	} else if (action === "server-start") {
 		slot("recovery-status").textContent = "جارٍ تشغيل الخادم… Starting the server…";
 		show("starting");
-		api.server.start();
+		const r = await api.server.start();
+		if (r && r.busy) waitWhileBusy(r.operation);
 	} else if (action === "settings") {
 		show("settings");
 		settingsForm();
@@ -290,6 +330,7 @@ document.addEventListener("click", async (e) => {
 		slot("update-spinner").hidden = false;
 		slot("update-msg").textContent = "جارٍ التحديث — لا تطفئ الجهاز · Updating — do not turn off the computer";
 		const r = await api.server.update();
+		if (r && r.busy) return waitWhileBusy(r.operation);
 		slot("update-spinner").hidden = true;
 		const status = r && r.result && r.result.status;
 		slot("update-msg").textContent =
@@ -306,7 +347,7 @@ document.addEventListener("click", async (e) => {
 		slot("backup-status").textContent = "جارٍ النسخ الاحتياطي… Backing up…";
 		const r = await api.backups.create();
 		btn.disabled = false;
-		slot("backup-status").textContent = r && r.ok ? `✓ تم: ${r.folder} · Done` : `تعذّر النسخ · Backup failed ${(r && r.error) || ""}`;
+		slot("backup-status").textContent = r && r.busy ? BUSY_REFUSED : r && r.ok ? `✓ تم: ${r.folder} · Done` : `تعذّر النسخ · Backup failed ${(r && r.error) || ""}`;
 		slot("backup-status").className = "status " + (r && r.ok ? "good" : "bad");
 		loadBackups();
 	} else if (action === "backup-open") api.backups.open();
@@ -322,7 +363,7 @@ document.addEventListener("click", async (e) => {
 		const r = await api.backups.restore(restoreTarget.folder, slot("restore-files").checked);
 		btn.disabled = false;
 		slot("restore-confirm").hidden = true;
-		slot("backup-status").textContent = r && r.ok ? "✓ تمت الاستعادة · Restored. سجّل الدخول من جديد · Sign in again." : `تعذّرت الاستعادة؛ البيانات الحالية لم تتغير أو أُعيدت من النسخة الآمنة · Restore failed ${(r && r.error) || ""}`;
+		slot("backup-status").textContent = r && r.busy ? BUSY_REFUSED : r && r.ok ? "✓ تمت الاستعادة · Restored. سجّل الدخول من جديد · Sign in again." : `تعذّرت الاستعادة؛ البيانات الحالية لم تتغير أو أُعيدت من النسخة الآمنة · Restore failed ${(r && r.error) || ""}`;
 		slot("backup-status").className = "status " + (r && r.ok ? "good" : "bad");
 		loadBackups();
 	}
@@ -342,7 +383,7 @@ api.onStartup(({ attempt, of }) => {
 	slot("starting-msg").textContent = `يتم تشغيل خادم الصيدلية… (${attempt}/${of}) · Starting the pharmacy server…`;
 });
 api.server.onLine((line) => {
-	for (const name of ["update-log", "backup-log"]) {
+	for (const name of ["update-log", "backup-log", "busy-log"]) {
 		const pre = slot(name);
 		pre.textContent = (pre.textContent + line + "\n").slice(-20000);
 		pre.scrollTop = pre.scrollHeight;
@@ -356,6 +397,8 @@ api.server.onLine((line) => {
 	const cfg = (await api.getConfig()) || {};
 	onlyFor(cfg.mode === "network" ? "network" : "this-pc");
 	const view = params.get("view") || "starting";
+	const running = await api.busy();
+	if (running && running.busy) return waitWhileBusy(running.operation); // never offer to start it twice
 	if (view === "settings") {
 		show("settings");
 		settingsForm();

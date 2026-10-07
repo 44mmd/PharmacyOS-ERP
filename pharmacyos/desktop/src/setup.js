@@ -4,7 +4,9 @@
 // the setup screen; it survives a restart (the script continues by itself after sign-in).
 //
 // The owner's password travels in a request file in this Windows user's own app-data folder (not
-// readable by other standard users) and is deleted by the script as soon as the owner account exists.
+// readable by other standard users) and is deleted by the script as soon as the owner account exists —
+// and by this app when the script will not read it: Windows' permission prompt was refused or failed, or
+// the owner leaves a failed setup to enter the details again (see forgetRequest).
 const { spawn } = require("child_process");
 const fs = require("fs");
 const path = require("path");
@@ -72,7 +74,8 @@ async function systemCheck(app) {
 // PowerShell single-quoted string
 const psq = (s) => "'" + String(s).replace(/'/g, "''") + "'";
 
-async function start(app, values) {
+// `launch` is replaceable for tests only (the IPC calls pass just the values).
+async function start(app, values, launch = launchElevated) {
 	const errors = validate(values);
 	if (Object.keys(errors).length) return { ok: false, errors };
 	const request = {
@@ -87,14 +90,33 @@ async function start(app, values) {
 	const file = requestFile(app.getPath("userData"));
 	fs.mkdirSync(path.dirname(file), { recursive: true });
 	fs.writeFileSync(file, JSON.stringify(request), { encoding: "utf8", mode: 0o600 });
-	return launchElevated(app, file);
+	const r = await launch(app, file);
+	if (!r.ok) forgetRequest(app); // the script never started (pressing Install again writes it anew)
+	return r;
+}
+
+// Deletes the request file (the owner's password), except while Windows restarts in the middle of the
+// setup: the script continues after the next sign-in and reads it then.
+function forgetRequest(app) {
+	const state = readState();
+	if (state && state.status === "reboot_required") return false;
+	try {
+		fs.rmSync(requestFile(app.getPath("userData")), { force: true });
+		return true;
+	} catch {
+		return false;
+	}
 }
 
 // Asks Windows for administrator permission (one UAC prompt) and starts the setup script hidden.
 async function launchElevated(app, file) {
+	let previous = null;
+	let wrote = false;
 	try {
+		previous = fs.existsSync(stateFile()) ? fs.readFileSync(stateFile()) : null;
 		fs.mkdirSync(path.dirname(stateFile()), { recursive: true });
 		fs.writeFileSync(stateFile(), JSON.stringify({ version: 1, step: "check", status: "starting", percent: 0, updated: new Date().toISOString() }));
+		wrote = true;
 	} catch {
 		/* ProgramData not writable without elevation: the script creates it */
 	}
@@ -104,13 +126,29 @@ async function launchElevated(app, file) {
 		.map((a) => psq(/\s/.test(a) ? `"${a}"` : a))
 		.join(",");
 	const r = await powershell(["-Command", `Start-Process -FilePath powershell.exe -Verb RunAs -WindowStyle Hidden -ArgumentList ${argList}`]);
-	if (r.code !== 0) return { ok: false, denied: /canceled|cancelled|operation was canceled/i.test(r.err), error: r.err.slice(0, 400) };
+	if (r.code !== 0) {
+		// the script never started: put back the state it would have replaced (a "starting" left behind
+		// would show a setup in progress at the next start, with nothing running)
+		if (wrote) {
+			try {
+				if (previous) fs.writeFileSync(stateFile(), previous);
+				else fs.rmSync(stateFile(), { force: true });
+			} catch {
+				/* the next run of the script rewrites it */
+			}
+		}
+		return { ok: false, denied: /canceled|cancelled|operation was canceled/i.test(r.err), error: r.err.slice(0, 400) };
+	}
 	return { ok: true };
 }
 
-async function resume(app) {
+// Retry of a failed setup with the details already given. If Windows' prompt is refused the details are
+// forgotten too; a script that needs them then says so and the owner enters them again.
+async function resume(app, launch = launchElevated) {
 	const file = requestFile(app.getPath("userData"));
-	return launchElevated(app, fs.existsSync(file) ? file : "");
+	const r = await launch(app, fs.existsSync(file) ? file : "");
+	if (!r.ok) forgetRequest(app);
+	return r;
 }
 
 function readState() {
@@ -134,4 +172,4 @@ function inProgress(state) {
 	return Boolean(state && ["starting", "running", "reboot_required", "failed"].includes(state.status));
 }
 
-module.exports = { validate, systemCheck, start, resume, readState, logTail, inProgress, stateFile, logFile, requestFile };
+module.exports = { validate, systemCheck, start, resume, forgetRequest, readState, logTail, inProgress, stateFile, logFile, requestFile };

@@ -76,7 +76,11 @@
 		<div class="alert" data-slot="install-failed" hidden>
 			<b>توقف التثبيت · Setup stopped</b>
 			<p data-slot="fail-msg" dir="auto"></p>
-			<div class="row"><button class="primary" data-action="install-retry">إعادة المحاولة · Retry</button></div>
+			<div class="row">
+				<button class="primary" data-action="install-retry">إعادة المحاولة · Retry</button>
+				<button data-action="install-restart">إدخال البيانات من جديد · Enter the details again</button>
+			</div>
+			<div class="status bad" data-slot="retry-error"></div>
 		</div>
 		<details><summary>التفاصيل التقنية · Technical details</summary><pre data-slot="log" dir="ltr"></pre></details>
 		<p class="foot-note">يمكنك ترك الجهاز يعمل. لا تطفئ الجهاز أثناء التثبيت. <span class="en">You can leave the PC; do not turn it off while installing.</span></p>
@@ -140,6 +144,15 @@
 		<p class="msg" data-slot="update-msg" dir="auto"></p>
 		<details><summary>التفاصيل التقنية · Technical details</summary><pre data-slot="update-log" dir="ltr"></pre></details>
 		<div class="row" data-slot="update-done" hidden><button class="primary" data-action="update-continue">متابعة · Continue</button></div>
+	</section>
+
+	<section data-view="busy" hidden>
+		<div class="spinner" role="progressbar" aria-label="عملية جارية"></div>
+		<h1>يرجى الانتظار · Please wait</h1>
+		<p class="msg" data-slot="busy-what" dir="auto"></p>
+		<p>هناك عملية جارية على خادم الصيدلية، ولا يمكن بدء أي عملية أخرى حتى تنتهي. لا تطفئ الجهاز؛ تتابع هذه الشاشة تلقائيًا عند الانتهاء.</p>
+		<p class="en">An operation is already running on the pharmacy server; nothing else can be started until it finishes. Do not turn off the computer — this screen continues by itself when it is done.</p>
+		<details><summary>التفاصيل التقنية · Technical details</summary><pre data-slot="busy-log" dir="ltr"></pre></details>
 	</section>
 
 	<section data-view="backups" hidden>

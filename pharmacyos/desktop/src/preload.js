@@ -4,12 +4,13 @@ const { contextBridge, ipcRenderer } = require("electron");
 contextBridge.exposeInMainWorld("pharmacyosDesktop", {
 	isDesktop: true,
 	info: () => ipcRenderer.invoke("app:info"),
-	// the app's own local screens only (the main process ignores these calls from any other page)
+	// the app's own local screen only (the main process ignores these calls from any other page or frame)
 	getConfig: () => ipcRenderer.invoke("config:get"),
 	testServer: (url) => ipcRenderer.invoke("config:test", url),
 	saveConfig: (values) => ipcRenderer.invoke("config:save", values),
 	retry: () => ipcRenderer.invoke("connect:retry"),
 	openApp: () => ipcRenderer.invoke("app:open"),
+	busy: () => ipcRenderer.invoke("app:busy"),
 	listPrinters: () => ipcRenderer.invoke("printers:list"),
 	testPrinter: () => ipcRenderer.invoke("printers:test"),
 	onStartup: (cb) => ipcRenderer.on("startup:progress", (_e, p) => cb(p)),
@@ -18,6 +19,7 @@ contextBridge.exposeInMainWorld("pharmacyosDesktop", {
 		start: (values) => ipcRenderer.invoke("setup:start", values),
 		resume: () => ipcRenderer.invoke("setup:resume"),
 		state: () => ipcRenderer.invoke("setup:state"),
+		forget: () => ipcRenderer.invoke("setup:forget"),
 		reboot: () => ipcRenderer.invoke("setup:reboot"),
 		finish: (serverUrl) => ipcRenderer.invoke("setup:finish", serverUrl),
 	},
