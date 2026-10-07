@@ -294,6 +294,8 @@ _COUNTER = {
 	"Loyalty Program": _SELECT,
 }
 
+_SUPPLIER_MASTER = ("read", "select", "create", "write", "report", "export")
+
 CUSTOM_PERMISSIONS = {
 	"Cashier": _COUNTER,
 	"Pharmacist": {
@@ -301,15 +303,18 @@ CUSTOM_PERMISSIONS = {
 		"Batch": ("read", "select", "report"),
 		"Stock Ledger Entry": ("read", "report"),
 	},
-	"Pharmacy Owner": {"Item Price": _PRICE_ADMIN, "Branch": ("read", "select", "create", "write")},
+	# Suppliers: ERPNext keeps creating them for "Purchase Master Manager", a bundle that also grants full
+	# Item Price rights; the pharmacy's buyers get exactly the supplier master instead.
+	"Pharmacy Owner": {"Item Price": _PRICE_ADMIN, "Branch": ("read", "select", "create", "write"), "Supplier": _SUPPLIER_MASTER},
 	"Pharmacy Manager": {
 		"Item Price": _PRICE_ADMIN,
+		"Supplier": _SUPPLIER_MASTER,
 		"Sales Invoice": ("read", "select", "cancel", "amend"),
 		"POS Invoice": ("read", "select", "cancel", "amend"),
 		"Branch": _READ,
 	},
 	"Inventory Manager": {"Item Price": _PRICE_EDIT, "Branch": _READ},
-	"Purchasing Officer": {"Item Price": _READ, "Branch": _READ},
+	"Purchasing Officer": {"Item Price": _READ, "Branch": _READ, "Supplier": _SUPPLIER_MASTER},
 	"Pharmacy Accountant": {
 		"Item Price": _READ,
 		# Frappe saves a cancelled document, which checks write as well as cancel (submitted bundles

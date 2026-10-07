@@ -71,6 +71,9 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
           foreach ($f in Get-ChildItem *.ps1) {
+            # Windows PowerShell 5.1 reads a file without a BOM as Windows-1252: non-ASCII text needs the BOM
+            $bytes = [IO.File]::ReadAllBytes($f.FullName)
+            if (($bytes | Where-Object { $_ -gt 127 }) -and -not ($bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF)) { throw "$($f.Name): non-ASCII text without a UTF-8 BOM" }
             $errors = $null
             [System.Management.Automation.Language.Parser]::ParseFile($f.FullName, [ref]$null, [ref]$errors) | Out-Null
             if ($errors) { throw "$($f.Name): $($errors[0].Message)" }
@@ -81,7 +84,9 @@ jobs:
             Where-Object { $_.Name -in "ConvertTo-B64", "ConvertTo-WslPath" } | ForEach-Object { Invoke-Expression $_.Extent.Text }
           $wsl = ConvertTo-WslPath $env:ProgramFiles
           if ($wsl -ne "/mnt/c/Program Files") { throw "ConvertTo-WslPath gave $wsl" }
-          $value = "Al Noor `"x`" صيدلية p@ss'word"
+          # Arabic built from code points: the runner saves inline scripts without a BOM
+          $arabic = -join ([char[]](0x0635, 0x064A, 0x062F, 0x0644, 0x064A, 0x0629))
+          $value = "Al Noor `"x`" $arabic p@ss'word"
           $back = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String((ConvertTo-B64 $value)))
           if ($back -ne $value) { throw "base64 round trip failed" }
           # the system check the setup screen runs, on real Windows

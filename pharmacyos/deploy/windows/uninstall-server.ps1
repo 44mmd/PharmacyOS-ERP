@@ -1,4 +1,4 @@
-# PharmacyOS ERP — removes the PharmacyOS server environment from this PC (run elevated).
+﻿# PharmacyOS ERP — removes the PharmacyOS server environment from this PC (run elevated).
 # DESTROYS the pharmacy database inside the environment. Backups in %ProgramData%\PharmacyOS\Backups are
 # kept. Takes a final backup first unless -SkipBackup is given. Used by the desktop app's uninstaller only
 # when the person removing PharmacyOS explicitly chooses to remove the server too.

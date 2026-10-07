@@ -64,3 +64,13 @@ test("the server bundle carries the app and scripts, not tests or caches", () =>
 	assert.ok(localserver.parseVersion(fs.readFileSync(path.join(out, "VERSION"), "utf8").trim()));
 	assert.ok(!fs.readFileSync(path.join(out, "deploy/server/install-server.sh"), "utf8").includes("\r\n"), "LF line endings for Linux");
 });
+
+test("Windows setup scripts are UTF-8 with a BOM (Windows PowerShell 5.1 otherwise misreads them)", () => {
+	const dir = path.join(__dirname, "..", "..", "deploy", "windows");
+	for (const name of fs.readdirSync(dir).filter((n) => n.endsWith(".ps1"))) {
+		const bytes = fs.readFileSync(path.join(dir, name));
+		const nonAscii = bytes.some((b) => b > 127);
+		const bom = bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf;
+		assert.ok(!nonAscii || bom, `${name}: non-ASCII text without a BOM`);
+	}
+});

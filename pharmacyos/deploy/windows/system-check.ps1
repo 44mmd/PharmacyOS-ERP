@@ -1,4 +1,4 @@
-# PharmacyOS ERP — can this PC run the pharmacy server? (no administrator rights needed)
+﻿# PharmacyOS ERP — can this PC run the pharmacy server? (no administrator rights needed)
 # Prints one JSON object: { ok, checks: [ { key, ok, level, value } ] }. The desktop setup shows it
 # before asking Windows for permission to install. "error" blocks the setup; "warn" is advice.
 $ErrorActionPreference = "SilentlyContinue"

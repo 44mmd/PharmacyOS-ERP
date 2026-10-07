@@ -1,4 +1,4 @@
-# PharmacyOS ERP — sets up the LOCAL ERP server on this Windows 10/11 PC (run elevated).
+﻿# PharmacyOS ERP — sets up the LOCAL ERP server on this Windows 10/11 PC (run elevated).
 #
 # Normally started by the PharmacyOS ERP desktop app's setup ("This computer is the pharmacy server"),
 # which asks Windows for administrator permission once and shows the progress this script writes to
