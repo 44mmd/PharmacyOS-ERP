@@ -26,8 +26,13 @@ try { $distro = [bool](((& wsl.exe -l -q 2>$null) -replace "`0", "") | Where-Obj
 Add-Check "existing_server" (-not $distro) "info" $distro
 $port80 = [bool](Get-NetTCPConnection -State Listen -LocalPort 80)
 Add-Check "port80" (-not $port80) "info" $port80
-$admin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-$inAdmins = [bool](whoami /groups | Select-String "S-1-5-32-544")
-Add-Check "administrator" $inAdmins "warn" $admin
+$me = [Security.Principal.WindowsIdentity]::GetCurrent()
+$admin = ([Security.Principal.WindowsPrincipal]$me).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+# a member of Administrators, elevated or not (not elevated, the group is in the token as "deny only")
+$inAdmins = $admin -or [bool]($me.Claims | Where-Object { $_.Value -eq "S-1-5-32-544" }) -or [bool](whoami /groups | Select-String "S-1-5-32-544")
+# blocking: the server environment and its tasks belong to the Windows account that runs the setup. A
+# standard user elevating with someone else's administrator password would install them for that other
+# account, where this user's PharmacyOS can never reach them.
+Add-Check "administrator" $inAdmins "error" $admin
 $blocking = @($checks | Where-Object { $_.level -eq "error" -and -not $_.ok })
 [ordered]@{ ok = ($blocking.Count -eq 0); checks = $checks; build = $build } | ConvertTo-Json -Depth 4 -Compress
