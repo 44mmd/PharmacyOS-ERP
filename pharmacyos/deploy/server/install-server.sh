@@ -228,6 +228,8 @@ production() {
 	systemctl enable nginx supervisor mariadb redis-server
 	systemctl restart supervisor
 	systemctl restart nginx
+	# supervisord back on its socket before it is given work (a restart can return before it listens)
+	for i in $(seq 1 30); do supervisorctl pid >/dev/null 2>&1 && break; [ "$i" = 15 ] && { systemctl start supervisor || true; }; sleep 1; done
 	supervisorctl reread >/dev/null || true
 	supervisorctl update >/dev/null || true
 	install -m 0755 "$HERE/pharmacyos-server" "$OPT/bin/pharmacyos-server"

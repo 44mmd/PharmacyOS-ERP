@@ -121,6 +121,8 @@ override_whitelisted_methods = dict(_COST_OVERRIDES)
 after_request = [f"{_cost}.scrub_response"]
 
 doc_events = {
+	# counter staff keep customers' names and phones up to date, not their commercial terms
+	"Customer": {"validate": "pharmacyos_erp.pharmacy.counter_sales.guard_customer_terms"},
 	"Item": {
 		"validate": "pharmacyos_erp.pharmacy.medicine.validate_item",
 		"on_update": f"{_outbox}.on_item",

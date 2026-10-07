@@ -82,11 +82,22 @@ run_restore() {
 		env PATH="/home/$BENCH_USER/.local/bin:$PATH" HOME="/home/$BENCH_USER" "$OPT/bin/restore-backup.sh" "$@"
 }
 result() { echo "##PHARMACYOS-RESULT $1"; }
+# supervisord answers on its socket (a restart can take a moment; started again if it did not come back)
+supervisor_up() {
+	local i
+	for i in $(seq 1 30); do
+		supervisorctl pid >/dev/null 2>&1 && return 0
+		[ "$i" = 15 ] && { systemctl start supervisor || true; }
+		sleep 1
+	done
+	return 1
+}
 web_ok() { curl -fsS -m 5 "http://127.0.0.1:$HTTP_PORT/api/method/ping" >/dev/null 2>&1; }
 wait_web() { for _ in $(seq 1 "${1:-60}"); do web_ok && return 0; sleep 2; done; return 1; }
 
 start() {
 	for s in "${SERVICES[@]}"; do systemctl start "$s"; done
+	supervisor_up || true
 	supervisorctl start all >/dev/null || true
 }
 
@@ -162,8 +173,9 @@ update() {
 	install -m 0755 "$bundle/deploy/restore-backup.sh" "$OPT/bin/restore-backup.sh"
 	secure_redis
 	echo "== Restarting"
+	supervisor_up
 	supervisorctl update >/dev/null || true
-	supervisorctl restart all >/dev/null
+	supervisorctl restart all >/dev/null || true   # the health check below decides (a slow start is not a failure)
 	as_bench "bench --site '$SITE' set-maintenance-mode off"
 	echo "== Health check"
 	wait_web 60
@@ -194,7 +206,8 @@ case "${1:-status}" in
 		as_bench "bench --site all execute pharmacyos_erp.backup.service.health_check" ;;
 	version) cat "$OPT/VERSION" 2>/dev/null || echo unknown ;;
 	build-id) cat "$OPT/BUILD_ID" 2>/dev/null || echo unknown ;;
-	secure-redis) secure_redis; supervisorctl restart all >/dev/null; wait_web 60 ;;
+	# the web answering is the check; supervisorctl's own exit status also reports programs still starting
+	secure-redis) secure_redis; supervisor_up; supervisorctl restart all >/dev/null || true; wait_web 60 ;;
 	backup)
 		take_lock 600
 		folder="$(backup)"

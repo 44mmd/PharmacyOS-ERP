@@ -171,3 +171,35 @@ def _priced_copy(doc):
 	copy.set_missing_values()
 	copy.calculate_taxes_and_totals()
 	return copy
+
+
+CUSTOMER_TERMS = ("customer_group", "default_price_list", "payment_terms", "default_currency")
+
+
+def guard_customer_terms(doc, method=None):
+	"""doc_event (validate) for Customer. Counter staff add customers at the counter (name, phone) and
+	correct their contact details, but not the terms that decide prices and credit: customer group (group
+	promotions and price lists), default price list, payment terms, currency, credit limits. A new customer
+	gets the pharmacy's default group. (A loyalty programme is assigned by ERPNext from the rules the
+	managers define, so it is not checked here.)"""
+	if frappe.flags.in_install or frappe.flags.in_migrate or frappe.flags.in_patch or not is_counter_only():
+		return
+	refused = _("Only a pharmacy manager or the owner changes a customer's group, price list, loyalty or credit terms.")
+	if doc.is_new():
+		defaults = {
+			frappe.db.get_single_value("Selling Settings", "customer_group"),
+			frappe.db.get_default("customer_group"),
+			frappe.defaults.get_user_default("customer_group"),
+		} - {None, ""}
+		if doc.customer_group and doc.customer_group not in defaults:
+			frappe.throw(refused, CounterPriceError)
+		if any(doc.get(f) for f in ("default_price_list", "payment_terms")) or doc.get("credit_limits"):
+			frappe.throw(refused, CounterPriceError)
+		return
+	before = doc.get_doc_before_save()
+	if not before:
+		return
+	changed = [f for f in CUSTOMER_TERMS if (before.get(f) or None) != (doc.get(f) or None)]
+	limits = lambda d: sorted((r.company, flt(r.credit_limit), cint(r.bypass_credit_limit_check)) for r in d.get("credit_limits") or [])
+	if changed or limits(before) != limits(doc):
+		frappe.throw(refused, CounterPriceError)

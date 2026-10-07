@@ -145,6 +145,31 @@ class TestCounterPricing(IntegrationTestCase):
 		with self.assertRaises(CounterPriceError):  # 15 % on top of the offer: 12 % of the list price
 			api.quote(pos_profile=COUNTER, items=[{"item_code": promo.name, "qty": 1}], additional_discount_percentage=15)
 
+	def test_counter_staff_do_not_change_customer_terms(self):
+		# a customer group with its own promotion, or a cheaper price list, is a manager's decision
+		if not frappe.db.exists("Customer Group", "Cert VIP"):
+			frappe.get_doc({"doctype": "Customer Group", "customer_group_name": "Cert VIP", "parent_customer_group": "All Customer Groups"}).insert()
+		frappe.db.commit()
+		frappe.set_user(CASHIER)
+		plain = frappe.get_doc({"doctype": "Customer", "customer_name": "Cert walk-in " + rid()[:6], "customer_type": "Individual", "mobile_no": "07701234567"}).insert()
+		plain.mobile_no = "07707654321"
+		plain.save()  # contact details: allowed
+		with self.assertRaises(CounterPriceError):
+			frappe.get_doc({"doctype": "Customer", "customer_name": "Cert VIP " + rid()[:6], "customer_type": "Individual", "customer_group": "Cert VIP"}).insert()
+		plain.reload()
+		plain.customer_group = "Cert VIP"
+		with self.assertRaises(CounterPriceError):
+			plain.save()
+		plain.reload()
+		plain.default_price_list = "Standard Selling"
+		with self.assertRaises(CounterPriceError):
+			plain.save()
+		frappe.set_user(MANAGER)
+		plain.reload()
+		plain.customer_group = "Cert VIP"
+		plain.save()  # the manager decides
+		self.assertEqual(frappe.db.get_value("Customer", plain.name, "customer_group"), "Cert VIP")
+
 	def test_counter_sales_are_in_the_users_own_shift_and_dated_today(self):
 		frappe.set_user(CASHIER)
 		with self.assertRaises(CounterShiftError):  # CASHIER2's counter: not CASHIER's shift
