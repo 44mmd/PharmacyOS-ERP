@@ -83,7 +83,11 @@ class TestV1Operations(IntegrationTestCase):
 			api.void_sale(sale["name"], reason="wrong item", approver=CASHIER, approver_password="x")  # not oneself
 		self.assertEqual(frappe.db.get_value("Sales Invoice", sale["name"], "docstatus"), 1)
 
+		frappe.local.session.sid = "cashier-browser-session"
+		frappe.local.session.data = frappe._dict(csrf_token="cashier-token")
 		voided = api.void_sale(sale["name"], reason="wrong item", approver=MANAGER, approver_password=MANAGER_PASSWORD)
+		# the cashier keeps their own session (sign-in and CSRF token) after the manager's approval
+		self.assertEqual((frappe.session.user, frappe.local.session.sid, frappe.local.session.data.csrf_token), (CASHIER, "cashier-browser-session", "cashier-token"))
 		frappe.set_user("Administrator")
 		self.assertEqual((voided["requested_by"], voided["approved_by"]), (CASHIER, MANAGER))
 		self.assertEqual(frappe.db.get_value("Sales Invoice", sale["name"], "docstatus"), 2, "kept, cancelled — never deleted")

@@ -210,7 +210,11 @@ PharmacyOS Integration account, Guest.
 
 ## Known pharmacy gaps (next phases)
 
-Prescriptions, controlled-drug register and regulator-confirmed rules (extension point exists:
-`pharmacyos_sale_validators`), expired-stock quarantine/disposal workflow, GS1 DataMatrix
-(GTIN + batch + expiry) scanning, generic substitution / ingredient search in POS,
-Iraqi chart-of-accounts template, near-expiry notifications (email/push), offline POS.
+Built in Local ERP v1 (October 2026): voids with manager approval and audit, expired-stock disposal with
+reasons and history (expired batches cannot be re-dated by staff), the Pharmacy Report page, supplier returns.
+
+Future modules, outside Local ERP v1: prescriptions, controlled-drug register and regulator-confirmed rules
+(extension point exists: `pharmacyos_sale_validators`), payroll/attendance (HRMS), GS1 DataMatrix
+(GTIN + batch + expiry) scanning, generic substitution / ingredient search in POS, Iraqi chart-of-accounts
+template, near-expiry notifications (email/push), a client-side offline queue for counter PCs that lose the
+LAN server, and the CLOUD ERP ↔ LOCAL ERP sync engine.

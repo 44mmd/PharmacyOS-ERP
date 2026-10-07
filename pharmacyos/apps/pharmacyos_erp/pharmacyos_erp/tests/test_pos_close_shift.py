@@ -67,3 +67,25 @@ class TestPOSCloseShift(IntegrationTestCase):
 		frappe.set_user("close-shift-idle@example.com")
 		with self.assertRaises(frappe.ValidationError):
 			api.shift_summary()
+
+
+class TestPOSCloseShiftOpeningFloat(IntegrationTestCase):
+	def test_expected_cash_includes_the_opening_float(self):
+		user = "close-shift-float@example.com"
+		counter = "PharmacyOS Close Shift Float Counter"
+		make_user(user, CASHIER_ROLES)
+		ensure_pos_profile(counter, [user])
+		item = make_medicine("CLOSE-FLOAT-MED", item_name="Close Float Medicine")
+		ensure_price(item.name, 2000)
+		receive(item.name, make_batch(item.name, "CF-BATCH", 300), 10)
+		frappe.set_user(user)
+		from erpnext.selling.page.point_of_sale.point_of_sale import create_opening_voucher
+
+		create_opening_voucher(counter, frappe.get_cached_value("POS Profile", counter, "company"), [{"mode_of_payment": "Cash", "opening_amount": 25000}])
+		api.checkout(pos_profile=counter, items=[{"item_code": item.name, "qty": 1}], payments=[{"mode_of_payment": "Cash", "amount": 5000}], request_id=rid())
+		cash = next(p for p in api.shift_summary()["payments"] if p["mode_of_payment"] == "Cash")
+		# 25,000 float + 2,000 sale (5,000 tendered, 3,000 change given back)
+		self.assertEqual((flt(cash["opening_amount"]), flt(cash["expected_amount"])), (25000, 27000))
+		closed = api.close_shift(counted=[{"mode_of_payment": "Cash", "closing_amount": 27000}])
+		self.assertEqual(next(p for p in closed["payments"] if p["mode_of_payment"] == "Cash")["difference"], 0)
+		frappe.set_user("Administrator")

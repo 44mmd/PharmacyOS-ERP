@@ -26,6 +26,7 @@ stored on the invoice in the DB-unique field `pharmacyos_pos_request_id`. Sendin
 """
 
 import re
+from contextlib import contextmanager
 
 import frappe
 from frappe import _
@@ -680,7 +681,18 @@ def _closing_for(opening):
 	"""ERPNext's own closing entry for the shift, unsaved: its sales, payments and expected cash."""
 	from erpnext.accounts.doctype.pos_closing_entry.pos_closing_entry import make_closing_entry_from_opening
 
-	return make_closing_entry_from_opening(opening)
+	closing = make_closing_entry_from_opening(opening)
+	# ERPNext's server builder leaves the opening float out (its desk form adds it): the drawer holds the
+	# opening cash plus the takings, so that is what the cashier is expected to count
+	rows = {row.mode_of_payment: row for row in closing.payment_reconciliation}
+	for detail in opening.balance_details:
+		row = rows.get(detail.mode_of_payment)
+		if row is None:
+			row = closing.append("payment_reconciliation", {"mode_of_payment": detail.mode_of_payment, "opening_amount": 0, "expected_amount": 0})
+			rows[detail.mode_of_payment] = row
+		row.opening_amount = flt(detail.opening_amount)
+		row.expected_amount = flt(row.expected_amount) + flt(detail.opening_amount)
+	return closing
 
 
 def _closing_summary(closing) -> dict:
@@ -771,6 +783,23 @@ def _closing_reference(doctype: str, name: str) -> str | None:
 	return None
 
 
+@contextmanager
+def _acting_as(user: str):
+	"""Run as another user inside this request, then give the signed-in user back their own session.
+	(`frappe.set_user` also replaces the session id and data: used alone it would sign the cashier out.)"""
+	session = frappe.local.session
+	saved = {"user": session.user, "sid": session.sid, "data": session.data}
+	form = frappe.local.form_dict
+	try:
+		frappe.set_user(user)
+		yield
+	finally:
+		frappe.set_user(saved["user"])
+		session.sid = saved["sid"]
+		session.data = saved["data"]
+		frappe.local.form_dict = form
+
+
 def _approver(user: str | None, password: str | None) -> str:
 	"""A second person's approval: their own sign-in password, checked like a login (with a failure limit)."""
 	from frappe.utils.password import check_password
@@ -838,12 +867,9 @@ def void_sale(invoice: str, reason: str, approver: str | None = None, approver_p
 			frappe.throw(_("{0} is not allowed to void sales.").format(approved_by), frappe.PermissionError)
 
 	# the cancel runs as the approving user, so ERPNext's own rules and every PharmacyOS hook apply
-	try:
-		frappe.set_user(approved_by)
+	with _acting_as(approved_by):
 		doc = frappe.get_doc(doctype, invoice)
 		doc.cancel()
-	finally:
-		frappe.set_user(requester)
 
 	log = frappe.get_doc(
 		{

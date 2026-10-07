@@ -127,7 +127,6 @@ class PharmacyOSReport {
 		);
 		const shifts = d.shifts || [];
 		this.$root.find('[data-slot="body"]').html(
-			`<div class="pos-grid-2">` +
 				this.table(
 					__("Payment methods"),
 					[{ label: __("Method") }, { label: __("Sales"), num: true }, { label: __("Amount"), num: true }],
@@ -140,7 +139,6 @@ class PharmacyOSReport {
 					d.cashiers.map((c) => [esc(c.name || c.user), c.sales, c.returns, money(c.total)]),
 					__("No sales in this period")
 				) +
-				`</div>` +
 				this.table(
 					__("Top medicines"),
 					[{ label: __("Medicine") }, { label: __("Qty"), num: true }, { label: __("Amount"), num: true }],

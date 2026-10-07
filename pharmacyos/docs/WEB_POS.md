@@ -73,12 +73,13 @@ concurrency, cost privacy) was modified.
 
 Arabic first (RTL; English when the user's language is English), IQD, PharmacyOS tokens and Tajawal.
 
-* **Shift:** opens the cashier's own shift on their counter (ERPNext `create_opening_voucher`). *Close shift*
-  shows ERPNext's expected amount per payment method (opening + takings, `shift_summary`); the cashier enters
-  what the drawer holds and `close_shift` submits ERPNext's POS Closing Entry as the cashier, recording the
-  difference (never correcting it). The shift row is locked, so a double click never closes it twice. The full
-  desk form stays one click away.
-* **Search / scan:** one always-focused field. A scanner (keyboard wedge, Enter suffix) or typed code →
+* **Shift:** opens the cashier's own shift on their counter with the cash float (ERPNext
+  `create_opening_voucher`). *Close shift* shows the expected amount per payment method — opening float +
+  takings − change (`shift_summary`; ERPNext's own closing entry leaves the float out, PharmacyOS adds it back);
+  the cashier enters what the drawer holds and `close_shift` submits ERPNext's POS Closing Entry as the
+  cashier, recording the difference (never correcting it). The shift row is locked, so a double click never
+  closes it twice. The full desk form stays one click away.
+* **Search / scan:** one always-focused field. A scanner (keyboard wedge, Enter or Tab suffix) or typed code →
   ERPNext's scan (barcode, batch, serial) → added to the cart; scans are queued, so fast consecutive
   scans all land; the field is cleared synchronously and keeps focus. Typing searches by name, Arabic
   name, generic name (POS search fields). Typing anywhere goes to the field.
@@ -95,6 +96,16 @@ Arabic first (RTL; English when the user's language is English), IQD, PharmacyOS
 * **Receipt:** the ERP's `PharmacyOS Receipt` print view in a preview; Print (browser dialog / native).
 * **Returns:** by invoice number or from *Recent sales*; returnable quantities from ERPNext's mapper
   and the PharmacyOS ledger; ERPNext's refund previewed, then submitted; return receipt.
+* **Sales history:** *Recent sales* searches today's and earlier sales by invoice number or customer; voided
+  sales carry a *Voided* badge.
+* **Void (cancel a sale):** *Void* on a sale in the history, with a reason (required). A user who may cancel
+  sales (Pharmacy Manager, Owner, Accountant) voids directly; a cashier can void **only their own sale** and
+  only with a manager's email and password typed on the same screen (the cashier stays signed in). The server
+  refuses: returned sales, sales not from today, sales in a closed shift, the requester approving themselves,
+  and more than 5 wrong approvals in 10 minutes. The sale is cancelled through ERPNext as the approver (stock,
+  batches and accounts reversed — never deleted), a **PharmacyOS Void Log** row records invoice, amount,
+  requester, approver, counter and reason, and a comment is added to the invoice. A voided sale leaves the
+  shift's expected cash. Owners and managers see *Voided Sales* in the Reports menu.
 * **Connection:** offline banner, automatic recovery; a checkout interrupted by the network is
   re-asked with the same request ID and the cart is locked meanwhile — "do not re-enter the sale".
 * **Session:** cart kept per user across reloads; expired session → sign-in prompt, cart kept; sign-out
@@ -115,6 +126,7 @@ Arabic first (RTL; English when the user's language is English), IQD, PharmacyOS
 | Secrets | none in the frontend (grep); test passwords generated at install, never in code | checked |
 | Integration credentials | the POS never uses the Cloud integration account or API keys | — |
 | Cost data | facade returns selling figures only; global `cost_privacy.scrub_response` applies; receipt has no costs | 0 cost keys / values in every cashier response |
+| Voids | server decides who may void; approver password checked server-side, rate-limited, audited | `test_v1_operations` |
 | Exposed endpoints | 8 new whitelisted methods, all requiring login; no `allow_guest`; Frappe security unchanged | guest → 403 on each |
 
 ## 5. Tests
@@ -122,7 +134,7 @@ Arabic first (RTL; English when the user's language is English), IQD, PharmacyOS
 | Suite | Result |
 |---|---|
 | PharmacyOS ERP suite, `develop` bench (Frappe/ERPNext develop + this fork) | 234 / 234 passed |
-| PharmacyOS ERP suite, **commercial target** (Frappe 16.36.1 / ERPNext 16.37.0) | 234 / 234 passed |
+| PharmacyOS ERP suite, **commercial target** (Frappe 16.36.1 / ERPNext 16.37.0) | 247 / 247 passed (Oct 2026, v1) |
 | `tests/test_web_pos.py` (part of the suite) | 10 / 10 |
 | `dev/web_pos_check.py` — HTTP like a browser, ledgers verified, 8 rounds of 6 simultaneous duplicate checkouts and of last-unit races, live PharmacyOS Cloud | develop 66 / 66 (without Cloud), version-16 69 / 69 (with Cloud) |
 | Browser E2E (Playwright, Chromium engine = Chrome/Edge): login, shift, Arabic search, fast scans, qty (Arabic digits), customer, cash sale, receipt, return, expired batch, reload, logout/login | 20 / 20 at 1440, 1280, 820, 390 px (develop) and 1440 px (version-16) |
@@ -179,4 +191,5 @@ type `PA-2401` (Paracetamol, expired) — the POS refuses it.
 * A USB/Bluetooth barcode scanner (keyboard mode, Enter suffix) on Mac and Windows.
 * An 80 mm thermal printer: browser dialog (margins "none", scale 100 %) and the desktop's silent mode.
 * The Windows installer on Windows 10/11 (unsigned; SmartScreen), the single-PC WSL2 server, auto-start.
-* A cash drawer (not built).
+* A cash drawer opened by the receipt printer's driver ("open drawer after printing"); PharmacyOS sends no
+  drawer command of its own.

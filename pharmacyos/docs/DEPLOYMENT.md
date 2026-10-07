@@ -70,55 +70,68 @@ directory. It drops and recreates the site, so never point it at real data.
 
 ## Server installation
 
-### Linux server — Untested end-to-end
+### Windows PC — the PharmacyOS Setup (owner guide: `INSTALL_WINDOWS.md`)
 
-The installer brings its own toolchain (Node.js 24 + yarn from NodeSource/npm, `uv` for Python 3.14 and the
-bench CLI) and installs the pinned, verified release **Frappe v16.36.1 / ERPNext v16.37.0** — not the moving
-`version-16` branch head (v16.50.0 created sites without the Gender DocType, Oct 2026). Before Oct 2026 the
-script relied on `uv`, Node 24 and yarn being present and on `bench` being on root's PATH; on a fresh Ubuntu or
-WSL environment it stopped at the bench step. The bench steps it runs were exercised in a container with that
-toolchain and the pinned versions (site creation, app install, build, the PharmacyOS tests); the systemd /
-nginx / supervisor part needs a real Ubuntu or WSL2 machine.
+`PharmacyOS-Setup-<version>.exe` is the only thing the pharmacy runs. It installs the desktop app **and carries
+the server bundle** (`resources/server`: the `pharmacyos_erp` app, `deploy/`, `dev/setup-dev-bench.sh`,
+`VERSION`), so no repository checkout is needed. On first start the app's setup screens:
 
-```
-sudo SITE=pharmacy.local ADMIN_PASSWORD=… DB_ROOT_PASSWORD=… ./deploy/server/install-server.sh
-```
+1. ask the role of this PC (pharmacy server / connect to a server on the network);
+2. ask the pharmacy's name (EN/AR), owner name, email, password, phone, network sharing — validated;
+3. run `deploy/windows/system-check.ps1` (Windows build ≥ 19041, 64-bit, memory, free disk, virtualization,
+   WSL, an existing server, port 80, administrator) and show each result;
+4. start `deploy/windows/install-server.ps1` **elevated, once** (one UAC prompt). The request (with the owner
+   password) is written to the user's app-data folder and deleted by the installer after use;
+5. follow progress from `%ProgramData%\PharmacyOS\Setup\state.json` (step, percent, message, log tail).
 
-* Installs MariaDB, Redis, nginx and supervisor.
-* Creates the bench, apps and site using the same steps as the dev bootstrap, which is tested.
-* Then runs `bench setup production`, which makes the services start at boot.
+`install-server.ps1` steps: check → WSL (`wsl --install --no-distribution`, Windows-feature fallback) →
+**reboot if needed** (state saved; a logon task and RunOnce entry restart the app with `--resume-setup`, which
+continues where it stopped) → Ubuntu 24.04 WSL image imported as distro **PharmacyOS** (systemd on) →
+`install-server.sh` inside it → **PharmacyOS Server** scheduled task (at startup and at logon, runs
+`pharmacyos-server run`, restarted on failure) → optional firewall rule → wait until the server answers.
+Passwords never appear in the log. Port 80 is used, or 8780 when 80 is taken; the choice is saved.
 
-### Single Windows PC — Untested
+**Tested:** Windows CI (windows-latest, Windows PowerShell 5.1): scripts parse, helpers behave, the system
+check runs on real Windows; the installer installs silently, opens (first-run screenshot) and uninstalls
+keeping data. Electron setup screens (validation, check, progress, reboot, failure, done, resume) driven with
+Playwright on Linux. **Not tested:** the WSL2 part on a physical Windows PC (GitHub's Windows runners cannot
+run WSL2) — that is production validation.
 
-Needs the pharmacy's name, the owner's email and two passwords (asked for, never written to disk):
+### Linux server / inside WSL — `deploy/server/install-server.sh` — Tested on a fresh Ubuntu 24.04
 
-```
-deploy\windows\install-server.ps1 -Site pharmacy.local -PharmacyName "Al Noor Pharmacy" -PharmacyNameAr "صيدلية النور" -OwnerEmail owner@example.com [-ShareOnNetwork]
-```
+Run as root; resumable (each of its 9 steps leaves `/var/lib/pharmacyos/install/<step>.done`, a rerun
+continues after the last completed step):
 
-Before Oct 2026 the script did not pass the pharmacy name, owner email and owner password that
-`install-server.sh` requires (it stopped at once), and converted the folder path with a PowerShell 7-only
-construct that Windows PowerShell 5.1 does not run. Values now reach Linux base64-encoded, so quotes, Arabic
-text and spaces in names or passwords are safe (checked with PowerShell 7 on Linux: the script parses and the
-values arrive byte-for-byte). It has not run on Windows.
-
-```
-deploy/windows/install-server.ps1 -Site pharmacy.local [-ShareOnNetwork]
-```
-
-Run it as Administrator. It:
-
-* imports an Ubuntu 24.04 WSL2 distro named **PharmacyOS**;
-* enables systemd and keeps the VM alive;
-* runs `install-server.sh` inside the distro;
-* registers the **PharmacyOS Server** scheduled task, which starts at boot before anyone signs in;
-* with `-ShareOnNetwork`, turns on mirrored networking and opens a firewall rule on private networks.
-
-Control the server with:
+1. packages (MariaDB, Redis, nginx, supervisor, build tools);
+2. toolchain — Node.js 24.21.0 from nodejs.org and uv 0.11.32 from GitHub, both SHA-256 verified;
+3. database (generated root password, `unix_socket OR mysql_native_password`);
+4. app release copied into `/opt/pharmacyos/releases/<version>`, `/opt/pharmacyos/app` → it;
+5. bench (Python 3.14.6, bench 5.31.0, **Frappe v16.36.1 / ERPNext v16.37.0**, the app), site;
+6. site config (data folder, scheduler on, production mode);
+7. first run (`setup_pharmacy`: company, branch, owner, counter **Main Counter** with cash);
+8. production: supervisor + nginx configs generated by bench (without `bench setup production`, which would
+   pip-install Ansible), install-time Redis stopped, services enabled;
+9. finish: `/opt/pharmacyos/bin/pharmacyos-server` installed.
 
 ```
-wsl -d PharmacyOS --exec /opt/pharmacyos/bin/pharmacyos-server start|stop|status|health
+sudo PHARMACY_NAME="Al Noor Pharmacy" PHARMACY_NAME_AR="صيدلية النور" OWNER_EMAIL=owner@example.com \
+     OWNER_PASSWORD=… ./deploy/server/install-server.sh
 ```
+
+Secrets (database root and Administrator passwords, generated) are kept in `/etc/pharmacyos/server.env`
+(root only). **Tested** in a chroot of the exact Ubuntu 24.04 WSL image the Windows setup imports: install from
+nothing, all 7 supervisor programs running, health ok, owner sign-in, Arabic UI, `/pos`; a failure in the
+middle resumed correctly.
+
+### Server control — `pharmacyos-server`
+
+```
+wsl -d PharmacyOS --user root --exec pharmacyos-server start|stop|status|health|version
+wsl -d PharmacyOS --user root --exec pharmacyos-server backup|list-backups|restore <folder> [--with-files]
+wsl -d PharmacyOS --user root --exec pharmacyos-server update <bundle-folder>
+```
+
+Machine-readable results are printed as `##PHARMACYOS-RESULT {json}`; the desktop app uses them.
 
 ## Desktop app (Electron) — `pharmacyos/desktop`
 
@@ -130,57 +143,35 @@ toolchain.
 * context isolation, sandbox, no Node.js in pages;
 * navigation locked to the server origin;
 * external links open in the system browser;
-* the only extra web permissions are notifications, clipboard write and fullscreen.
+* the only extra web permissions are notifications, clipboard write and fullscreen;
+* only the app's own local screens (setup, startup, backups) get the setup/server/backup bridge.
 
-**First run:** "This computer is the pharmacy server" or "Connect to the pharmacy server" (enter its
-address). You can also pick a receipt printer and choose to print receipts without a dialog.
-
-**At runtime:**
-* the server is pinged every 30 seconds;
-* if the connection drops, an Arabic or English banner appears without reloading the page;
-* in single-PC mode, the app starts the server if it is down.
+**Product behaviour:**
+* single instance (a second launch focuses the open window);
+* startup screen while the server starts (single-PC mode starts it and waits), then the app; if the server
+  does not answer, a **recovery** screen (Start the server / Try again / Backups / the log);
+* when the installer's server bundle is newer than the installed server, an **Update now / Later** screen;
+* menu: Point of Sale, ERP, **Backups…**, **Connection & Printer…**, **Print a test receipt**, About (versions);
+* closing is refused while setup, an update or a restore is running;
+* the server is pinged every 30 seconds; an Arabic/English banner appears if it drops.
 
 **PharmacyOS POS (`/pos`) — the same screen in the browser and in this app (see `WEB_POS.md`):**
-* Settings → *Open at start* → **Point of Sale** makes a counter PC open the POS directly; the menu has
-  *Point of Sale* (Ctrl+Shift+P) and *ERP*.
-* Receipts from the POS print through the app's native bridge: silently to the receipt printer chosen
-  in Settings (with *Print receipts directly*), otherwise with the system dialog. The bridge accepts only
-  the server's own `/printview`, from the server's own pages. **Tested here:** Electron E2E (sale, bridge
-  refuses other sites, a configured printer that does not exist returns a clear error). A real thermal
-  printer is hardware-only validation.
-* The same POS works in Safari / Chrome / Edge at `http(s)://<server>/pos` without installing anything.
+* Settings → *Open at start* → **Point of Sale** makes a counter PC open the POS directly.
+* Receipts print through the app's native bridge: silently to the chosen receipt printer (with *Print
+  receipts directly*), otherwise with the system dialog. The bridge accepts only the server's own
+  `/printview`, from the server's own pages.
 
-**Barcode scanners:** they work as keyboard (HID) devices; nothing is installed for them.
+**Barcode scanners:** keyboard (HID) devices; Enter or Tab suffix; nothing is installed for them.
 
-**Tested here (Linux + Xvfb):**
-* first-run setup screen;
-* connecting to a live server opens the Arabic sign-in;
-* an unreachable server shows the offline screen;
-* config unit tests: `npm test`.
+**Installer:** NSIS, per-machine, desktop and Start-menu shortcuts, opens the app when finished; data folders in
+`%ProgramData%\PharmacyOS` (kept on uninstall). The uninstaller asks (default **No**) whether to remove the
+pharmacy server too; on Yes `uninstall-server.ps1` takes a final backup first and keeps the Backups folder.
+An upgrade never removes the server. Signing: `RELEASE.md`.
 
-**Runtime:** Electron 44 (a supported release line) and electron-builder 26, pinned exactly. Verified
-on Linux: unit tests, a packaged build, and a headless launch that reaches the ERP sign-in page.
-
-**Windows installer — built by CI, not yet validated on Windows.** The **PharmacyOS Desktop
-(Windows)** workflow builds `PharmacyOS-ERP-Setup-<version>.exe` on `windows-latest`. An earlier run
-(37067473124, Electron 33) produced the artifact; the Electron 44 build is produced by the workflow on
-the next push. The installer is **unsigned**; a code-signing certificate is needed before distribution.
-
-**Still required on real hardware (not done):** installation on Windows 10 and 11, the WSL2 single-PC
-server, reboot/auto-start, barcode scanners, receipt printers, and SmartScreen behaviour with a signed
-installer. Nothing in this repository has been validated on a physical Windows machine.
-
-**Earlier notes:**
-* The installer is defined: NSIS, per-machine, desktop and Start-menu shortcuts.
-* Data folders go in `%ProgramData%\PharmacyOS`. Uninstall never deletes them.
-* Build it with the **PharmacyOS Desktop (Windows)** GitHub workflow (manual or on a tag) or `npm run dist:win`
-  on Windows.
-* It also builds on Linux with Wine installed (`npm run dist:win`): verified in Oct 2026 — `PharmacyOS-ERP-Setup-0.1.0.exe`, about 111 MB, unsigned. `"publish": null` keeps electron-builder from looking for an update feed (there is none; see Updates).
-
-**Not built yet (Planned):**
-* code signing (needs a certificate purchase);
-* auto-update (deliberately not enabled, see Updates);
-* a cash-drawer kick.
+**Tested here:** `npm test` (12); Playwright-driven Electron on Linux + Xvfb: every setup screen, startup to the
+sign-in, recovery → start the server, update offer → updated, backups list / back up now / restore with
+typed confirmation; Windows CI install/launch/uninstall. **Hardware-only:** real Windows 10/11 + WSL2,
+reboot/auto-start, scanners, thermal printers, SmartScreen with a signed installer.
 
 ## Backups — Tested
 
@@ -216,24 +207,25 @@ It runs these steps:
 9. write an audit entry;
 10. then restart the services.
 
-This was tested onto a fresh site and in place, including with an encrypted backup. Restore is a server
-operation, never a button in the UI.
+This was tested onto a fresh site and in place, including with an encrypted backup. On the pharmacy PC the
+owner restores from **PharmacyOS → Backups…** (typed confirmation; runs `pharmacyos-server restore`, which takes
+the safety backup first) — tested end-to-end on the fresh-install server.
 
-## Updates — procedure, not automatic
+## Updates — guided, with rollback
 
-1. Back up now (System Status) and confirm it succeeded.
-2. `bench update --pull --patch --build`, or `git pull` + `bench migrate` + `bench build`.
-3. `pharmacyos-server health`.
-4. If migration fails, restore the pre-update backup with `restore-backup.sh`.
-
-The desktop app shows its version. Silent auto-update is deliberately not enabled, so a database is never
-upgraded unattended.
+* **Desktop**: install the newer Setup over the old one; data and settings are kept.
+* **Server**: at the next start the app offers **Update now / Later** when the bundled server is newer.
+  `pharmacyos-server update` takes a verified safety backup, turns maintenance mode on, installs the new release
+  next to the old one, runs `bench migrate` and `bench build`, restarts and checks health. **Any failure rolls
+  back**: previous release, safety backup restored, services restarted — tested with a real failed update and
+  with five successful updates (rc1 → rc6) on the fresh-install server.
+* Nothing updates unattended; there is no update feed (`RELEASE.md`).
 
 ## Disaster recovery
 
 | Event | Behaviour |
 |---|---|
-| Windows reboot or power cut | Services start at boot (scheduled task, systemd). MariaDB recovers InnoDB. An interrupted backup is reconciled as Failed and the next hour runs normally. |
+| Windows reboot or power cut | Services start at boot (scheduled task "PharmacyOS Server", systemd, supervisor). MariaDB recovers InnoDB. An interrupted backup is reconciled as Failed and the next hour runs normally. |
 | Desktop app crash | Reopen it. The session persists, and nothing unsaved lives in the app. |
 | Server unreachable | Offline screen with Retry. The banner warns not to re-enter a sale. |
 | Internet outage | Sales continue. Cloud events queue with back-off; Retry is on System Status. |

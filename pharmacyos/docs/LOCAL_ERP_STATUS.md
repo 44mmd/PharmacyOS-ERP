@@ -1,116 +1,109 @@
-# LOCAL ERP — status map (October 2026)
+# LOCAL ERP v1 — status map (October 2026, 1.0.0-rc.1)
 
-**LOCAL ERP** = the standalone PharmacyOS ERP that runs at the pharmacy: a Frappe/ERPNext server (this
-fork's `pharmacyos_erp` app on upstream Frappe 16.36.1 / ERPNext 16.37.0, MariaDB) on the pharmacy's own PC
-(WSL2) or LAN server, opened through the **PharmacyOS ERP** Windows desktop app (Electron, `desktop/`) or any
-browser. **CLOUD ERP** = the PharmacyOS Admin website (repository `PharmacyOS`). They coexist; a future sync
-engine will connect them. The existing Cloud integration (outbox → Cloud, website orders pulled from the
-Cloud) is listed below but was not extended.
+**LOCAL ERP** = the standalone PharmacyOS ERP that runs at the pharmacy: a Frappe/ERPNext server (this fork's
+`pharmacyos_erp` app on upstream Frappe 16.36.1 / ERPNext 16.37.0, MariaDB 10.11) inside a WSL2 environment on
+the pharmacy's Windows PC (or a Linux server), opened through the **PharmacyOS ERP** desktop app (Electron) or a
+browser. **CLOUD ERP** = the PharmacyOS Admin website (repository `PharmacyOS`). The CLOUD ↔ LOCAL sync engine
+is not started, by decision; nothing in v1 makes it harder (one authoritative database per pharmacy, every
+document has a stable name, the existing outbox is untouched).
 
-How each line was established:
-* **verified** — run in October 2026 on a fresh Frappe 16.36.1 / ERPNext 16.37.0 site (MariaDB 10.11), test
-  modules named;
-* **code** — read in the source, covered by the repository's own tests or docs, not re-run this time;
-* **untested** — written, never run on its target.
+Evidence labels:
+* **verified** — run in October 2026 on Frappe 16.36.1 / ERPNext 16.37.0; test module or run named;
+* **CI** — run by GitHub Actions on `windows-latest` (Windows Server 2025, Windows PowerShell 5.1);
+* **code** — in the source and the repository's tests, ERPNext standard behaviour;
+* **hardware** — needs a physical Windows PC, scanner or printer (production validation).
 
-| Status | Meaning |
-|---|---|
-| COMPLETE | works end-to-end |
-| PARTIAL | exists, with important missing states |
-| BROKEN | implemented but not usable |
-| MISSING | does not exist |
-| UNKNOWN | cannot be determined without hardware or a Windows machine |
+## v1 scope
 
-## Sales / POS (`/pos`, `pos/api.py`, `public/js/pos/pos.js`)
+In: counter sales (scan, search, discounts, payment, receipt, hold, returns, voids), cash shifts, stock with
+batches and expiry (FEFO, expired never sold, expired disposal), purchasing (suppliers, orders, receipts,
+supplier returns), reports, users and roles with server-side permissions and cost privacy, Arabic-first UI,
+offline operation, backups and restore, a one-file Windows installer that installs the server, start-up and
+recovery, guided updates with rollback.
+
+Out (future modules): prescriptions, controlled-drug register, payroll/attendance (HRMS), GS1 DataMatrix,
+Iraqi chart-of-accounts template, CLOUD sync, a client-side offline queue for counter PCs that lose the LAN
+server.
+
+## Sales / POS (`/pos`)
 
 | Feature | Status | Evidence |
 |---|---|---|
-| Barcode scanning (keyboard wedge, queued scans, batch barcodes) | COMPLETE | verified (`test_web_pos`, browser run) |
-| Product search (name, Arabic name, generic) | COMPLETE | verified (browser run) |
-| Cart, quantities, stock warnings | COMPLETE | verified |
-| Pricing (ERPNext price lists, pricing rules, taxes) | COMPLETE | verified (`test_web_pos.test_quote…`) |
-| Discounts (line %, sale %, per-counter switches enforced on the server) | COMPLETE | verified (`test_counter_switches…`) |
-| Payment, change, idempotent checkout | COMPLETE | verified (`test_checkout_is_idempotent…`) |
-| Receipts (80 mm `PharmacyOS Receipt`, A4 invoice, batch/expiry per line) | COMPLETE | verified (`test_local_journeys` renders the receipt) |
-| Returns (root-sale, quantity and money bounds, concurrency) | COMPLETE | verified (`test_return_integrity_round4`, 19 tests; `test_local_journeys`) |
-| Voids (cancel a sale) | PARTIAL | code: managers/accountant cancel in the desk (stock, batch, GL reversed); not on the `/pos` screen |
-| Held sales (hold / resume) | COMPLETE *(new)* | verified (browser run); per computer, no stock reservation |
-| Cashier assignment | COMPLETE | verified: every invoice is owned by the signed-in cashier; counters can be limited to users |
-| Cash shifts (open / sell / count / close) | COMPLETE *(close at the counter new)* | verified (`test_pos_shift`, `test_pos_close_shift`, browser run) |
-| Customers at the counter (walk-in, search, quick add) | COMPLETE | code |
-| FEFO + expired batches never sold | COMPLETE | verified (`test_pharmacy_core`, `test_web_pos`) |
+| Barcode scanning (HID, Enter or Tab suffix, fast queued scans, batch barcodes) | COMPLETE | verified (`test_web_pos`, browser: 3 rapid scans → qty 3) |
+| Search (name, Arabic name, generic), cart, quantities, stock warnings | COMPLETE | verified |
+| Pricing, taxes, discounts (per-counter switches enforced on the server) | COMPLETE | verified (`test_web_pos`) |
+| Payment, change, idempotent checkout | COMPLETE | verified |
+| Receipts (80 mm and 58 mm, Arabic/English, batch/expiry per line) | COMPLETE in software | verified (render); printer = hardware |
+| Hold / resume | COMPLETE | verified (browser) |
+| Returns (root-sale bounds, refunds, concurrency) | COMPLETE | verified (`test_return_integrity_round4`, browser) |
+| Sales history with search | COMPLETE | verified (browser) |
+| Void with manager approval + audit log, never deleted | COMPLETE | verified (`test_v1_operations`, browser) |
+| Cash shifts: open with float, close with counted cash and difference | COMPLETE | verified (`test_pos_shift`, `test_pos_close_shift`, browser: float 25,000, variance −500) |
+| A whole shift without the Desk | COMPLETE | verified (browser walkthrough) |
+| FEFO, expired batches never sold | COMPLETE | verified (`test_pharmacy_core`, `test_web_pos`) |
 
 ## Inventory
 
 | Feature | Status | Evidence |
 |---|---|---|
-| Stock per warehouse, stock ledger (movements) | COMPLETE | verified (ledger checked in `test_flows`, `test_local_journeys`) |
-| Adjustments / counts / transfers | COMPLETE | code (ERPNext Stock Entry, Stock Reconciliation) |
-| Expiry, batches (الوجبة), Batches & Expiry page | COMPLETE | verified (`test_pharmacy_core`) |
-| Low stock (Inventory Health, Reorder Suggestions) | COMPLETE | verified (`test_pharmacy_core`) |
-| Last-unit protection, website reservations | COMPLETE | code (`test_concurrency_round4`, not re-run) |
-| Expired-stock quarantine / disposal workflow | MISSING | `PRODUCT.md` known gaps |
-
-## Medicines / products
-
-Creation (Add Medicine dialog), editing, barcode, selling price, cost (hidden from counter staff), expiry
-(batch), stock, categories (Item Group), brands, active ingredients, dosage forms: **COMPLETE** (code;
-`test_foundation`, `test_cost_exposure` verified for cost privacy).
+| Stock, ledger, adjustments, counts, transfers | COMPLETE | verified / code (ERPNext) |
+| Batches & expiry page, low stock, reorder suggestions | COMPLETE | verified (`test_pharmacy_core`) |
+| Expired-stock disposal (batch → qty → reason → write-off → history, user and time) | COMPLETE | verified (`test_v1_operations`, browser) |
+| Expired stock cannot return to sellable stock (no re-dating by staff, never sold) | COMPLETE | verified (`test_v1_operations`) |
 
 ## Purchasing
 
 | Feature | Status | Evidence |
 |---|---|---|
-| Suppliers, purchase orders | COMPLETE | code (ERPNext) |
-| Purchase receipts with batch + expiry rules | COMPLETE | verified (`test_operations`: expired rejected, short shelf life warns/blocks) |
-| Receiving → stock → sale | COMPLETE | verified (`test_local_journeys`, new) |
-| Cost updates (valuation) | COMPLETE | code (ERPNext FIFO/moving average) |
-| Purchase returns (supplier returns / debit notes) | COMPLETE | code (ERPNext; in the Purchasing sidebar) — no PharmacyOS-specific rule |
+| Suppliers (owner/manager/purchasing can create) | COMPLETE | verified (browser; `test_permissions_matrix`) |
+| Purchase orders, receipts with batch + expiry rules, cost updates | COMPLETE | verified for receipts (`test_operations`, `test_local_journeys`); code for orders (ERPNext) |
+| Supplier returns take stock out of the batch | COMPLETE | verified (`test_v1_operations`) |
 
-## People, rights, reports, settings
+## Reports
+
+| Feature | Status | Evidence |
+|---|---|---|
+| Pharmacy Report: today/yesterday/7 days/month/custom; sales, returns, net, transactions, discounts, voids, payment methods, top items, by cashier, shift summaries | COMPLETE | verified (`test_v1_operations`, browser) |
+| Purchases, stock value, gross profit — owners/accountants only | COMPLETE | verified (cost-gated) |
+| Low / expiring / expired stock | COMPLETE | verified (Batches & Expiry, Inventory Health) |
+| Cashiers: no report, no cost data | COMPLETE | verified (403; `test_cost_exposure`) |
+
+## People and rights
+
+Users and role profiles (Owner, Manager, Pharmacist, Cashier, Inventory, Purchasing, Accountant) enforced on
+the server: COMPLETE, verified (`test_permissions_matrix`, `test_cost_exposure`). Arabic UI: COMPLETE for
+PharmacyOS screens, verified (`test_localization`); ~26 % of upstream ERPNext strings remain English.
+
+## Platform and installation
 
 | Area | Status | Evidence |
 |---|---|---|
-| Customers | COMPLETE | code (ERPNext Customer) |
-| Users and role profiles (Owner, Manager, Pharmacist, Cashier, Inventory, Purchasing, Accountant, Integration) | COMPLETE | verified (`test_permissions_matrix`) |
-| Employees (records) | COMPLETE | code (ERPNext Employee, Team sidebar) |
-| Payroll / attendance / leave | MISSING | needs the HRMS app (not installed) |
-| Cost privacy for counter staff | COMPLETE | verified (`test_cost_exposure`) |
-| Reports / analytics (ERPNext reports, dashboard, expiry intelligence) | COMPLETE | code; dashboard verified (`test_pharmacy_core`) |
-| Settings (PharmacyOS Settings) | COMPLETE | code |
-| Arabic-first UI | COMPLETE for PharmacyOS screens; ~26 % of upstream ERPNext strings English | verified (`test_localization`) |
+| One Setup.exe (desktop + server bundle), version 1.0.0-rc.1 | COMPLETE | CI (build, silent install, first launch, uninstall keeps data) |
+| Setup screens: pharmacy details, system check, elevated install, progress | COMPLETE | verified (Electron/Playwright); system check CI |
+| WSL2 + distro + server install, reboot and continue | COMPLETE in code | server part verified on a fresh Ubuntu 24.04 WSL image; WSL2 on Windows = hardware |
+| Server auto-start (scheduled task), startup screen, recovery | COMPLETE in code | verified (Electron); boot task = hardware |
+| Offline operation | COMPLETE | by architecture; every journey ran with no Cloud and no internet use |
+| Backups (hourly/daily, verified), restore from the app | COMPLETE | verified (`test_backup`, app restore round trip on the fresh server) |
+| Server update with automatic rollback | COMPLETE | verified (rc1 → rc6; a real failure rolled back) |
+| Desktop update over the old version, data kept | COMPLETE | code (NSIS upgrade; uninstall-on-upgrade skips the server) |
+| Reproducible build, CI artifact, draft-only releases | COMPLETE | CI |
+| Code signing | READY, not signed | hooks in CI/package.json; the certificate is an external dependency |
+| Scanners / thermal printers / cash drawer | COMPLETE in software, UNKNOWN on hardware | test receipt in the app; hardware |
 
-## Platform
+## Verified in this pass
 
-| Area | Status | Evidence |
-|---|---|---|
-| Database | COMPLETE | MariaDB 10.11, one authoritative database per pharmacy |
-| Backup (hourly/daily, verified, encrypted option) / restore script | COMPLETE | code (`test_backup`; restore tested on Linux per `DEPLOYMENT.md`) |
-| Offline operation (no internet) | COMPLETE by architecture | the server is on the pharmacy's PC/LAN; every journey above ran with no Cloud configured. A client PC that loses the *LAN server* cannot sell (offline banner, no client-side queue) |
-| Printing | COMPLETE in software; UNKNOWN on real thermal printers | Electron silent printing tested on Linux; no hardware test |
-| Desktop app (Electron) | COMPLETE on Linux; UNKNOWN on Windows | unit tests pass; never run on Windows |
-| Windows `.exe` installer | PARTIAL | builds (`npm run dist:win`, verified Oct 2026, ~111 MB) — **unsigned**, never installed on Windows |
-| Server installers | PARTIAL *(were BROKEN)* | Linux `install-server.sh`: missing toolchain fixed, versions pinned — not run on a real Ubuntu/WSL; Windows `install-server.ps1`: missing required inputs and a PowerShell 5.1 incompatibility fixed — never run on Windows |
-| One-click install (desktop + server in one installer) | MISSING | the `.exe` installs only the window; the server needs `install-server.ps1` from a repository checkout and the internet once |
-| Updates | PARTIAL | documented manual procedure (`bench update` + health check); no auto-update by design |
-| Cloud integration (outbox, website orders, catalog/price events) | COMPLETE for the current scope | code (`test_cloud`, `test_sync`, `test_integration`, not re-run). Full two-way sync with the CLOUD ERP is future work |
+* Full PharmacyOS suite on Frappe 16.36.1 / ERPNext 16.37.0: **247 / 247 pass**.
+* Desktop unit tests: 12 / 12. Electron screens driven with Playwright (Linux + Xvfb).
+* Fresh install of the server in the Ubuntu 24.04 WSL image the setup imports; backup/restore; 5 updates and
+  one rollback.
+* Browser walkthrough on that fresh pharmacy: open shift → scans → hold → second sale → resume → return →
+  void (refused with a wrong manager password, then approved) → close shift with variance → report → expired
+  batch disposal → backup.
+* Windows CI: PowerShell 5.1 parse and helpers, system check, build, install, first launch, uninstall.
 
-## Verified in October 2026 (fresh site, Frappe 16.36.1 / ERPNext 16.37.0)
+## Production validation still needed (not code)
 
-`test_flows` 2, `test_web_pos` 10, `test_pos_shift` 2, `test_pharmacy_core` 15, `test_return_integrity_round4` 19,
-`test_localization` 22, `test_operations` 13, `test_api_surface` 1, `test_permissions_matrix` 5,
-`test_cost_exposure` 6, new `test_pos_close_shift` 2, new `test_local_journeys` 1 — all pass. Browser run of
-`/pos` as a cashier: scan, hold, resume, pay, receipt, close shift with a counted-cash difference.
-
-Not re-run this time: the remaining modules of the 234-test suite (the repository records 234/234 on this
-version) and the multi-worker HTTP tools in `dev/`.
-
-## What remains before production
-
-1. Install and run on real Windows 10/11 machines: `install-server.ps1` (WSL2), the `.exe`, reboot and auto-start.
-2. A code-signing certificate for the `.exe` (SmartScreen).
-3. Real receipt printer and barcode scanner checks; a cash-drawer kick.
-4. A single installer (or a guided first-run) that sets up the server without a repository checkout.
-5. Voids at the counter (manager approval inside `/pos`), if the pharmacy wants them there.
-6. Expired-stock quarantine/disposal, prescriptions/controlled drugs, Iraqi chart of accounts (`PRODUCT.md`).
-7. Later: the CLOUD ERP ↔ LOCAL ERP sync engine (not started, by decision).
+1. Install on physical Windows 10 and 11 PCs: WSL2 enablement, reboot-and-continue, boot task, port 80.
+2. A code-signing certificate (SmartScreen).
+3. Real barcode scanners, 80/58 mm thermal printers, a cash drawer on the printer.
+4. A pilot pharmacy running full days.
