@@ -15,7 +15,7 @@ import re
 import subprocess
 import sys
 
-from qalib import Results, Session
+from qalib import Results, Session, counter_shift_arabic, desk_shift_arabic, desk_shift_arabic_ok, shift_arabic_ok
 from qa_seed import OWNER
 
 R = Results()
@@ -68,6 +68,12 @@ def fresh():
 	owner = Session("owner").login(*OWNER)
 	st, html = owner.raw("GET", "/app/pharmacy-dashboard")
 	R.add(A, "the owner signs in and lands on the Pharmacy Dashboard", "HTTP 200", f"HTTP {st}", st == 200)
+	# the Arabic the counter screen shows, from the translations the installer compiled (1.0.0-rc.3: a cash/POS
+	# shift is «شِفت», masculine)
+	shift_ar = counter_shift_arabic(owner)
+	R.add(A, "the counter's Arabic: a shift is «شِفت» (translations compiled by the installer)", "الشِفت · فتح الشِفت · إغلاق الشِفت · لا يوجد شِفت مفتوح… · no older shift word on the screen", shift_ar, shift_arabic_ok(shift_ar))
+	desk_ar = desk_shift_arabic(owner)
+	R.add(A, "the desk's Arabic (translations the server boots the desk with): shifts are «شِفتات»", "الشِفتات · شِفتات نقطة البيع · لا شِفتات في هذه الفترة · فُتح / أُغلق / مفتوح; no served string uses the older word for a cash shift", desk_ar, desk_shift_arabic_ok(desk_ar))
 	g = Session("guest")
 	st, _ = g.raw("POST", "/api/method/frappe.core.doctype.user.user.sign_up", {"email": "x@example.com", "full_name": "x", "redirect_to": ""})
 	R.add(A, "self sign-up refused", "refused (sign-up disabled)", f"HTTP {st}", st in (403, 417, 500) or st == 200 and "disabled" in _.lower())
@@ -99,9 +105,10 @@ def receipts():
 		R.add(A, "a counter sale with a discount and change exists", "found", None, False)
 		return
 	st, html = render(sale["name"])
-	names = [(i["item_name"], i.get("pharma_name_ar")) for i in sale["items"]]
+	# the receipt prints the medicine's Arabic name (Item.pharma_name_ar) with its English name
+	names = [(i["item_name"], owner.value("Item", i["item_code"], "pharma_name_ar")) for i in sale["items"]]
 	R.add(A, "80 mm receipt of a counter sale", "HTTP 200, 80 mm layout (no 58 mm rule)", f"HTTP {st}, {len(html)} bytes, 58mm rule: {'58mm' in html}", st == 200 and "max-width: 58mm" not in html)
-	R.add(A, "Arabic and English medicine names on the receipt", "both names printed", names[:3], st == 200 and all(n[0] in html for n in names))
+	R.add(A, "Arabic and English medicine names on the receipt", "both names printed", names[:3], st == 200 and all(en in html and ar and ar in html for en, ar in names))
 	R.add(A, "discount, cash received and change printed", "line discount and change figures present", {"invoice": sale["name"], "line_discounts": [i.get("discount_percentage") for i in sale["items"]], "paid": sale.get("paid_amount"), "change": sale.get("change_amount")},
 		st == 200 and f"{int(sale['change_amount']):,}" in html)
 	setw("58mm")

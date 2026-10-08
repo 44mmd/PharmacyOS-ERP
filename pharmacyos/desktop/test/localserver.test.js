@@ -12,6 +12,8 @@ test("the server update is offered for a newer version, or the same version buil
 	const offers = (bundled, installed, bundledBuild, installedBuild) => localserver.offersUpdate({ bundled, installed, bundledBuild, installedBuild });
 	assert.equal(offers("1.0.1", "1.0.0", A, A), true, "a newer version, whatever the builds");
 	assert.equal(offers("1.0.0", "1.0.0rc2", null, null), true);
+	assert.equal(offers("1.0.0rc3", "1.0.0rc2", A, B), true, "1.0.0-rc.3 is offered to a pharmacy on rc.2");
+	assert.equal(offers("1.0.0rc2", "1.0.0rc3", A, B), false, "an rc.2 installer never downgrades an rc.3 server");
 	assert.equal(offers("1.0.0", "1.0.1", B, A), false, "an older bundle never replaces a newer server");
 	assert.equal(offers("1.0.0", "1.0.1", B, "unknown"), false, "…also when the server cannot tell its build");
 	assert.equal(offers("1.0.0", "1.0.0", A, A), false, "the same version and build");

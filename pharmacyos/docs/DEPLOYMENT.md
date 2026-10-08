@@ -92,7 +92,7 @@ continues where it stopped) → Ubuntu 24.04 WSL image imported as distro **Phar
 Passwords never appear in the log. Port 80 is used, or 8780 when 80 is taken; the choice is saved.
 
 **Tested:** Windows CI (windows-latest, Windows PowerShell 5.1): scripts parse, helpers behave, the system
-check runs on real Windows; the installer installs silently, opens (first-run screenshot) and uninstalls
+check runs on real Windows; the installer installs silently, opens (first-launch smoke run) and uninstalls
 keeping data. Electron setup screens (validation, check, progress, reboot, failure, done, resume) driven with
 Playwright on Linux. **Not tested:** the WSL2 part on a physical Windows PC (GitHub's Windows runners cannot
 run WSL2) — that is production validation.

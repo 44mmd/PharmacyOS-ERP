@@ -1,6 +1,6 @@
 # Installing PharmacyOS on a Windows PC — for the pharmacy owner
 
-PharmacyOS Local ERP 1.0.0-rc.2. No technical knowledge is needed: there is one file to run and a few
+PharmacyOS Local ERP 1.0.0-rc.3. No technical knowledge is needed: there is one file to run and a few
 questions to answer. The pharmacy then works on this computer **without internet**.
 
 ## What you need
@@ -15,7 +15,7 @@ questions to answer. The pharmacy then works on this computer **without internet
 
 ## Installation (20–40 minutes)
 
-1. **Run `PharmacyOS-Setup-1.0.0-rc.2.exe`.** Accept the licence, keep the suggested folder, press Install.
+1. **Run `PharmacyOS-Setup-1.0.0-rc.3.exe`.** Accept the licence, keep the suggested folder, press Install.
    PharmacyOS opens when the installer finishes.
 2. **Choose "This computer is the pharmacy server"** (هذا الجهاز هو خادم الصيدلية) and press Continue.
 3. **Enter the pharmacy's details:** pharmacy name (English and Arabic), the owner's name, the owner's email

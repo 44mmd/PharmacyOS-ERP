@@ -62,7 +62,7 @@ def main():
 	R.refused(A, "cashier gives 100% off through the document API", "refused: above the counter discount limit", lambda: post(cashier, invoice(additional_discount_percentage=100, payments=[{"mode_of_payment": "Cash", "amount": 0}])), must_contain="مدير الصيدلية")
 	R.refused(A, "cashier makes a credit (non-POS) invoice", "refused: counter staff sell through the POS", lambda: post(cashier, invoice(is_pos=0, pos_profile=None, payments=[])), must_contain="نقطة البيع")
 	R.refused(A, "cashier back-dates a sale (expiry is checked against the posting date)", "refused: today's date only", lambda: post(cashier, invoice(set_posting_time=1, posting_date=str(today - dt.timedelta(days=30)))), must_contain="بتاريخ اليوم")
-	R.refused(A, "cashier sells on a counter that is not their open shift", "refused: own shift only", lambda: post(cashier, invoice(pos_profile="Main Counter")), must_contain="افتح ورديتك")
+	R.refused(A, "cashier sells on a counter that is not their open shift", "refused: own shift only", lambda: post(cashier, invoice(pos_profile="Main Counter")), must_contain="افتح شِفتك")
 	R.refused(A, "cashier discount above the 10% ceiling at the POS", "refused before payment (quote)", lambda: cashier.call(POS + "quote", pos_profile=mine, items=[{"item_code": "QA-PAN500", "qty": 1, "discount_percentage": 25}]))
 	ok = cashier.call(POS + "checkout", pos_profile=mine, items=[{"item_code": "QA-PAN500", "qty": 1, "discount_percentage": 10}], payments=[{"mode_of_payment": "Cash", "amount": 2250}], request_id=rid())
 	R.add(A, "a correct counter sale still works (10% discount, own shift)", "sale submitted for 2,250", (ok["name"], ok["grand_total"]), abs(ok["grand_total"] - 2250) < 1)

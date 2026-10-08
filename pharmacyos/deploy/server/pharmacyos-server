@@ -152,6 +152,9 @@ update() {
 		printf '%s' "$old_build" > "$OPT/BUILD_ID"
 		if [ "$restored" = 1 ]; then
 			as_bench "bench --site '$SITE' set-maintenance-mode off" || true
+			# like a restore and a successful update: the result comes once the server answers again, so the
+			# app's Continue never lands on the web server's "back soon" page while the workers restart
+			wait_web 60 || echo "web not answering yet" >&2
 			result "{\"status\": \"rolled_back\", \"version\": \"$old_version\", \"backup\": \"$safety\"}"
 		else
 			# the data could not be put back automatically: stay in maintenance (no sales on a half state)

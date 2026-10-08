@@ -95,12 +95,21 @@ that word for database patches.
 | Nos (unit) | قطعة | |
 | Submit / Submitted | اعتماد / معتمد | |
 | **Batch / Batch No / Batches & Expiry** | **الوجبة / رقم الوجبة / الوجبات وتواريخ الانتهاء** | see below |
+| **Shift / Shifts (cash, POS)** | **الشِفت / الشِفتات** | masculine; see below |
 
 **Batch decision.** Iraqi pharmacists call a manufacturing lot a **وجبة**. The upstream دفعة / الدفعات
 reads as a *payment* in Arabic, which is dangerous on screens that mix money and stock. PharmacyOS
 therefore never shows دفعة / الدفعات / باتش for a stock batch. Payment batches keep دفعة. A test checks
 every effective Arabic string to enforce this
 (`test_effective_arabic_never_calls_a_stock_batch_a_payment`).
+
+**Shift decision (1.0.0-rc.3).** A cash/POS shift is **شِفت** (plural **شِفتات**), written with the kasra,
+the word Iraqi pharmacy staff use. It is masculine, so everything around it agrees: الشِفت الحالي،
+لا يوجد شِفت مفتوح، شِفت مغلق، هذا الشِفت، افتح شِفتك، تم إغلاق الشِفت؛ in the report's shift table the
+columns read فُتح / أُغلق and an open shift مفتوح. Only display text changed — msgids, DocTypes (POS Opening
+Entry, POS Closing Entry), fields and APIs keep their English names. ERPNext's own Arabic for an
+asset-depreciation shift or a workstation shift is a different thing and is left as upstream ships it.
+`qa/check_terminology.py` (run by CI) and `tests/test_terminology.py` fail on any other use of the older word.
 
 **Brand names are never translated:** PharmacyOS, PharmacyOS ERP and HALF (tested).
 

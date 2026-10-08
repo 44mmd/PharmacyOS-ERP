@@ -26,7 +26,8 @@ lives in the `pharmacyos_erp` app; no ERPNext file is modified (`pharmacyos/FORK
 ## Arabic-first
 
 Iraqi sites default to Arabic (RTL) and Baghdad time. Terminology follows Iraqi pharmacy usage:
-**الوجبة** for a batch (never الدفعة), المخزن, الزبائن, الشكل الدوائي and لوحة التحكم.
+**الوجبة** for a batch (never الدفعة), **الشِفت / الشِفتات** for a cash/POS shift (masculine: الشِفت الحالي),
+المخزن, الزبائن, الشكل الدوائي and لوحة التحكم.
 
 Other parts:
 * Arabic-tolerant search (أ/إ/آ/ا, ى/ي, ة/ه);

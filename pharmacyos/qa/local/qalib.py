@@ -10,6 +10,7 @@ import http.cookiejar
 import json
 import os
 import re
+import sys
 import time
 import urllib.error
 import urllib.parse
@@ -18,6 +19,9 @@ import uuid
 
 BASE = os.environ.get("QA_BASE", "http://127.0.0.1")
 OUT = os.environ.get("QA_OUT", os.path.join(os.path.dirname(__file__), "results.json"))
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+from check_terminology import ERPNEXT_NOT_A_CASH_SHIFT, old_shift_words  # noqa: E402  the repository's terminology rule
 
 
 class Refused(Exception):
@@ -124,6 +128,75 @@ class Session:
 	def value(self, doctype: str, name, field):
 		r = self.call("frappe.client.get_value", doctype=doctype, filters=name, fieldname=field)
 		return (r or {}).get(field) if isinstance(field, str) else r
+
+
+def pos_messages(session: Session) -> dict:
+	"""The strings the counter screen (/pos) shows, as the server rendered them for this signed-in user."""
+	status, html = session.raw("GET", "/pos")
+	m = re.search(r'<script type="application/json" id="px-messages">(.*?)</script>', html, re.S)
+	return json.loads(m.group(1)) if status == 200 and m else {}
+
+
+def counter_shift_arabic(session: Session) -> dict:
+	"""The counter's shift wording (1.0.0-rc.3: «شِفت», masculine) and how many older shift words are left."""
+	msgs = pos_messages(session)
+	out = {k: msgs.get(k) for k in ("shift", "open_shift", "close_shift", "no_shift", "shift_closed")}
+	out["old_word_left"] = len(old_shift_words(json.dumps(msgs, ensure_ascii=False)))
+	return out
+
+
+SHIFT_ARABIC = {
+	"shift": "الشِفت",
+	"open_shift": "فتح الشِفت",
+	"close_shift": "إغلاق الشِفت",
+	"no_shift": "لا يوجد شِفت مفتوح. افتح شِفتك لبدء البيع.",
+	"shift_closed": "تم إغلاق الشِفت.",
+}
+
+
+def shift_arabic_ok(found: dict) -> bool:
+	return bool(found) and all(found.get(k) == v for k, v in SHIFT_ARABIC.items()) and found.get("old_word_left") == 0
+
+
+def desk_messages(session: Session) -> dict:
+	"""Every translation the desk boots with (frappe.boot.__messages: all installed apps' compiled
+	translations merged, as the server serves them to this signed-in user)."""
+	status, html = session.raw("GET", "/app")
+	start = html.find("frappe.boot = ")
+	if status != 200 or start < 0:
+		return {}
+	boot, _end = json.JSONDecoder().raw_decode(html, start + len("frappe.boot = "))
+	return boot.get("__messages") or {}
+
+
+# the desk's shift wording: Pharmacy Report shift table and the sidebar (msgid → Arabic)
+DESK_SHIFT_ARABIC = {
+	"Shifts": "الشِفتات",
+	"No shifts in this period": "لا شِفتات في هذه الفترة",
+	"POS sessions": "شِفتات نقطة البيع",
+	"Opening Entries": "فتح الشِفتات",
+	"Closing Entries": "إغلاق الشِفتات",
+	"Opened": "فُتح",
+	"Closed": "أُغلق",
+	"Open": "مفتوح",
+}
+
+
+def desk_shift_arabic(session: Session) -> dict:
+	"""The desk's shift wording and every served string that still uses the older word for a cash shift
+	(ERPNext's asset-depreciation / workstation shifts are a different thing and are not counted)."""
+	msgs = desk_messages(session)
+	out = {k: msgs.get(k) for k in DESK_SHIFT_ARABIC}
+	out["served_strings"] = len(msgs)
+	out["old_word_left"] = sorted(
+		k for k, v in msgs.items()
+		if isinstance(v, str) and old_shift_words(v) and k not in ERPNEXT_NOT_A_CASH_SHIFT and k.rsplit(":", 1)[0] not in ERPNEXT_NOT_A_CASH_SHIFT
+	)
+	return out
+
+
+def desk_shift_arabic_ok(found: dict) -> bool:
+	return found.get("served_strings", 0) > 1000 and all(found.get(k) == v for k, v in DESK_SHIFT_ARABIC.items()) and not found.get("old_word_left")
 
 
 def rid() -> str:

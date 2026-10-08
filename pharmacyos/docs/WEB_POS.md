@@ -180,7 +180,7 @@ type `PA-2401` (Paracetamol, expired) — the POS refuses it.
 ## 7. Manual test (Mac or Windows browser)
 
 1. Open the POS URL (e.g. `https://pos.halfpharmacy.com`). You land on the PharmacyOS sign-in.
-2. Sign in as the **cashier** test account. The first time, press **فتح الوردية** (Open shift).
+2. Sign in as the **cashier** test account. The first time, press **فتح الشِفت** (Open shift).
 3. Sale: type or scan `2000000000015` + Enter (twice = quantity 2), press **دفع** (Pay; F9 on Windows,
    ⌘↵ on a Mac), tap a cash note, **إتمام البيع** (Complete sale).
 4. Receipt: the preview opens — **طباعة الوصل** (Print receipt) opens the browser's print dialog

@@ -204,8 +204,17 @@ def ensure_price(item_code, rate):
 
 
 def open_shift(user, counter):
-	if frappe.db.exists("POS Opening Entry", {"pos_profile": counter, "status": "Open", "docstatus": 1}):
-		return
+	"""An open shift on `counter` today. A shift an earlier day's run left open is closed first, as the pharmacy
+	would close it: ERPNext refuses every sale on a POS Opening Entry from another day ("outdated")."""
+	for name, start in frappe.get_all(
+		"POS Opening Entry",
+		filters={"pos_profile": counter, "status": "Open", "docstatus": 1},
+		fields=["name", "period_start_date"],
+		as_list=True,
+	):
+		if str(start)[:10] == nowdate():
+			return
+		close_stale_shift(name)
 	frappe.set_user(user)
 	opening = frappe.get_doc(
 		{
@@ -221,3 +230,15 @@ def open_shift(user, counter):
 	opening.insert()
 	opening.submit()
 	frappe.set_user("Administrator")
+
+
+def close_stale_shift(name):
+	"""ERPNext's own closing of a shift (POS Closing Entry, counted = expected), as the pharmacy closes a shift
+	that was left open overnight."""
+	from erpnext.accounts.doctype.pos_closing_entry.pos_closing_entry import make_closing_entry_from_opening
+
+	closing = make_closing_entry_from_opening(frappe.get_doc("POS Opening Entry", name))
+	for row in closing.payment_reconciliation:
+		row.closing_amount = row.expected_amount
+	closing.insert()
+	closing.submit()

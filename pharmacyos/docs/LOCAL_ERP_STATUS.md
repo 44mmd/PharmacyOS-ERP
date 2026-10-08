@@ -1,4 +1,4 @@
-# LOCAL ERP v1 — status map (October 2026, 1.0.0-rc.2)
+# LOCAL ERP v1 — status map (October 2026, 1.0.0-rc.3)
 
 **LOCAL ERP** = the standalone PharmacyOS ERP that runs at the pharmacy: a Frappe/ERPNext server (this fork's
 `pharmacyos_erp` app on upstream Frappe 16.36.1 / ERPNext 16.37.0, MariaDB 10.11) inside a WSL2 environment on
@@ -72,41 +72,50 @@ server.
 
 Users and role profiles (Owner, Manager, Pharmacist, Cashier, Inventory, Purchasing, Accountant) enforced on
 the server: COMPLETE, verified (`test_permissions_matrix`, `test_cost_exposure`). Arabic UI: COMPLETE for
-PharmacyOS screens, verified (`test_localization`); ~26 % of upstream ERPNext strings remain English.
+PharmacyOS screens, verified (`test_localization`; Iraqi terms: الوجبة for a batch, «شِفت» / «شِفتات» for a cash
+shift since 1.0.0-rc.3 — `test_terminology`, `qa/check_terminology.py` in CI); ~26 % of upstream ERPNext strings
+remain English.
 
 ## Platform and installation
 
 | Area | Status | Evidence |
 |---|---|---|
-| One Setup.exe (desktop + server bundle), version 1.0.0-rc.2 | COMPLETE | CI (build, silent install, first launch, uninstall keeps data) |
+| One Setup.exe (desktop + server bundle), version 1.0.0-rc.3 | COMPLETE | CI (build, silent install, first launch, uninstall keeps data) |
 | Setup screens: pharmacy details, system check, elevated install, progress | COMPLETE | verified (Electron/Playwright); system check CI |
 | WSL2 + distro + server install, reboot and continue | COMPLETE in code | server part verified on a fresh Ubuntu 24.04 WSL image; WSL2 on Windows = hardware |
 | Server auto-start (scheduled task), startup screen, recovery | COMPLETE in code | verified (Electron); boot task = hardware |
 | Offline operation | COMPLETE | verified (A18: the server's internet cut by firewall, Cloud unreachable — a full shift sold, returned, printed and closed; Cloud events waited in the outbox) |
 | Backups (hourly/daily, verified), restore from the app | COMPLETE | verified (`test_backup`, app restore round trip on the fresh server); scheduled jobs recover when the clock is put back (`TestSchedulerClock`) |
-| Server update with automatic rollback | COMPLETE | verified (rc1 → rc6; a real failure rolled back) |
+| Server update with automatic rollback | COMPLETE | verified (a real update 1.0.0-rc.2 → 1.0.0-rc.3 with QA data kept; a real failure rolled back) |
 | Desktop update over the old version, data kept | COMPLETE | code (NSIS upgrade; uninstall-on-upgrade skips the server) |
 | Reproducible build, CI artifact, draft-only releases | COMPLETE | CI |
 | Code signing | READY, not signed | hooks in CI/package.json; the certificate is an external dependency |
 | Scanners / thermal printers / cash drawer | COMPLETE in software, UNKNOWN on hardware | test receipt in the app; hardware |
 
-## Verified in this pass (final certification, 1.0.0-rc.2)
+## Verified in this pass (release QA, 1.0.0-rc.3)
 
-The full evidence is `docs/qa/local/FINAL_QA_REPORT.md` (every check: expected, actual, PASS/FAIL,
-screenshot, automated test) and `docs/qa/local/RELEASE_CHECKLIST.md`.
+The full evidence is `docs/qa/local/FINAL_QA_REPORT.md` (every check: expected, actual, PASS/FAIL, automated
+test) and `docs/qa/local/RELEASE_CHECKLIST.md`. 1.0.0-rc.3 changes the Arabic for a cash/POS shift to «شِفت» /
+«شِفتات» (display text only); because shipped text changed, everything below was run again.
 
-* Full PharmacyOS suite on Frappe 16.36.1 / ERPNext 16.37.0: **260 tests, OK**; 301 / 301 QA checks over HTTP.
-* Desktop unit tests 29 / 29 (Linux and Windows CI).
-* A QA pharmacy on a server installed from nothing in the Ubuntu 24.04 WSL image: owner, manager, pharmacist,
-  cashier, purchasing, inventory and accountant accounts; two suppliers; 17 medicines with categories,
-  batches, expired / near-expiry / low / out-of-stock items and several barcodes; then purchasing, inventory,
-  a 25,000 IQD shift with ≥ 10 sales, returns, voids, a −500 close, disposal, reports, permissions, backup /
-  restore, update / rollback, offline, barcode simulation, security exploits replayed and stress — all over
-  HTTP as the real users (`qa/local/*.py`).
-* 40+ screenshots of the running product (`docs/qa/local/screenshots/`), including the real Windows setup
-  screens from CI (`screenshots/windows/`).
-* Windows CI on the final commit: PowerShell 5.1, build, silent install, first launch, setup screens,
-  uninstall keeps data.
+* Full PharmacyOS suite on Frappe 16.36.1 / ERPNext 16.37.0: **265 tests, OK** (including
+  `test_terminology`); 309 / 309 QA checks over HTTP.
+* Desktop unit tests 29 / 29 (Linux and Windows CI); the Arabic terminology guard (`qa/check_terminology.py`) in CI.
+* A QA pharmacy on a server installed from nothing (rc.3 bundle) in the Ubuntu 24.04 WSL image: owner,
+  manager, pharmacist, cashier, purchasing, inventory and accountant accounts; two suppliers; 20 medicines with
+  categories, batches, expired / near-expiry / low / out-of-stock items and several barcodes; then purchasing,
+  inventory, a 25,000 IQD shift with ≥ 10 sales, returns, voids, a −500 close, disposal, reports, permissions,
+  backup / restore, update / rollback, offline, barcode lookups, security exploits replayed and stress — all
+  over HTTP as the real users (`qa/local/*.py`). The installer's compiled Arabic was checked as served
+  (the counter screen and the desk).
+* A real update **1.0.0-rc.2 → 1.0.0-rc.3**: a server installed from the rc.2 bundle (rebuilt from commit
+  `56f8266`, same build id as certified), given QA data, updated with the rc.3 bundle by `pharmacyos-server
+  update` (what the app's *Update now* runs): data kept, version/build exact, the Arabic recompiled and served
+  with «شِفت»; then the failed-update rollback and restore checks again on the updated server.
+* Screenshots are no longer maintained (requirement withdrawn by the product owner); the images in
+  `docs/qa/local/screenshots/` are historical 1.0.0-rc.2 captures.
+* Windows CI on the release commit: PowerShell 5.1, build, silent install, first launch, uninstall keeps data;
+  the installer's file name, size, SHA-256 and signing state printed in the job log and the run summary.
 
 ## Production validation still needed (not code)
 

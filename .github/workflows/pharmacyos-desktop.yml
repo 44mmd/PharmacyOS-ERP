@@ -1,8 +1,10 @@
 # PharmacyOS LOCAL ERP — Windows installer (PharmacyOS-Setup-<version>.exe), built and checked on Windows.
 #
-# Runs on PharmacyOS branch pushes that touch the desktop app, its server bundle or this workflow, by hand
-# (workflow_dispatch), and on tags "pharmacyos-local-v*". A tag only creates a DRAFT GitHub release: nothing
-# is published without a person pressing "Publish".
+# Runs on PharmacyOS branch pushes that touch the desktop app, its server bundle, the terminology guard or
+# ERPNext's Arabic it checks, or this workflow, by hand (workflow_dispatch), and on tags "pharmacyos-local-v*".
+# A tag only creates a DRAFT GitHub release: nothing is published without a person pressing "Publish".
+# Every run prints the installer's file name, size, SHA-256 (dist/SHA256SUMS.txt) and signing state in the
+# job log and the run summary.
 #
 # Code signing: add the repository secrets WINDOWS_CSC_LINK (base64 of the .pfx code-signing certificate)
 # and WINDOWS_CSC_KEY_PASSWORD. Without them the installer is built unsigned (and says so in the summary);
@@ -24,6 +26,8 @@ on:
       - "pharmacyos/deploy/**"
       - "pharmacyos/dev/setup-dev-bench.sh"
       - "pharmacyos/apps/pharmacyos_erp/**"
+      - "pharmacyos/qa/check_terminology.py"
+      - "erpnext/locale/ar.po"
       - ".github/workflows/pharmacyos-desktop.yml"
 
 permissions:
@@ -43,6 +47,8 @@ jobs:
           node-version: 22
       - name: Shell scripts parse
         run: for f in deploy/server/install-server.sh deploy/server/pharmacyos-server deploy/restore-backup.sh dev/setup-dev-bench.sh; do bash -n "$f"; done
+      - name: Arabic terminology (a cash/POS shift is «شِفت»)
+        run: python3 qa/check_terminology.py
       - name: PowerShell scripts parse (PowerShell 7)
         shell: pwsh
         run: |
@@ -155,10 +161,13 @@ jobs:
         run: |
           $exe = Get-ChildItem dist/PharmacyOS-Setup-*.exe | Select-Object -First 1
           if (-not $exe) { throw "No installer was produced." }
-          $hash = (Get-FileHash $exe.FullName -Algorithm SHA256).Hash
+          $hash = (Get-FileHash $exe.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
           "$hash  $($exe.Name)" | Set-Content dist/SHA256SUMS.txt
           "INSTALLER=$($exe.FullName)" >> $env:GITHUB_ENV
-          "### PharmacyOS installer`n`n| | |`n|---|---|`n| File | $($exe.Name) |`n| Size | $([math]::Round($exe.Length / 1MB, 1)) MB |`n| SHA-256 | ``$hash`` |`n| Signed | $env:SIGNED |" >> $env:GITHUB_STEP_SUMMARY
+          # the release facts in the job log and the run summary (readable without downloading the artifact)
+          "SHA256SUMS.txt: $(Get-Content dist/SHA256SUMS.txt)" | Write-Host
+          "file: $($exe.Name)`nbytes: $($exe.Length)`nsha256: $hash`nsigned: $env:SIGNED`ncommit: $env:GITHUB_SHA" | Write-Host
+          "### PharmacyOS installer`n`n| | |`n|---|---|`n| File | $($exe.Name) |`n| Size | $($exe.Length) bytes ($([math]::Round($exe.Length / 1MB, 1)) MB) |`n| SHA-256 | ``$hash`` |`n| Signed | $env:SIGNED |`n| Commit | ``$env:GITHUB_SHA`` |`n`n``SHA256SUMS.txt``: ``$(Get-Content dist/SHA256SUMS.txt)``" >> $env:GITHUB_STEP_SUMMARY
 
       - name: Install silently, open the app, uninstall (data kept)
         shell: pwsh

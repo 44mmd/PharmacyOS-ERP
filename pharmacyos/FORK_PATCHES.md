@@ -9,6 +9,18 @@ custom fields, property setters, app-shipped DocTypes / Pages / Sidebars / Dock 
 template overrides (`www/login.html` extends Frappe's login; `footer_powered.html`), translations and
 whitelisted API methods.
 
+ERPNext's Arabic translation (`erpnext/locale/ar.po`) needs **no patch** for the 1.0.0-rc.3 terminology change
+(a cash/POS shift is «شِفت», plural «شِفتات», masculine), so none is made. Its POS / cashier strings (POS Opening
+Entry, POS Closing Entry, Cashier Closing, outdated opening entry, …) do not use the older shift word at all; the
+only 7 strings that do (8 occurrences) are about asset-depreciation shifts (Asset Shift Allocation / Asset Shift
+Factor: *Depreciate based on shifts*, *Shift Name*, the shift-based depreciation message) and workstation /
+Item Lead Time shifts (*No of Shift*, *Shift Time (In Hours)*, the per-day formula, the Workstation working-hours
+help) — a different thing from a cash shift, left as upstream ships them. Everything a pharmacy reads about a cash
+shift (the POS, the shift dialogs, server messages, the Pharmacy Report, the sidebar, and ERPNext's own
+*Create POS Opening Entry* button) takes its Arabic from the app's `locale/ar.po`, which wins over ERPNext's
+(the installer also takes ERPNext from the upstream v16.37.0 tag, not from this tree). `qa/check_terminology.py`
+names those 7 msgids (`ERPNEXT_NOT_A_CASH_SHIFT`) and fails on any other ERPNext string with the older word.
+
 Extension points used for consistency and least privilege (still no ERPNext file changed):
 
 | Extension | What | Why |

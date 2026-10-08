@@ -2,14 +2,23 @@
 
 ## Version
 
-| Part | Where | 1.0.0-rc.2 |
+| Part | Where | 1.0.0-rc.3 |
 |---|---|---|
-| Desktop app and installer | `desktop/package.json` `version` (SemVer) | `1.0.0-rc.2` |
-| Server app (`pharmacyos_erp`) | `apps/pharmacyos_erp/pharmacyos_erp/__init__.py` (PEP 440) | `1.0.0rc2` |
-| Server bundle | `VERSION` written by `scripts/prepare-server-bundle.js` from the app version | `1.0.0rc2` |
+| Desktop app and installer | `desktop/package.json` `version` (SemVer) | `1.0.0-rc.3` |
+| Server app (`pharmacyos_erp`) | `apps/pharmacyos_erp/pharmacyos_erp/__init__.py` (PEP 440) | `1.0.0rc3` |
+| Server bundle | `VERSION` written by `scripts/prepare-server-bundle.js` from the app version | `1.0.0rc3` |
 
 Both move together for a release. The app shows its version on every setup/startup screen and in
 *PharmacyOS → About*; the POS context returns the server version; System Status lists app versions.
+Any change to shipped text (Arabic included) is a new version: the desktop app offers a server update only when
+the bundled version (or, for the same version, the build) differs from the installed one.
+
+### Release notes
+
+| Version | Changes |
+|---|---|
+| `1.0.0-rc.3` | Arabic terminology (Iraqi usage): a cash/POS shift is **«شِفت»**, plural **«شِفتات»**, masculine — on the POS (open / close shift, the counter bar), in server messages, the Pharmacy Report's shift table (فُتح / أُغلق / مفتوح) and the sidebar (شِفتات نقطة البيع). Display text only (`locale/ar.po` msgstr, docs): no database, DocType, field, API or migration change. Guard: `qa/check_terminology.py` (CI step *Arabic terminology*) and `tests/test_terminology.py`. Updating from rc.2 recompiles the translations during `bench migrate` (the app's `after_migrate`). Also: after a failed update is rolled back, `pharmacyos-server` reports the result only once the server answers again (found by the rc.3 QA: the next sign-in got the web server's "back soon" page). Fresh install, the update rc.2 → rc.3 and the full local QA re-run: `docs/qa/local/FINAL_QA_REPORT.md`. |
+| `1.0.0-rc.2` | Local ERP v1 final certification (Phase A): `docs/qa/local/FINAL_QA_REPORT.md` at commit `05a68fa`. |
 
 ## Pinned dependencies (server)
 
@@ -44,13 +53,18 @@ generated from the repository each time.
 
 ### GitHub Actions — `.github/workflows/pharmacyos-desktop.yml`
 
-* **checks** (Linux): shell and PowerShell scripts parse; desktop unit tests.
+* **checks** (Linux): shell and PowerShell scripts parse; Arabic terminology guard (`qa/check_terminology.py`:
+  a cash/POS shift is «شِفت»); desktop unit tests.
 * **windows-installer** (windows-latest): scripts parse in Windows PowerShell 5.1 (and are UTF-8 with BOM,
   which 5.1 needs for non-ASCII text); installer helper functions behave on 5.1; the setup's system check runs
-  on real Windows; build; SHA-256; silent install → installed server bundle present → first launch captured
-  (`first-run.png`) → silent uninstall keeps pharmacy data. Artifact **PharmacyOS-Setup** (installer,
-  `SHA256SUMS.txt`, `first-run.png`), kept 90 days.
-* **draft-release**: on a tag `pharmacyos-local-v<version>` (e.g. `pharmacyos-local-v1.0.0-rc.2`) the installer
+  on real Windows; build; SHA-256 — the installer's file name, size in bytes, SHA-256 (`SHA256SUMS.txt`),
+  whether it is signed and the commit are printed in the job log and the run summary; silent install →
+  installed server bundle present → first launch (smoke run) → silent uninstall keeps pharmacy data. Artifact
+  **PharmacyOS-Setup** (installer, `SHA256SUMS.txt`, the smoke run's images), kept 90 days.
+* **evidence** (`workflow_dispatch` with `publish_evidence` only): commits the Windows CI images to the branch.
+  Not used since 1.0.0-rc.3: screenshots are no longer maintained as QA evidence (requirement withdrawn by the
+  product owner); the release facts come from the push run's log and summary.
+* **draft-release**: on a tag `pharmacyos-local-v<version>` (e.g. `pharmacyos-local-v1.0.0-rc.3`) the installer
   is attached to a **draft** GitHub release. Nothing is published until a person presses *Publish*.
 
 ## Code signing (external dependency)

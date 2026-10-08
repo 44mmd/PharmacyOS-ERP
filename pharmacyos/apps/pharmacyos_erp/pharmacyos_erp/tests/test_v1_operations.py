@@ -175,7 +175,8 @@ class TestV1Operations(IntegrationTestCase):
 
 	def test_expired_batch_cannot_be_redated_into_sellable_stock(self):
 		item = make_medicine("V1-REDATE", item_name="V1 Redate Medicine")
-		batch = make_batch(item.name, "V1-RD-01", -3)
+		# a new batch each run: a batch left by a run on an earlier day carries that day's dates
+		batch = make_batch(item.name, f"V1-RD-{frappe.generate_hash(length=6)}", -3)
 		frappe.set_user(INVENTORY)
 		doc = frappe.get_doc("Batch", batch)
 		doc.expiry_date = add_days(nowdate(), 300)

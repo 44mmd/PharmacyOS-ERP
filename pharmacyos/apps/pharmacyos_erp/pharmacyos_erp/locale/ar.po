@@ -264,16 +264,16 @@ msgid "Sales Orders"
 msgstr "طلبات البيع"
 
 msgid "POS sessions"
-msgstr "ورديات نقطة البيع"
+msgstr "شِفتات نقطة البيع"
 
 msgid "POS Profiles"
 msgstr "ملفات نقطة البيع"
 
 msgid "Opening Entries"
-msgstr "فتح الورديات"
+msgstr "فتح الشِفتات"
 
 msgid "Closing Entries"
-msgstr "إغلاق الورديات"
+msgstr "إغلاق الشِفتات"
 
 msgid "Promotions"
 msgstr "العروض"
@@ -1751,7 +1751,7 @@ msgid "POS Profile"
 msgstr "ملف نقطة البيع"
 
 msgid "Create POS Opening Entry"
-msgstr "فتح وردية نقطة البيع"
+msgstr "فتح شِفت نقطة البيع"
 
 msgid "Opening Amount"
 msgstr "مبلغ الافتتاح"
@@ -2574,7 +2574,7 @@ msgid "Order {0} could not be fully delivered."
 msgstr "تعذر تسليم الطلب {0} بالكامل."
 
 msgid "'Is Consolidated' is set by POS closing when it merges the shift's invoices; it cannot be set on an invoice entered directly."
-msgstr "خيار \"فاتورة مجمّعة\" يُضبط عند إغلاق نقطة البيع حين تُدمج فواتير الوردية، ولا يمكن ضبطه في فاتورة مُدخلة مباشرة."
+msgstr "خيار \"فاتورة مجمّعة\" يُضبط عند إغلاق نقطة البيع حين تُدمج فواتير الشِفت، ولا يمكن ضبطه في فاتورة مُدخلة مباشرة."
 
 msgid "Not a consolidated invoice"
 msgstr "ليست فاتورة مجمّعة"
@@ -2821,10 +2821,10 @@ msgid "Reprint"
 msgstr "إعادة طباعة"
 
 msgid "Shift"
-msgstr "الوردية"
+msgstr "الشِفت"
 
 msgid "Open shift"
-msgstr "فتح الوردية"
+msgstr "فتح الشِفت"
 
 msgid "Opening cash"
 msgstr "النقد الافتتاحي"
@@ -2833,10 +2833,10 @@ msgid "POS Counter"
 msgstr "الكاونتر"
 
 msgid "No shift is open. Open your shift to start selling."
-msgstr "لا توجد وردية مفتوحة. افتح ورديتك لبدء البيع."
+msgstr "لا يوجد شِفت مفتوح. افتح شِفتك لبدء البيع."
 
 msgid "No shift is open for you. Ask a pharmacy manager to open your shift."
-msgstr "لا توجد وردية مفتوحة لك. اطلب من مدير الصيدلية فتح ورديتك."
+msgstr "لا يوجد شِفت مفتوح لك. اطلب من مدير الصيدلية فتح شِفتك."
 
 msgid "No counter (POS Profile) is assigned to you. Ask a pharmacy manager."
 msgstr "لم يُخصَّص لك كاونتر بيع. راجع مدير الصيدلية."
@@ -2845,7 +2845,7 @@ msgid "Your account is not allowed to sell at the counter."
 msgstr "حسابك غير مسموح له بالبيع على الكاونتر."
 
 msgid "Close shift"
-msgstr "إغلاق الوردية"
+msgstr "إغلاق الشِفت"
 
 msgid "Sign out"
 msgstr "تسجيل الخروج"
@@ -3034,19 +3034,19 @@ msgid "{0} sales · {1}"
 msgstr "{0} عملية بيع · {1}"
 
 msgid "Shift closed."
-msgstr "تم إغلاق الوردية."
+msgstr "تم إغلاق الشِفت."
 
 msgid "Open the full closing form"
 msgstr "فتح نموذج الإغلاق الكامل"
 
 msgid "You have no open shift."
-msgstr "ليست لديك وردية مفتوحة."
+msgstr "ليس لديك شِفت مفتوح."
 
 msgid "This shift is already closed."
-msgstr "هذه الوردية مغلقة بالفعل."
+msgstr "هذا الشِفت مغلق بالفعل."
 
 msgid "You are not allowed to close a shift."
-msgstr "غير مسموح لك بإغلاق وردية."
+msgstr "غير مسموح لك بإغلاق شِفت."
 
 msgid "Invalid counted amounts."
 msgstr "مبالغ العدّ غير صالحة."
@@ -3124,7 +3124,7 @@ msgid "Only sales of today can be voided. Use a return for older sales."
 msgstr "يمكن إلغاء مبيعات اليوم فقط. استخدم الإرجاع للمبيعات الأقدم."
 
 msgid "This sale belongs to a closed shift ({0}). Use a return instead."
-msgstr "هذا البيع ضمن وردية مغلقة ({0}). استخدم الإرجاع بدلًا من ذلك."
+msgstr "هذا البيع ضمن شِفت مغلق ({0}). استخدم الإرجاع بدلًا من ذلك."
 
 msgid "You can only ask to void your own sales."
 msgstr "يمكنك طلب إلغاء مبيعاتك فقط."
@@ -3304,22 +3304,22 @@ msgid "Top medicines"
 msgstr "الأدوية الأكثر مبيعًا"
 
 msgid "Shifts"
-msgstr "الورديات"
+msgstr "الشِفتات"
 
 msgid "Counter"
 msgstr "الكاونتر"
 
 msgid "Opened"
-msgstr "فُتحت"
+msgstr "فُتح"
 
 msgid "Closed"
-msgstr "أُغلقت"
+msgstr "أُغلق"
 
 msgid "Open"
-msgstr "مفتوحة"
+msgstr "مفتوح"
 
 msgid "No shifts in this period"
-msgstr "لا ورديات في هذه الفترة"
+msgstr "لا شِفتات في هذه الفترة"
 
 msgid "Requested by"
 msgstr "بطلب من"
@@ -3388,7 +3388,7 @@ msgid "The largest discount a cashier or pharmacist may give, per line and for t
 msgstr "أكبر خصم يمكن للكاشير أو الصيدلاني منحه، لكل سطر وللبيع كاملًا، على الكاونترات التي تسمح بالخصم. يمكن لمدير الصيدلية أو المالك منح أكثر. يُطبَّق على الخادم في كل عملية بيع."
 
 msgid "Counter staff sell through the point of sale, in their own shift."
-msgstr "يبيع موظفو الكاونتر من خلال نقطة البيع، ضمن ورديتهم."
+msgstr "يبيع موظفو الكاونتر من خلال نقطة البيع، ضمن شِفتاتهم."
 
 msgid "Counter sales and returns are recorded with today's date."
 msgstr "تُسجَّل مبيعات ومرتجعات الكاونتر بتاريخ اليوم."
@@ -3397,7 +3397,7 @@ msgid "Only a pharmacy manager or the owner changes a customer's group, price li
 msgstr "مدير الصيدلية أو المالك فقط يغيّر مجموعة الزبون أو قائمة أسعاره أو شروط الولاء والائتمان."
 
 msgid "Open your shift on {0} before selling or refunding there."
-msgstr "افتح ورديتك على {0} قبل البيع أو الإرجاع عليه."
+msgstr "افتح شِفتك على {0} قبل البيع أو الإرجاع عليه."
 
 msgid "Counter sales use the counter's price list ({0})."
 msgstr "تستخدم مبيعات الكاونتر قائمة أسعار الكاونتر ({0})."
