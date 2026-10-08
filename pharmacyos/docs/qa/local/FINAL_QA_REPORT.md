@@ -140,9 +140,24 @@ bundle inside it has **the same `BUILD_ID` as the Linux one** (the job fails oth
 prints the installer's **file name, size in bytes, SHA-256** (`dist/SHA256SUMS.txt`), whether it is **signed**,
 the commit and the **server bundle's version and build** — in the job log (job *Windows installer*, step
 *Installer exists*) and in the run summary — so the release facts are readable without downloading the artifact
-**PharmacyOS-Setup** (installer, `SHA256SUMS.txt` and the smoke run's images, kept 90 days). The build certified
-above is `a701924350b1`; the run confirms the installer carries exactly that build. No code-signing certificate
-is configured, so the installer is unsigned and the run says so; nothing is faked.
+**PharmacyOS-Setup** (installer, `SHA256SUMS.txt` and the smoke run's images, kept 90 days). No code-signing
+certificate is configured, so the installer is unsigned and the run says so; nothing is faked.
+
+**Result — run [37860654139](https://github.com/44mmd/PharmacyOS-ERP/actions/runs/37860654139) on commit
+`effd71a` (the commit that added this report; the later commit only records these facts in the docs): success.**
+Linux checks: guard clean, desktop tests 29 / 29, server bundle `a701924350b1`. Windows: PowerShell 5.1 steps
+passed; `npm test` 22 pass, 7 skipped, 0 fail; the installer's server bundle `1.0.0rc3`, build
+`a701924350b13cfa4fd5c79d05b878ee7c9c591b091ce9851db17effb10c3520` — **the same build as the Linux checkout and as
+every QA server above**; silent install, first launch and uninstall (pharmacy data kept) OK.
+
+| Installer | |
+|---|---|
+| File | `PharmacyOS-Setup-1.0.0-rc.3.exe` |
+| Size | 111,601,986 bytes |
+| SHA-256 | `0a254100e122364e00f5f3dd61d85ef9424fc6218bb61404b1b08fdcb0ce6667` |
+| Signed | no (no certificate configured) |
+| Server bundle | 1.0.0rc3, build `a701924350b1` |
+| Artifact | **PharmacyOS-Setup** of run 37860654139 (kept 90 days) |
 
 ## A17 — server failure and recovery
 
