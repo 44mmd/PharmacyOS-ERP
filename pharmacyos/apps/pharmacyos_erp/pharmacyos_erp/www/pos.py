@@ -111,7 +111,8 @@ def messages() -> dict:
 		"reprint": _("Reprint"),
 		"return_short": _("Return"),
 		"is_return": _("Return"),
-		"shift": _("Shift"),
+		# a cash shift: the context keeps ERPNext's generic "Shift" (asset depreciation) as upstream ships it
+		"shift": _("Shift", context="POS"),
 		"open_shift": _("Open shift"),
 		"opening_cash": _("Opening cash"),
 		"counter": _("POS Counter"),

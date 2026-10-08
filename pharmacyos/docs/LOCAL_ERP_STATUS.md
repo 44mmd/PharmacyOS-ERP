@@ -96,16 +96,20 @@ remain English.
 
 The full evidence is `docs/qa/local/FINAL_QA_REPORT.md` (every check: expected, actual, PASS/FAIL, automated
 test) and `docs/qa/local/RELEASE_CHECKLIST.md`. 1.0.0-rc.3 changes the Arabic for a cash/POS shift to «شِفت» /
-«شِفتات» (display text only); because shipped text changed, everything below was run again.
+«شِفتات» (display text only); because shipped text changed, everything below was run again — and once more after
+the review fixes of the first rc.3 pass (context translations, guard, LF line endings, QA assertions). Certified
+server build: `a701924350b1`, the build the Windows installer carries (CI-enforced).
 
-* Full PharmacyOS suite on Frappe 16.36.1 / ERPNext 16.37.0: **265 tests, OK** (including
+* Full PharmacyOS suite on Frappe 16.36.1 / ERPNext 16.37.0: **266 tests, OK** (including
   `test_terminology`); 309 / 309 QA checks over HTTP.
-* Desktop unit tests 29 / 29 (Linux and Windows CI); the Arabic terminology guard (`qa/check_terminology.py`) in CI.
+* Desktop unit tests 29 / 29 on Linux; on Windows CI 22 pass and 7 are skipped by design (bash / pwsh /
+  POSIX-shell tests); the Arabic terminology guard (`qa/check_terminology.py`) in CI.
 * A QA pharmacy on a server installed from nothing (rc.3 bundle) in the Ubuntu 24.04 WSL image: owner,
   manager, pharmacist, cashier, purchasing, inventory and accountant accounts; two suppliers; 20 medicines with
   categories, batches, expired / near-expiry / low / out-of-stock items and several barcodes; then purchasing,
   inventory, a 25,000 IQD shift with ≥ 10 sales, returns, voids, a −500 close, disposal, reports, permissions,
-  backup / restore, update / rollback, offline, barcode lookups, security exploits replayed and stress — all
+  backup / restore, update / rollback, offline, barcode lookups (over HTTP; no keystroke test in rc.3),
+  security exploits replayed and stress — all
   over HTTP as the real users (`qa/local/*.py`). The installer's compiled Arabic was checked as served
   (the counter screen and the desk).
 * A real update **1.0.0-rc.2 → 1.0.0-rc.3**: a server installed from the rc.2 bundle (rebuilt from commit
@@ -115,7 +119,8 @@ test) and `docs/qa/local/RELEASE_CHECKLIST.md`. 1.0.0-rc.3 changes the Arabic fo
 * Screenshots are no longer maintained (requirement withdrawn by the product owner); the images in
   `docs/qa/local/screenshots/` are historical 1.0.0-rc.2 captures.
 * Windows CI on the release commit: PowerShell 5.1, build, silent install, first launch, uninstall keeps data;
-  the installer's file name, size, SHA-256 and signing state printed in the job log and the run summary.
+  the installer's file name, size, SHA-256, signing state and server bundle build printed in the job log and the
+  run summary; the run fails if that bundle is not the Linux-built (QA'd) one.
 
 ## Production validation still needed (not code)
 

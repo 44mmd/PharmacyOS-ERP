@@ -98,7 +98,7 @@ def guided():
 	R.add(A, "the counter's Arabic after the update: a shift is «شِفت» (recompiled during the update's migrate)", "before: the older word; after: الشِفت · فتح الشِفت · إغلاق الشِفت …, no older word left",
 		{"before": {"version": b["version"], "older_word_on_counter": b["old_word_on_counter"]}, "after": after}, b["old_word_on_counter"] > 0 and not b["new_word_on_counter"] and shift_arabic_ok(after))
 	desk = desk_shift_arabic(o)
-	R.add(A, "the desk's Arabic after the update (Pharmacy Report, sidebar): shifts are «شِفتات»", "before: strings with the older word; after: الشِفتات · شِفتات نقطة البيع …, none left",
+	R.add(A, "the desk's Arabic after the update (Pharmacy Report, sidebar): shifts are «شِفتات»", "before: strings with the older word; after: الشِفتات · شِفتات نقطة البيع …, none left; the generic Shift / Open / Closed / Opened keep Frappe's and ERPNext's Arabic",
 		{"before": {"strings_with_older_word": b["old_word_in_desk"]}, "after": desk}, b["old_word_in_desk"] > 0 and desk_shift_arabic_ok(desk))
 	# a message the server itself raises (Python, from the compiled translations): the cashier's shift was
 	# closed on the previous release (qa_ops.py A11), so there is none to summarise

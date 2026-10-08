@@ -70,7 +70,8 @@ def ensure(session, doctype, filters, doc):
 
 def main():
 	owner = Session("owner").login(*OWNER)
-	R.add("A5 QA pharmacy", "owner signs in", "the owner created by setup can sign in", owner.user, True)
+	me = owner.call("frappe.auth.get_logged_user")
+	R.add("A5 QA pharmacy", "owner signs in", "the owner created by setup can sign in", me, me == OWNER[0])
 	company = owner.value("Global Defaults", "Global Defaults", "default_company")
 	branch = owner.get_list("Branch", fields=["name", "pharmacyos_warehouse"], limit=1)[0]
 	wh = branch["pharmacyos_warehouse"]
@@ -223,7 +224,9 @@ def purchasing(purch, owner, ctx):
 			("QA-VOLT50", "VOL-QA-2510", d(25), 10, cost["QA-VOLT50"]),
 		], posting=d(-200))
 		pr5 = direct_receipt(purch, sup2, company, wh, [("QA-AMOXSYR", "AMX-QA-2604", d(400), 12, cost["QA-AMOXSYR"])])
-		R.add("A6 Purchasing", "back-dated delivery (now expired / near-expiry batches) + fresh batch", "receipts submitted", [pr4, pr5], True)
+		R.add("A6 Purchasing", "back-dated delivery (now expired / near-expiry batches) + fresh batch", "both receipts submitted (the first dated 200 days ago)",
+			[(pr, purch.value("Purchase Receipt", pr, "docstatus"), purch.value("Purchase Receipt", pr, "posting_date")) for pr in (pr4, pr5)],
+			purch.value("Purchase Receipt", pr4, "docstatus") == 1 and purch.value("Purchase Receipt", pr5, "docstatus") == 1 and purch.value("Purchase Receipt", pr4, "posting_date") == d(-200))
 		# receiving an already-expired batch today is refused
 		R.refused("A6 Purchasing", "receiving an expired batch today is refused", "server refuses an expired batch on today's receipt",
 			lambda: direct_receipt(purch, sup2, company, wh, [("QA-AMOXSYR", "AMX-QA-EXPIRED", d(-30), 5, cost["QA-AMOXSYR"])]), must_contain="expire")

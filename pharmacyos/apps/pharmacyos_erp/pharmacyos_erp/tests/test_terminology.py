@@ -13,7 +13,7 @@ from pathlib import Path
 
 import frappe
 from frappe.tests import IntegrationTestCase
-from frappe.translate import clear_cache, get_all_translations
+from frappe.translate import clear_cache, get_all_translations, get_translations_from_apps
 
 APP_DIR = Path(frappe.get_app_path("pharmacyos_erp")).resolve()
 GUARD = APP_DIR.parents[2] / "qa" / "check_terminology.py"  # pharmacyos/apps/pharmacyos_erp/pharmacyos_erp → pharmacyos/qa
@@ -30,7 +30,6 @@ def load_guard():
 
 # what the counter shows, with masculine agreement (msgid → Arabic)
 COUNTER_STRINGS = {
-	"Shift": "الشِفت",
 	"Shifts": "الشِفتات",
 	"Open shift": "فتح الشِفت",
 	"Close shift": "إغلاق الشِفت",
@@ -48,6 +47,16 @@ COUNTER_STRINGS = {
 	"Closing Entries": "إغلاق الشِفتات",
 	"No shifts in this period": "لا شِفتات في هذه الفترة",
 	"POS sessions": "شِفتات نقطة البيع",
+}
+
+# generic English words PharmacyOS needs in one sense only: translated with a context (msgctxt), so the same
+# word elsewhere in the desk keeps Frappe's / ERPNext's Arabic — e.g. ERPNext's asset-depreciation "Shift",
+# Frappe's "Open" button, the "Closed" status of orders. (msgid, context) → Arabic
+CONTEXT_STRINGS = {
+	("Shift", "POS"): "الشِفت",  # the counter (www/pos.py)
+	("Opened", "Shift table"): "فُتح",  # the Pharmacy Report's shift table
+	("Closed", "Shift table"): "أُغلق",
+	("Open", "Shift status"): "مفتوح",
 }
 
 
@@ -70,6 +79,17 @@ class TestShiftTerminology(IntegrationTestCase):
 		self.assertFalse(g.is_old_shift_word("الموردين"))  # suppliers
 		self.assertFalse(g.is_old_shift_word("موردي"))
 		self.assertEqual(g.old_shift_words("Shift / Open shift / shift_id"), [])
+		# the same word typed on other keyboards or copied from other documents
+		self.assertTrue(g.is_old_shift_word(g.OLD_SHIFT.replace("\u064a", "\u06cc") + "ة"))  # Persian/Kurdish YEH
+		self.assertEqual(len(g.old_shift_words(g.OLD_SHIFT[:3] + "\u200c" + g.OLD_SHIFT[3:] + "ة")), 1)  # ZWNJ inside
+		self.assertTrue(g.is_old_shift_word(g.OLD_SHIFT + "ه"))  # the common HEH spelling
+		# the colour pink is not a shift: the masculine word, or a colour phrase
+		colour = "\u0627\u0644\u0644\u0648\u0646"  # "the colour"
+		self.assertEqual(g.old_shift_words("قرص " + g.OLD_SHIFT), [])
+		self.assertEqual(g.old_shift_words("أقراص " + g.OLD_SHIFT + "ة " + colour), [])
+		self.assertEqual(len(g.old_shift_words("أقراص " + g.OLD_SHIFT + "ة")), 1)
+		self.assertIn(".bat", g.TEXT_SUFFIXES)
+		self.assertIn(".cmd", g.TEXT_SUFFIXES)
 		# historical rc.2 screenshot records are kept as they were taken; everything else is scanned
 		self.assertTrue(g.skipped(g.REPO / "pharmacyos/docs/qa/local/screenshots/screens.json"))
 		self.assertFalse(g.skipped(g.REPO / "pharmacyos/docs/qa/local/FINAL_QA_REPORT.md"))
@@ -80,17 +100,29 @@ class TestShiftTerminology(IntegrationTestCase):
 
 	def test_ar_po_checks_msgstr_only(self):
 		po = APP_DIR / "locale" / "ar.po"
-		entries = {msgid: msgstr for _line, msgid, msgstr in self.guard.po_entries(po)}
+		entries = {(msgid, context): msgstr for _line, msgid, msgstr, context in self.guard.po_entries(po)}
 		for msgid, arabic in COUNTER_STRINGS.items():
-			self.assertEqual(entries.get(msgid), arabic, msgid)
+			self.assertEqual(entries.get((msgid, None)), arabic, msgid)
+		for key, arabic in CONTEXT_STRINGS.items():
+			self.assertEqual(entries.get(key), arabic, key)
+			# the generic word is not overridden: it stays Frappe's / ERPNext's everywhere else in the desk
+			self.assertNotIn((key[0], None), entries, key[0])
 
 	def test_served_arabic_reads_shift_with_masculine_agreement(self):
 		for msgid, arabic in COUNTER_STRINGS.items():
 			self.assertEqual(frappe._(msgid, lang="ar"), arabic, msgid)
-		# the report's shift table: a shift was opened / closed, or is still open
-		self.assertEqual(frappe._("Opened", lang="ar"), "فُتح")
-		self.assertEqual(frappe._("Closed", lang="ar"), "أُغلق")
-		self.assertEqual(frappe._("Open", lang="ar"), "مفتوح")
+		# the counter's "Shift" and the report's shift table (opened / closed, or still open): by context
+		for (msgid, context), arabic in CONTEXT_STRINGS.items():
+			self.assertEqual(frappe._(msgid, lang="ar", context=context), arabic, (msgid, context))
+
+	def test_generic_words_keep_upstream_arabic(self):
+		"""PharmacyOS does not change "Shift" (ERPNext's asset-depreciation shift), "Open", "Closed" or "Opened"
+		for the rest of the desk: they read exactly what Frappe and ERPNext serve without the app."""
+		upstream = get_translations_from_apps("ar", [a for a in frappe.get_installed_apps() if a != "pharmacyos_erp"])
+		served = get_all_translations("ar")
+		for (msgid, _context), arabic in CONTEXT_STRINGS.items():
+			self.assertEqual(served.get(msgid), upstream.get(msgid), msgid)
+			self.assertNotEqual(frappe._(msgid, lang="ar"), arabic, msgid)
 
 	def test_served_arabic_never_uses_the_old_word_for_a_cash_shift(self):
 		allowed = self.guard.ERPNEXT_NOT_A_CASH_SHIFT  # ERPNext's asset-depreciation / workstation shifts

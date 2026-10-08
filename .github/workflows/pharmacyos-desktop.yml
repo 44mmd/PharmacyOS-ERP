@@ -1,10 +1,12 @@
 # PharmacyOS LOCAL ERP — Windows installer (PharmacyOS-Setup-<version>.exe), built and checked on Windows.
 #
-# Runs on PharmacyOS branch pushes that touch the desktop app, its server bundle, the terminology guard or
-# ERPNext's Arabic it checks, or this workflow, by hand (workflow_dispatch), and on tags "pharmacyos-local-v*".
+# Runs on PharmacyOS branch pushes that touch the desktop app, its server bundle, the docs or QA files (the
+# terminology guard checks them), ERPNext's Arabic it checks, the line-ending rules or this workflow, by hand
+# (workflow_dispatch), and on tags "pharmacyos-local-v*".
 # A tag only creates a DRAFT GitHub release: nothing is published without a person pressing "Publish".
-# Every run prints the installer's file name, size, SHA-256 (dist/SHA256SUMS.txt) and signing state in the
-# job log and the run summary.
+# Every run prints the installer's file name, size, SHA-256 (dist/SHA256SUMS.txt), signing state and the
+# server bundle's build in the job log and the run summary, and fails if the bundle built on Windows is not
+# byte-for-byte the one built from the Linux checkout (same BUILD_ID).
 #
 # Code signing: add the repository secrets WINDOWS_CSC_LINK (base64 of the .pfx code-signing certificate)
 # and WINDOWS_CSC_KEY_PASSWORD. Without them the installer is built unsigned (and says so in the summary);
@@ -26,8 +28,11 @@ on:
       - "pharmacyos/deploy/**"
       - "pharmacyos/dev/setup-dev-bench.sh"
       - "pharmacyos/apps/pharmacyos_erp/**"
-      - "pharmacyos/qa/check_terminology.py"
+      - "pharmacyos/docs/**"
+      - "pharmacyos/qa/**"
+      - "pharmacyos/*"
       - "erpnext/locale/ar.po"
+      - ".gitattributes"
       - ".github/workflows/pharmacyos-desktop.yml"
 
 permissions:
@@ -37,6 +42,8 @@ jobs:
   checks:
     name: Scripts and desktop tests (Linux)
     runs-on: ubuntu-latest
+    outputs:
+      bundle_build: ${{ steps.bundle.outputs.build }}
     defaults:
       run:
         working-directory: pharmacyos
@@ -62,6 +69,12 @@ jobs:
       - name: Desktop unit tests
         working-directory: pharmacyos/desktop
         run: npm ci --no-audit --no-fund && npm test
+      - name: Server bundle build (Linux checkout — what QA installs)
+        id: bundle
+        working-directory: pharmacyos/desktop
+        run: |
+          node scripts/prepare-server-bundle.js "$RUNNER_TEMP/server-bundle"
+          echo "build=$(cat "$RUNNER_TEMP/server-bundle/BUILD_ID")" >> "$GITHUB_OUTPUT"
 
   windows-installer:
     name: Windows installer
@@ -158,16 +171,23 @@ jobs:
 
       - name: Installer exists
         shell: pwsh
+        env:
+          LINUX_BUNDLE_BUILD: ${{ needs.checks.outputs.bundle_build }}
         run: |
           $exe = Get-ChildItem dist/PharmacyOS-Setup-*.exe | Select-Object -First 1
           if (-not $exe) { throw "No installer was produced." }
+          # the server bundle inside the installer must be the one built from the Linux checkout (line endings,
+          # files): the build QA installs is the build that ships
+          $bundleVersion = (Get-Content server-bundle/VERSION).Trim()
+          $bundleBuild = (Get-Content server-bundle/BUILD_ID).Trim()
+          if ($bundleBuild -ne $env:LINUX_BUNDLE_BUILD) { throw "The Windows server bundle (build $bundleBuild) differs from the Linux one (build $env:LINUX_BUNDLE_BUILD): a file or its line endings changed in the Windows checkout (.gitattributes)." }
           $hash = (Get-FileHash $exe.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
           "$hash  $($exe.Name)" | Set-Content dist/SHA256SUMS.txt
           "INSTALLER=$($exe.FullName)" >> $env:GITHUB_ENV
           # the release facts in the job log and the run summary (readable without downloading the artifact)
           "SHA256SUMS.txt: $(Get-Content dist/SHA256SUMS.txt)" | Write-Host
-          "file: $($exe.Name)`nbytes: $($exe.Length)`nsha256: $hash`nsigned: $env:SIGNED`ncommit: $env:GITHUB_SHA" | Write-Host
-          "### PharmacyOS installer`n`n| | |`n|---|---|`n| File | $($exe.Name) |`n| Size | $($exe.Length) bytes ($([math]::Round($exe.Length / 1MB, 1)) MB) |`n| SHA-256 | ``$hash`` |`n| Signed | $env:SIGNED |`n| Commit | ``$env:GITHUB_SHA`` |`n`n``SHA256SUMS.txt``: ``$(Get-Content dist/SHA256SUMS.txt)``" >> $env:GITHUB_STEP_SUMMARY
+          "file: $($exe.Name)`nbytes: $($exe.Length)`nsha256: $hash`nsigned: $env:SIGNED`ncommit: $env:GITHUB_SHA`nserver bundle: $bundleVersion (build $bundleBuild, same as the Linux checkout)" | Write-Host
+          "### PharmacyOS installer`n`n| | |`n|---|---|`n| File | $($exe.Name) |`n| Size | $($exe.Length) bytes ($([math]::Round($exe.Length / 1MB, 1)) MB) |`n| SHA-256 | ``$hash`` |`n| Signed | $env:SIGNED |`n| Commit | ``$env:GITHUB_SHA`` |`n| Server bundle | $bundleVersion, build ``$bundleBuild`` (same as the Linux checkout) |`n`n``SHA256SUMS.txt``: ``$(Get-Content dist/SHA256SUMS.txt)``" >> $env:GITHUB_STEP_SUMMARY
 
       - name: Install silently, open the app, uninstall (data kept)
         shell: pwsh

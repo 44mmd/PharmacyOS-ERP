@@ -147,12 +147,12 @@ class PharmacyOSReport {
 				) +
 				this.table(
 					__("Shifts"),
-					[{ label: __("Cashier") }, { label: __("Counter") }, { label: __("Opened") }, { label: __("Closed") }, { label: __("Expected"), num: true }, { label: __("Counted"), num: true }, { label: __("Difference"), num: true }],
+					[{ label: __("Cashier") }, { label: __("Counter") }, { label: __("Opened", null, "Shift table") }, { label: __("Closed", null, "Shift table") }, { label: __("Expected"), num: true }, { label: __("Counted"), num: true }, { label: __("Difference"), num: true }],
 					shifts.map((x) => [
 						esc(x.name || x.user),
 						esc(x.counter),
 						esc(frappe.datetime.str_to_user(x.opened)),
-						x.closed ? esc(frappe.datetime.str_to_user(x.closed)) : `<span class="pos-chip">${__("Open")}</span>`,
+						x.closed ? esc(frappe.datetime.str_to_user(x.closed)) : `<span class="pos-chip">${__("Open", null, "Shift status")}</span>`,
 						x.expected == null ? "—" : money(x.expected),
 						x.counted == null ? "—" : money(x.counted),
 						x.difference == null ? "—" : `<span class="${Math.abs(x.difference) > 0.0005 ? "text-danger" : ""}">${money(x.difference)}</span>`,

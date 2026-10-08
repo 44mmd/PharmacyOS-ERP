@@ -47,14 +47,16 @@ def main():
 		_, ms = timed(lambda: owner.call("pharmacyos_erp.pharmacy.medicine.create_medicine", item_code=code, item_name=f"QA Stress Medicine {i:03d}", pharma_name_ar=f"دواء اختبار {i:03d}", item_group="Analgesics", stock_uom="Nos", barcode=f"62919{i:08d}", standard_rate=1000 + i * 10, buying_rate=600 + i * 5))
 		times.append(ms)
 	if times:
-		R.add(A, "create 120 products", "all created", stats(times), True)
+		made = len(owner.get_list("Item", filters=[["name", "like", "QA-STRESS-%"]], fields=["name"], limit=500))
+		R.add(A, "create 120 products", "all 120 created", {"created": made, **stats(times)}, made == 120)
 	if not owner.get_list("Purchase Receipt", filters=[["supplier", "=", "QA Basra Medical Trading"], ["remarks", "=", "QA stress stock"]], fields=["name"]):
 		doc = {"doctype": "Purchase Receipt", "supplier": "QA Basra Medical Trading", "company": company, "set_warehouse": wh, "remarks": "QA stress stock", "items": []}
 		for i in range(120):
 			b = purch.call("pharmacyos_erp.pharmacy.receiving.create_receiving_batch", item_code=f"QA-STRESS-{i:03d}", batch_id=f"STR-{i:03d}", expiry_date=str(today + dt.timedelta(days=300 + i)))
 			doc["items"].append({"item_code": f"QA-STRESS-{i:03d}", "qty": 50, "rate": 600 + i * 5, "warehouse": wh, "batch_no": b["name"], "use_serial_batch_fields": 1})
-		(_, ms) = timed(lambda: purch.submit(purch.insert(doc)))
-		R.add(A, "one purchase receipt with 120 lines (120 batches)", "submitted", {"ms": round(ms)}, True)
+		(pr, ms) = timed(lambda: purch.submit(purch.insert(doc)))
+		lines = len(pr.get("items") or [])
+		R.add(A, "one purchase receipt with 120 lines (120 batches)", "submitted with 120 lines", {"ms": round(ms), "docstatus": pr.get("docstatus"), "lines": lines}, pr.get("docstatus") == 1 and lines == 120)
 	total_items = len(owner.get_list("Item", fields=["name"], limit=1000))
 	R.add(A, "catalogue size", "≥ 140 products", total_items, total_items >= 140)
 

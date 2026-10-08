@@ -62,7 +62,7 @@ def main(start="inventory"):
 		amx_exp = owner.get_list("Batch", filters=[["batch_id", "=", "AMX-QA-2509"]], fields=["name"])[0]["name"]
 		amx2604 = owner.get_list("Batch", filters=[["batch_id", "=", "AMX-QA-2604"]], fields=["name"])[0]["name"]
 		sales = [x for x in cashier.call(POS + "recent_sales", limit=100) if not x["is_return"]]
-		return tail(owner, cashier, manager, stock, pharm, company, wh, sales, amx_exp, amx2604)
+		return tail(owner, cashier, cashier2, manager, stock, pharm, company, wh, sales, amx_exp, amx2604)
 
 	# ---------------------------------------------------------------- A7 inventory
 	b = stock.get_call("pharmacyos_erp.pharmacy.expiry.get_batches", bucket="all", search="QA-", page_length=200)
@@ -231,10 +231,10 @@ def main(start="inventory"):
 		except Refused:
 			pass
 	R.refused(A10, "repeated wrong approvals lock the requester out", "6th attempt (correct password) refused: too many failed approvals", lambda: cashier2.call(POS + "void_sale", invoice=s["name"], reason="lockout test", approver="accountant@qa-pharmacy.test", approver_password=STAFF_PWD), must_contain="too many")
-	return tail(owner, cashier, manager, stock, pharm, company, wh, sales, amx_exp, amx2604)
+	return tail(owner, cashier, cashier2, manager, stock, pharm, company, wh, sales, amx_exp, amx2604)
 
 
-def tail(owner, cashier, manager, stock, pharm, company, wh, sales, amx_exp, amx2604):
+def tail(owner, cashier, cashier2, manager, stock, pharm, company, wh, sales, amx_exp, amx2604):
 	A10, A11, A12 = "A10 Void", "A11 Shift close", "A12 Expired disposal"
 	# previous-day sale: posted yesterday through the desk by the manager, then a void is refused
 	yday = previous_day_sale(manager, company, wh)
@@ -247,17 +247,31 @@ def tail(owner, cashier, manager, stock, pharm, company, wh, sales, amx_exp, amx
 	inv = owner.get_list("Sales Invoice", filters=[["owner", "=", "cashier@qa-pharmacy.test"], ["is_pos", "=", 1], ["docstatus", "=", 1], ["creation", ">=", shift["period_start_date"]]], fields=["name", "rounded_total", "grand_total", "is_return"], limit=500)
 	takings = sum((x["rounded_total"] or x["grand_total"]) for x in inv)
 	R.add(A11, "expected cash = 25,000 + takings − refunds (voided excluded)", f"25,000 + {takings:,.0f} (sum of the shift's submitted sales and returns)", cash_row, abs(cash_row["expected_amount"] - (25000 + takings)) < 1)
-	R.add(A11, "voided sale not in expected cash", "T9's 8,000 excluded", cash_row["expected_amount"], True)
+	# the shift's voided sales (T9): cancelled invoices of the cashier since the shift opened, and their void log
+	voided = owner.get_list("Sales Invoice", filters=[["owner", "=", "cashier@qa-pharmacy.test"], ["is_pos", "=", 1], ["docstatus", "=", 2], ["creation", ">=", shift["period_start_date"]]], fields=["name", "rounded_total", "grand_total"], limit=50)
+	voided_amount = sum((x["rounded_total"] or x["grand_total"]) for x in voided)
+	logged = {r["invoice"] for r in manager.get_list("PharmacyOS Void Log", filters=[["invoice", "in", [x["name"] for x in voided] or [""]]], fields=["invoice"])}
+	R.add(A11, "voided sale not in expected cash", "T9 (8,000, cancelled, in the void log) is not among the shift's sales and not counted: expected = 25,000 + takings, not + 8,000 more",
+		{"expected_amount": cash_row["expected_amount"], "takings": takings, "voided": [(x["name"], x["grand_total"]) for x in voided], "in_void_log": sorted(logged)},
+		len(voided) == 1 and abs(voided_amount - 8000) < 1 and logged == {voided[0]["name"]} and voided[0]["name"] not in {x["name"] for x in inv}
+		and abs(cash_row["expected_amount"] - (25000 + takings)) < 1 and abs(cash_row["expected_amount"] - (25000 + takings + voided_amount)) >= 1)
 	closed = cashier.call(POS + "close_shift", counted=[{"mode_of_payment": "Cash", "closing_amount": cash_row["expected_amount"] - 500}])
 	diff = next(p for p in closed["payments"] if p["mode_of_payment"] == "Cash")["difference"]
 	R.add(A11, "counted 500 short → variance −500 recorded", "difference −500, closing entry submitted", closed, abs(diff + 500) < 0.01 and bool(closed.get("name")))
 	R.refused(A11, "a closed shift cannot be closed twice", "second close refused", lambda: cashier.call(POS + "close_shift", counted=[{"mode_of_payment": "Cash", "closing_amount": 1}]))
 	R.refused(A10, "sale of a closed shift cannot be voided", "refused: use a return", lambda: manager.call(POS + "void_sale", invoice=sales[0]["name"], reason="after close"), must_contain="closed shift")
 	pce = owner.get_doc("POS Closing Entry", closed["name"])
-	R.add(A11, "closing entry audit", "owner = cashier, submitted, 11 sales", (pce["owner"], pce["docstatus"], len(pce.get("sales_invoices") or pce.get("pos_transactions") or [])), pce["owner"] == "cashier@qa-pharmacy.test" and pce["docstatus"] == 1)
+	closing_invoices = {r.get("sales_invoice") or r.get("pos_invoice") for r in (pce.get("sales_invoices") or pce.get("pos_transactions") or [])}
+	R.add(A11, "closing entry audit", f"owner = cashier, submitted, the shift's {len(inv)} invoices (11 sales — T1–T12 without the voided T9 — and 1 return), never the voided one",
+		(pce["owner"], pce["docstatus"], len(closing_invoices)),
+		pce["owner"] == "cashier@qa-pharmacy.test" and pce["docstatus"] == 1 and closing_invoices == {x["name"] for x in inv}
+		and len([x for x in inv if not x["is_return"]]) == 11 and len([x for x in inv if x["is_return"]]) == 1 and not closing_invoices & {x["name"] for x in voided})
 
 	# ---------------------------------------------------------------- A12 expired disposal
-	R.add(A12, "expired batch blocked at the POS", "see A8: selling AMX-QA-2509 refused", "", True)
+	# the expired batch still holds 8 units here: a counter checkout naming it is refused (cashier2's shift on the
+	# second counter is still open from the A10 lock-out test)
+	R.refused(A12, "expired batch blocked at the POS", f"AMX-QA-2509 ({batch_qty(owner, 'AMX-QA-2509'):g} in stock, expired) refused at a counter checkout",
+		lambda: sell(cashier2, [{"item_code": "QA-AMOXSYR", "qty": 1, "batch_no": amx_exp}], profile=COUNTER2), must_contain="expir")
 	R.refused(A12, "cashier cannot dispose", "disposal refused for a cashier", lambda: cashier.call("pharmacyos_erp.pharmacy.disposal.dispose_batch", item_code="QA-AMOXSYR", batch=amx_exp, warehouse=wh, qty=1, reason="Expired"))
 	R.refused(A12, "cannot dispose more than the batch holds", "9 > 8 refused", lambda: stock.call("pharmacyos_erp.pharmacy.disposal.dispose_batch", item_code="QA-AMOXSYR", batch=amx_exp, warehouse=wh, qty=9, reason="Expired"))
 	R.refused(A12, "a healthy batch cannot be disposed as 'Expired'", "AMX-QA-2604 refused", lambda: stock.call("pharmacyos_erp.pharmacy.disposal.dispose_batch", item_code="QA-AMOXSYR", batch=amx2604, warehouse=wh, qty=1, reason="Expired"))
@@ -273,7 +287,7 @@ def tail(owner, cashier, manager, stock, pharm, company, wh, sales, amx_exp, amx
 	disposal_check(owner, stock, wh, amx_exp, disp)
 
 	# ---------------------------------------------------------------- A13 reports
-	reports(owner, manager, cashier, pharm)
+	reports(owner, manager, cashier, pharm, closed)
 	return sales
 
 
@@ -316,29 +330,59 @@ def sell_as_new_shift(s, company, profile=PROFILE):
 	return sell(s, [{"item_code": "QA-PAN500", "qty": 1}], profile=profile)
 
 
+YESTERDAY_PRICE = 4500  # QA-VOLT50's selling price (qa_seed.MEDICINES)
+
+
 def previous_day_sale(manager, company, wh):
+	"""Yesterday's sale, recorded today through the desk by the manager. The QA pharmacy's prices start on the
+	day it was set up (an Item Price is valid from the day it is entered), so ERPNext finds no list price for
+	yesterday and would price the line at 0: the manager types the price, as on the desk form (managers have
+	price authority)."""
 	prof = manager.get_doc("POS Profile", PROFILE)
 	doc = {"doctype": "Sales Invoice", "is_pos": 1, "pos_profile": PROFILE, "company": company, "customer": prof["customer"],
 		"set_posting_time": 1, "posting_date": str(today - dt.timedelta(days=1)), "update_stock": 1, "set_warehouse": wh,
 		# a batch that was already in stock yesterday (received 200 days ago)
-		"items": [{"item_code": "QA-VOLT50", "qty": 1, "warehouse": wh, "use_serial_batch_fields": 1,
+		"items": [{"item_code": "QA-VOLT50", "qty": 1, "rate": YESTERDAY_PRICE, "warehouse": wh, "use_serial_batch_fields": 1,
 			"batch_no": manager.get_list("Batch", filters=[["batch_id", "=", "VOL-QA-2510"]], fields=["name"])[0]["name"]}],
-		"payments": [{"mode_of_payment": "Cash", "amount": 4500}]}
+		"payments": [{"mode_of_payment": "Cash", "amount": YESTERDAY_PRICE}]}
 	return manager.submit(manager.insert(doc))["name"]
 
 
-def reports(owner, manager, cashier, pharm):
+def day_totals(owner, day):
+	"""The day's sales computed independently of the report: every submitted Sales Invoice of that posting date."""
+	rows = owner.get_list("Sales Invoice", filters=[["docstatus", "=", 1], ["is_consolidated", "=", 0], ["posting_date", "=", str(day)]],
+		fields=["name", "is_return", "base_grand_total"], limit=5000)
+	sales = [r for r in rows if not r["is_return"]]
+	returns = [r for r in rows if r["is_return"]]
+	gross = sum(r["base_grand_total"] for r in sales)
+	refunds = abs(sum(r["base_grand_total"] for r in returns))
+	return {"transactions": len(sales), "returns_count": len(returns), "gross": round(gross, 2), "returns": round(refunds, 2), "net": round(gross - refunds, 2)}
+
+
+def same_totals(report_sales, expected):
+	return all(abs((report_sales or {}).get(k, -1) - v) < 0.01 for k, v in expected.items())
+
+
+def reports(owner, manager, cashier, pharm, closed):
 	A13 = "A13 Reports"
 	periods = owner.call("pharmacyos_erp.pharmacy.reports.report_periods")
 	R.add(A13, "period presets", "today, yesterday, 7 days, month", periods, all(k in json.dumps(periods) for k in ("today", "yesterday")))
 	t = owner.call("pharmacyos_erp.pharmacy.reports.get_sales_report", from_date=str(today), to_date=str(today))
-	R.add(A13, "today: transactions, sales, returns, net", "counts match the shift", {k: t.get(k) for k in ("summary",)} if "summary" in t else str(t)[:500], True)
+	expect = day_totals(owner, today)
+	shift_row = next((x for x in (t.get("shifts") or []) if x.get("shift") == closed.get("shift")), None)
+	R.add(A13, "today: transactions, sales, returns, net", f"the day's submitted invoices counted independently ({expect['transactions']} sales, {expect['returns_count']} return, gross {expect['gross']:,.0f}, net {expect['net']:,.0f}); the closed shift listed with its sales total {closed.get('grand_total'):,.0f}",
+		{"sales": t.get("sales"), "shift": shift_row},
+		same_totals(t.get("sales"), expect) and bool(shift_row) and abs((shift_row.get("sales_total") or 0) - closed.get("grand_total")) < 1 and abs((shift_row.get("difference") or 0) + 500) < 0.01)
 	R.add(A13, "discounts, voids, payment methods, top sellers, cashiers, shifts", "sections present and filled", {k: (t[k] if k != "top_items" else t[k][:3]) for k in ("discounts", "voids", "payments", "top_items", "cashiers") if k in t}, all(t.get(k) for k in ("discounts", "voids", "payments", "top_items", "cashiers", "shifts")))
 	R.add(A13, "owner sees costs (purchases, stock value, profit)", "costs_visible = 1", t.get("costs_visible"), bool(t.get("costs_visible")))
 	m = manager.call("pharmacyos_erp.pharmacy.reports.get_sales_report", from_date=str(today - dt.timedelta(days=6)), to_date=str(today))
 	R.add(A13, "manager: 7-day report", "report returned", m.get("costs_visible"), "payments" in m)
 	y = owner.call("pharmacyos_erp.pharmacy.reports.get_sales_report", from_date=str(today - dt.timedelta(days=1)), to_date=str(today - dt.timedelta(days=1)))
-	R.add(A13, "yesterday: the back-dated desk sale", "1 transaction yesterday", json.dumps(y.get("summary") or y, default=str)[:300], True)
+	cash = next((p for p in (y.get("payments") or []) if p.get("mode_of_payment") == "Cash"), None)
+	R.add(A13, "yesterday: the back-dated desk sale", f"1 transaction, gross = net = {YESTERDAY_PRICE:,} (Voltaren 50), a Cash payment row of {YESTERDAY_PRICE:,}",
+		{"sales": y.get("sales"), "payments": y.get("payments")},
+		same_totals(y.get("sales"), {"transactions": 1, "returns_count": 0, "gross": YESTERDAY_PRICE, "returns": 0, "net": YESTERDAY_PRICE})
+		and bool(cash) and abs(cash.get("amount", 0) - YESTERDAY_PRICE) < 0.01)
 	mo = owner.call("pharmacyos_erp.pharmacy.reports.get_sales_report", from_date=str(today.replace(day=1)), to_date=str(today))
 	R.add(A13, "month to date", "report returned", bool(mo), bool(mo))
 	R.refused(A13, "custom range over 366 days refused", "refused", lambda: owner.call("pharmacyos_erp.pharmacy.reports.get_sales_report", from_date="2020-01-01", to_date=str(today)))

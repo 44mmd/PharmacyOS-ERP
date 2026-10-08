@@ -111,6 +111,21 @@ Entry, POS Closing Entry), fields and APIs keep their English names. ERPNext's o
 asset-depreciation shift or a workstation shift is a different thing and is left as upstream ships it.
 `qa/check_terminology.py` (run by CI) and `tests/test_terminology.py` fail on any other use of the older word.
 
+The cash-shift words that are also generic English words are translated **with a context** so they do not leak
+into the rest of the desk: the counter's *Shift* is `_("Shift", context="POS")` (msgctxt *POS*), the report's
+shift table uses `__("Opened", null, "Shift table")`, `__("Closed", null, "Shift table")` and
+`__("Open", null, "Shift status")`. The generic *Shift* (ERPNext's asset-depreciation shift), *Open* (Frappe's
+button), *Closed* (order statuses) and *Opened* keep the Arabic Frappe and ERPNext ship (tested:
+`test_generic_words_keep_upstream_arabic`). Give a new string a context the same way when its English word is
+generic but its Arabic is specific.
+
+**The guard's rule.** `qa/check_terminology.py` matches the older word's letters followed by a feminine,
+pronoun or plural ending, after normalising the text the way it can arrive from other keyboards and documents
+(the Persian / Kurdish ی and ى read as ي, invisible joiners such as ZWNJ dropped, presentation forms folded).
+Supplier words (مورد، الموردين) never match. The same letters also mean *pink*: the masculine colour word
+never matches, and the feminine one is allowed only as a colour phrase — *pink-coloured* («… اللون» after it) or
+*the colour pink* («اللون / لون …» before it); phrase colour sentences that way. It scans `.bat` / `.cmd` too.
+
 **Brand names are never translated:** PharmacyOS, PharmacyOS ERP and HALF (tested).
 
 ## Navigation (Arabic)

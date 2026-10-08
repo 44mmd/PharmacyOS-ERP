@@ -2820,6 +2820,9 @@ msgstr "أُرجع كل ما في هذا البيع مسبقًا."
 msgid "Reprint"
 msgstr "إعادة طباعة"
 
+# a cash / POS shift (the counter). Context only: ERPNext's generic "Shift" is its asset-depreciation
+# shift and keeps upstream's Arabic.
+msgctxt "POS"
 msgid "Shift"
 msgstr "الشِفت"
 
@@ -3309,12 +3312,17 @@ msgstr "الشِفتات"
 msgid "Counter"
 msgstr "الكاونتر"
 
+# the Pharmacy Report's shift table (a shift was opened / closed, or is still open). Context only: the
+# generic "Open" / "Closed" / "Opened" are Frappe's and ERPNext's everywhere else in the desk.
+msgctxt "Shift table"
 msgid "Opened"
 msgstr "فُتح"
 
+msgctxt "Shift table"
 msgid "Closed"
 msgstr "أُغلق"
 
+msgctxt "Shift status"
 msgid "Open"
 msgstr "مفتوح"
 

@@ -6,7 +6,7 @@
   "actual": "{\"developer_mode\": 0, \"allow_tests\": null}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:50:12"
+  "at": "2026-10-08 23:14:23"
  },
  {
   "area": "A3 Fresh install",
@@ -15,7 +15,7 @@
   "actual": "{\"items\": 0, \"customers\": 1, \"invoices\": 0, \"suppliers\": 0}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:50:12"
+  "at": "2026-10-08 23:14:23"
  },
  {
   "area": "A3 Fresh install",
@@ -24,7 +24,7 @@
   "actual": "[\"owner@qa-pharmacy.test\"]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:50:12"
+  "at": "2026-10-08 23:14:23"
  },
  {
   "area": "A3 Fresh install",
@@ -33,7 +33,7 @@
   "actual": "[\"Accounts Manager\", \"Accounts User\", \"All\", \"Desk User\", \"Guest\", \"Inventory Manager\", \"Item Manager\", \"Pharmacy Accountant\", \"Pharmacy Manager\", \"Pharmacy Owner\", \"Purchase Manager\", \"Purchase User\", \"Purchasing Officer\", \"Report Manager\", \"Sales Manager\", \"Sales User\", \"Stock Manager\", \"Stock User\", \"System Manager\"]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:50:12"
+  "at": "2026-10-08 23:14:23"
  },
  {
   "area": "A3 Fresh install",
@@ -42,7 +42,7 @@
   "actual": "{\"companies\": [\"QA TEST Pharmacy\"], \"branches\": [{\"name\": \"Main Branch\", \"pharmacyos_warehouse\": \"Main Branch - QTP\"}]}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:50:12"
+  "at": "2026-10-08 23:14:23"
  },
  {
   "area": "A3 Fresh install",
@@ -51,7 +51,7 @@
   "actual": "[{\"name\": \"Main Counter\", \"warehouse\": \"Main Branch - QTP\", \"print_format\": \"PharmacyOS Receipt\", \"selling_price_list\": \"Standard Selling\"}]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:50:12"
+  "at": "2026-10-08 23:14:23"
  },
  {
   "area": "A3 Fresh install",
@@ -60,7 +60,7 @@
   "actual": "{\"enable_password_policy\": 1, \"minimum_password_score\": \"2\", \"disable_signup\": 1}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:50:12"
+  "at": "2026-10-08 23:14:23"
  },
  {
   "area": "A3 Fresh install",
@@ -69,7 +69,7 @@
   "actual": "true",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:50:12"
+  "at": "2026-10-08 23:14:23"
  },
  {
   "area": "A3 Fresh install",
@@ -78,7 +78,7 @@
   "actual": "none",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:50:12"
+  "at": "2026-10-08 23:14:23"
  },
  {
   "area": "A3 Fresh install",
@@ -87,7 +87,7 @@
   "actual": "{\"language\": \"ar\", \"time_zone\": \"Asia/Baghdad\", \"currency\": \"IQD\"}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:50:12"
+  "at": "2026-10-08 23:14:23"
  },
  {
   "area": "A3 Fresh install",
@@ -96,7 +96,7 @@
   "actual": "[[\"10\"]]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:50:12"
+  "at": "2026-10-08 23:14:23"
  },
  {
   "area": "A3 Fresh install",
@@ -105,7 +105,7 @@
   "actual": "HTTP 200",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:50:19"
+  "at": "2026-10-08 23:14:28"
  },
  {
   "area": "A3 Fresh install",
@@ -114,16 +114,16 @@
   "actual": "{\"shift\": \"الشِفت\", \"open_shift\": \"فتح الشِفت\", \"close_shift\": \"إغلاق الشِفت\", \"no_shift\": \"لا يوجد شِفت مفتوح. افتح شِفتك لبدء البيع.\", \"shift_closed\": \"تم إغلاق الشِفت.\", \"old_word_left\": 0}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:50:20"
+  "at": "2026-10-08 23:14:28"
  },
  {
   "area": "A3 Fresh install",
   "check": "the desk's Arabic (translations the server boots the desk with): shifts are «شِفتات»",
-  "expected": "الشِفتات · شِفتات نقطة البيع · لا شِفتات في هذه الفترة · فُتح / أُغلق / مفتوح; no served string uses the older word for a cash shift",
-  "actual": "{\"Shifts\": \"الشِفتات\", \"No shifts in this period\": \"لا شِفتات في هذه الفترة\", \"POS sessions\": \"شِفتات نقطة البيع\", \"Opening Entries\": \"فتح الشِفتات\", \"Closing Entries\": \"إغلاق الشِفتات\", \"Opened\": \"فُتح\", \"Closed\": \"أُغلق\", \"Open\": \"مفتوح\", \"served_strings\": 15132, \"old_word_left\": []}",
+  "expected": "الشِفتات · شِفتات نقطة البيع · لا شِفتات في هذه الفترة · the shift table's فُتح / أُغلق / مفتوح and the counter's الشِفت by context, while the generic Shift / Open / Closed / Opened keep Frappe's and ERPNext's Arabic; no served string uses the older word for a cash shift",
+  "actual": "{\"Shifts\": \"الشِفتات\", \"No shifts in this period\": \"لا شِفتات في هذه الفترة\", \"POS sessions\": \"شِفتات نقطة البيع\", \"Opening Entries\": \"فتح الشِفتات\", \"Closing Entries\": \"إغلاق الشِفتات\", \"Opened:Shift table\": \"فُتح\", \"Closed:Shift table\": \"أُغلق\", \"Open:Shift status\": \"مفتوح\", \"Shift:POS\": \"الشِفت\", \"generic\": {\"Shift\": \"يحول\", \"Opened\": \"افتتح\", \"Closed\": \"مغلق\", \"Open\": \"فتح\"}, \"served_strings\": 15136, \"old_word_left\": []}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:50:20"
+  "at": "2026-10-08 23:14:28"
  },
  {
   "area": "A3 Fresh install",
@@ -132,7 +132,7 @@
   "actual": "HTTP 417",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:50:21"
+  "at": "2026-10-08 23:14:28"
  },
  {
   "area": "A3 Fresh install",
@@ -141,7 +141,7 @@
   "actual": "[\"frappe-bench-redis:frappe-bench-redis-cache\", \"frappe-bench-redis:frappe-bench-redis-queue\", \"frappe-bench-web:frappe-bench-frappe-web\", \"frappe-bench-web:frappe-bench-node-socketio\", \"frappe-bench-workers:frappe-bench-frappe-long-worker-0\", \"frappe-bench-workers:frappe-bench-frappe-schedule\", \"frappe-bench-workers:frappe-bench-frappe-short-worker-0\"]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:50:21"
+  "at": "2026-10-08 23:14:29"
  },
  {
   "area": "A5 QA pharmacy",
@@ -150,7 +150,7 @@
   "actual": "owner@qa-pharmacy.test",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:50:23"
+  "at": "2026-10-08 23:14:30"
  },
  {
   "area": "A5 QA pharmacy",
@@ -159,7 +159,7 @@
   "actual": "[[\"QA Manager Omar\", \"manager@qa-pharmacy.test\"], [\"QA Pharmacist Huda\", \"pharmacist@qa-pharmacy.test\"], [\"QA Cashier Sara\", \"cashier@qa-pharmacy.test\"], [\"QA Cashier Ali\", \"cashier2@qa-pharmacy.test\"], [\"QA Purchasing Karim\", \"purchasing@qa-pharmacy.test\"], [\"QA Stock Zainab\", \"stock@qa-pharmacy.test\"], [\"QA Accountant Noor\", \"accountant@qa-pharmacy.test\"]]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:50:34"
+  "at": "2026-10-08 23:14:36"
  },
  {
   "area": "A6 Purchasing",
@@ -168,7 +168,7 @@
   "actual": "[{\"name\": \"QA Baghdad Pharma Supply\", \"owner\": \"purchasing@qa-pharmacy.test\"}, {\"name\": \"QA Basra Medical Trading\", \"owner\": \"purchasing@qa-pharmacy.test\"}]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:50:40"
+  "at": "2026-10-08 23:14:40"
  },
  {
   "area": "A5 QA pharmacy",
@@ -177,7 +177,7 @@
   "actual": "20 items, groups=['Analgesics', 'Antibiotics', 'Chronic Care', 'Gastrointestinal', 'Personal Care', 'Respiratory & Allergy', 'Vitamins & Supplements']",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:50:42"
+  "at": "2026-10-08 23:14:41"
  },
  {
   "area": "A5 QA pharmacy",
@@ -186,7 +186,7 @@
   "actual": "[\"6291100000011\", \"5000158062474\"]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:50:42"
+  "at": "2026-10-08 23:14:41"
  },
  {
   "area": "A6 Purchasing",
@@ -195,7 +195,7 @@
   "actual": "[\"PUR-ORD-2026-00001\", \"purchasing@qa-pharmacy.test\"]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:50:44"
+  "at": "2026-10-08 23:14:43"
  },
  {
   "area": "A6 Purchasing",
@@ -204,7 +204,7 @@
   "actual": "{\"receipt\": \"MAT-PRE-2026-00001\", \"per_received\": 41.891892, \"status\": \"To Receive and Bill\"}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:50:45"
+  "at": "2026-10-08 23:14:44"
  },
  {
   "area": "A6 Purchasing",
@@ -213,7 +213,7 @@
   "actual": "{\"receipt\": \"MAT-PRE-2026-00002\", \"per_received\": 100.0, \"status\": \"To Bill\"}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:50:47"
+  "at": "2026-10-08 23:14:45"
  },
  {
   "area": "A6 Purchasing",
@@ -222,16 +222,16 @@
   "actual": "MAT-PRE-2026-00003",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:50:50"
+  "at": "2026-10-08 23:14:47"
  },
  {
   "area": "A6 Purchasing",
   "check": "back-dated delivery (now expired / near-expiry batches) + fresh batch",
-  "expected": "receipts submitted",
-  "actual": "[\"MAT-PRE-2026-00004\", \"MAT-PRE-2026-00005\"]",
+  "expected": "both receipts submitted (the first dated 200 days ago)",
+  "actual": "[[\"MAT-PRE-2026-00004\", 1, \"2026-03-23\"], [\"MAT-PRE-2026-00005\", 1, \"2026-10-09\"]]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:50:51"
+  "at": "2026-10-08 23:14:48"
  },
  {
   "area": "A6 Purchasing",
@@ -240,7 +240,7 @@
   "actual": "refused HTTP 417: الصف رقم 1: انتهت صلاحية الوجبة AMX-QA-EXPIRED بالفعل.",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:50:51"
+  "at": "2026-10-08 23:14:48"
  },
  {
   "area": "A6 Purchasing",
@@ -249,7 +249,7 @@
   "actual": "{\"return\": \"MAT-PRE-2026-00006\", \"before\": 50.0, \"after\": 48.0}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:50:52"
+  "at": "2026-10-08 23:14:49"
  },
  {
   "area": "A6 Purchasing",
@@ -258,7 +258,7 @@
   "actual": "[{\"incoming_rate\": 1500.0, \"actual_qty\": 50.0, \"valuation_rate\": 1500.0}]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:50:52"
+  "at": "2026-10-08 23:14:49"
  },
  {
   "area": "A6 Purchasing",
@@ -267,16 +267,16 @@
   "actual": "{\"PAN-QA-2601\": 50.0, \"PAN-QA-2602\": 50.0}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:50:52"
+  "at": "2026-10-08 23:14:49"
  },
  {
   "area": "A6 Purchasing",
   "check": "inventory after purchasing (Bin = received − returned)",
   "expected": "Brufen 48, Panadol 100, Insulin none",
-  "actual": "{\"QA-PAN500\": 100.0, \"QA-OMEP20\": 40.0, \"QA-BRUF400\": 48.0, \"QA-PANEXT\": 40.0, \"QA-GLUCO500\": 60.0, \"QA-AZI500\": 20.0, \"QA-AUG1G\": 30.0, \"QA-ZYRTEC\": 30.0, \"QA-VENTOLIN\": 12.0, \"QA-SENSO\": 12.0, \"QA-LIPITOR20\": 20.0, \"QA-NIVEA\": 10.0, \"QA-CONCOR5\": 25.0, \"QA-VITD3\": 20.0, \"QA-GAVISCON\": 15.0, \"QA-VITC1000\": 30.0, \"QA-CIPRO500\": 3.0, \"QA-VOLT50\": 10.0, \"QA-AMOXSYR\": 20.0}",
+  "actual": "{\"QA-AUG1G\": 30.0, \"QA-PAN500\": 100.0, \"QA-PANEXT\": 40.0, \"QA-GLUCO500\": 60.0, \"QA-AZI500\": 20.0, \"QA-BRUF400\": 48.0, \"QA-ZYRTEC\": 30.0, \"QA-OMEP20\": 40.0, \"QA-CIPRO500\": 3.0, \"QA-SENSO\": 12.0, \"QA-VENTOLIN\": 12.0, \"QA-VITC1000\": 30.0, \"QA-CONCOR5\": 25.0, \"QA-NIVEA\": 10.0, \"QA-GAVISCON\": 15.0, \"QA-VITD3\": 20.0, \"QA-LIPITOR20\": 20.0, \"QA-AMOXSYR\": 20.0, \"QA-VOLT50\": 10.0}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:50:52"
+  "at": "2026-10-08 23:14:49"
  },
  {
   "area": "A7 Inventory",
@@ -285,16 +285,16 @@
   "actual": "22 batches; counts={'expired': 1, '30': 1, '60': 1, '90': 1, 'all': 22}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:04"
+  "at": "2026-10-08 23:14:59"
  },
  {
   "area": "A7 Inventory",
   "check": "expired batch identified",
   "expected": "AMX-QA-2509 flagged Expired",
-  "actual": "[[\"AMX-QA-2509\", 8.0, \"2026-10-02\"]]",
+  "actual": "[[\"AMX-QA-2509\", 8.0, \"2026-10-03\"]]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:04"
+  "at": "2026-10-08 23:14:59"
  },
  {
   "area": "A7 Inventory",
@@ -303,16 +303,16 @@
   "actual": "[[\"VOL-QA-2510\", 25, \"critical\"]]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:04"
+  "at": "2026-10-08 23:14:59"
  },
  {
   "area": "A7 Inventory",
   "check": "FEFO order",
   "expected": "Augmentin: AUG-QA-2600 (earlier expiry) before AUG-QA-2601",
-  "actual": "[[\"AUG-QA-2600\", \"2027-02-05\"], [\"AUG-QA-2601\", \"2027-08-04\"]]",
+  "actual": "[[\"AUG-QA-2600\", \"2027-02-06\"], [\"AUG-QA-2601\", \"2027-08-05\"]]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:04"
+  "at": "2026-10-08 23:14:59"
  },
  {
   "area": "A7 Inventory",
@@ -321,7 +321,7 @@
   "actual": "[[\"AMX-QA-2604\", 12.0]]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:04"
+  "at": "2026-10-08 23:14:59"
  },
  {
   "area": "A7 Inventory",
@@ -330,7 +330,7 @@
   "actual": "{\"rows\": [{\"item_code\": \"QA-INSULIN\", \"item_name\": \"Insulin Glargine Pen (cold chain)\", \"name_ar\": \"\\u0642\\u0644\\u0645 \\u0625\\u0646\\u0633\\u0648\\u0644\\u064a\\u0646 \\u063a\\u0644\\u0627\\u0631\\u062c\\u064a\\u0646\", \"uom\": \"Nos\", \"is_medicine\": 1, \"qty\": 0.0, \"available\": 0.0, \"projected\": 0.0, \"value\": 0.0, \"warehouses\": 0, \"reorder_level\": 2.0, \"batches\": 0, \"expired_qty\": 0.0, \"nearest_expiry\": null, \"n",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:04"
+  "at": "2026-10-08 23:14:59"
  },
  {
   "area": "A7 Inventory",
@@ -339,7 +339,7 @@
   "actual": "{\"reconciliation\": \"MAT-RECO-2026-00001\", \"before\": 10.0, \"after\": 9.0}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:04"
+  "at": "2026-10-08 23:14:59"
  },
  {
   "area": "A7 Inventory",
@@ -348,16 +348,16 @@
   "actual": "refused HTTP 403: لا يملك المستخدم cashier@qa-pharmacy.test حق الوصول إلى النمط عبر إذن دور للمستند جرد المخزون",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:04"
+  "at": "2026-10-08 23:14:59"
  },
  {
   "area": "A8 POS shift",
   "check": "open shift with 25,000 IQD",
   "expected": "an open POS Opening Entry for the cashier",
-  "actual": "{\"name\": \"POS-OPE-2026-00001\", \"company\": \"QA TEST Pharmacy\", \"pos_profile\": \"Main Counter\", \"period_start_date\": \"2026-10-08 19:51:04.901551\"}",
+  "actual": "{\"name\": \"POS-OPE-2026-00001\", \"company\": \"QA TEST Pharmacy\", \"pos_profile\": \"Main Counter\", \"period_start_date\": \"2026-10-09 02:14:59.923759\"}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:05"
+  "at": "2026-10-08 23:15:00"
  },
  {
   "area": "A19 Barcode (simulated HID)",
@@ -366,7 +366,7 @@
   "actual": "[[\"QA-PAN500\", 100.0]]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:05"
+  "at": "2026-10-08 23:15:00"
  },
  {
   "area": "A19 Barcode (simulated HID)",
@@ -375,7 +375,7 @@
   "actual": "[\"QA-PAN500\"]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:05"
+  "at": "2026-10-08 23:15:00"
  },
  {
   "area": "A19 Barcode (simulated HID)",
@@ -384,7 +384,7 @@
   "actual": "{\"items\": [], \"barcode_scan\": false}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:05"
+  "at": "2026-10-08 23:15:00"
  },
  {
   "area": "A19 Barcode (simulated HID)",
@@ -393,16 +393,16 @@
   "actual": "[[\"QA-INSULIN\", 0]]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:05"
+  "at": "2026-10-08 23:15:00"
  },
  {
   "area": "A19 Barcode (simulated HID)",
   "check": "expired batch barcode scanned",
   "expected": "batch recognised and flagged expired",
-  "actual": "[[\"QA-AMOXSYR\", {\"batch_id\": \"AMX-QA-2509\", \"expiry_date\": \"2026-10-02\", \"expired\": true}]]",
+  "actual": "[[\"QA-AMOXSYR\", {\"batch_id\": \"AMX-QA-2509\", \"expiry_date\": \"2026-10-03\", \"expired\": true}]]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:05"
+  "at": "2026-10-08 23:15:00"
  },
  {
   "area": "A8 POS shift",
@@ -411,7 +411,7 @@
   "actual": "[\"ACC-SINV-2026-00001\", 5000.0]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:05"
+  "at": "2026-10-08 23:15:00"
  },
  {
   "area": "A8 POS shift",
@@ -420,7 +420,7 @@
   "actual": "[\"ACC-SINV-2026-00002\", 5200.0, 4800.0, 10000.0]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:06"
+  "at": "2026-10-08 23:15:01"
  },
  {
   "area": "A8 POS shift",
@@ -429,7 +429,7 @@
   "actual": "[\"QA-PANEXT\"]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:06"
+  "at": "2026-10-08 23:15:01"
  },
  {
   "area": "A8 POS shift",
@@ -438,7 +438,7 @@
   "actual": "[\"ACC-SINV-2026-00003\", 6650.0, 350.0]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:07"
+  "at": "2026-10-08 23:15:01"
  },
  {
   "area": "A8 POS shift",
@@ -447,7 +447,7 @@
   "actual": "[\"QA-OMEP20\"]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:07"
+  "at": "2026-10-08 23:15:01"
  },
  {
   "area": "A8 POS shift",
@@ -456,7 +456,7 @@
   "actual": "[\"ACC-SINV-2026-00004\", 10500.0]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:07"
+  "at": "2026-10-08 23:15:02"
  },
  {
   "area": "A8 POS shift",
@@ -465,7 +465,7 @@
   "actual": "[[\"QA-AUG1G\", 1.0, \"AUG-QA-2600\"]]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:08"
+  "at": "2026-10-08 23:15:02"
  },
  {
   "area": "A8 POS shift",
@@ -474,7 +474,7 @@
   "actual": "[[\"QA-AMOXSYR\", 1.0, \"AMX-QA-2604\"]]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:08"
+  "at": "2026-10-08 23:15:03"
  },
  {
   "area": "A8 POS shift",
@@ -483,7 +483,7 @@
   "actual": "[\"ACC-SINV-2026-00007\", 30500.0, 9500.0]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:09"
+  "at": "2026-10-08 23:15:03"
  },
  {
   "area": "A8 POS shift",
@@ -492,7 +492,7 @@
   "actual": "[\"ACC-SINV-2026-00008\", 27000.0]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:10"
+  "at": "2026-10-08 23:15:04"
  },
  {
   "area": "A8 POS shift",
@@ -501,7 +501,7 @@
   "actual": "[\"ACC-SINV-2026-00009\", 8000.0]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:10"
+  "at": "2026-10-08 23:15:04"
  },
  {
   "area": "A8 POS shift",
@@ -510,7 +510,7 @@
   "actual": "{\"first\": \"ACC-SINV-2026-00010\", \"retry\": \"ACC-SINV-2026-00010\", \"replayed\": true, \"invoices\": 1}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:11"
+  "at": "2026-10-08 23:15:05"
  },
  {
   "area": "A8 POS shift",
@@ -519,7 +519,7 @@
   "actual": "[\"ACC-SINV-2026-00011\", 12000.0, 8000.0]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:11"
+  "at": "2026-10-08 23:15:05"
  },
  {
   "area": "A8 POS shift",
@@ -528,7 +528,7 @@
   "actual": "ACC-SINV-2026-00012",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:12"
+  "at": "2026-10-08 23:15:06"
  },
  {
   "area": "A8 POS shift",
@@ -537,7 +537,7 @@
   "actual": "refused HTTP 417: For the item QA-CIPRO500, the Available qty 3.0 is less than the Required Qty 10.0 in the warehouse Main Branch - QTP. Please add sufficient qty in the warehouse.",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:12"
+  "at": "2026-10-08 23:15:06"
  },
  {
   "area": "A8 POS shift",
@@ -546,7 +546,7 @@
   "actual": "refused HTTP 417: Serial No / Batch No are mandatory for Item QA-INSULIN",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:12"
+  "at": "2026-10-08 23:15:06"
  },
  {
   "area": "A8 POS shift",
@@ -555,7 +555,7 @@
   "actual": "refused HTTP 417: الصف رقم 1: انتهت صلاحية الوجبة AMX-QA-2509 بالفعل.",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:13"
+  "at": "2026-10-08 23:15:07"
  },
  {
   "area": "A8 POS shift",
@@ -564,7 +564,7 @@
   "actual": "refused HTTP 403: تغيير السعر غير مسموح على هذا الكاونتر.",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:13"
+  "at": "2026-10-08 23:15:07"
  },
  {
   "area": "A8 POS shift",
@@ -573,7 +573,7 @@
   "actual": "refused HTTP 417: يجب أن يكون الخصم بين 0 و100%.",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:13"
+  "at": "2026-10-08 23:15:07"
  },
  {
   "area": "A8 POS shift",
@@ -582,7 +582,7 @@
   "actual": "refused HTTP 417: طريقة الدفع Wire Transfer غير متاحة على هذا الكاونتر.",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:13"
+  "at": "2026-10-08 23:15:07"
  },
  {
   "area": "A8 POS shift",
@@ -591,7 +591,7 @@
   "actual": "12",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:13"
+  "at": "2026-10-08 23:15:07"
  },
  {
   "area": "A8 POS shift",
@@ -600,7 +600,7 @@
   "actual": "[\"ACC-SINV-2026-00008\"]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:13"
+  "at": "2026-10-08 23:15:07"
  },
  {
   "area": "A8 POS shift",
@@ -609,7 +609,7 @@
   "actual": "0",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:13"
+  "at": "2026-10-08 23:15:07"
  },
  {
   "area": "A8 POS shift",
@@ -618,7 +618,7 @@
   "actual": "receipt with Panadol 500mg, batch and expiry",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:13"
+  "at": "2026-10-08 23:15:07"
  },
  {
   "area": "A9 Returns",
@@ -627,7 +627,7 @@
   "actual": "[\"ACC-SINV-2026-00013\", -4000.0, -4000.0]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:14"
+  "at": "2026-10-08 23:15:07"
  },
  {
   "area": "A9 Returns",
@@ -636,7 +636,7 @@
   "actual": "{\"before\": 56.0, \"after\": 57.0}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:14"
+  "at": "2026-10-08 23:15:07"
  },
  {
   "area": "A9 Returns",
@@ -645,7 +645,7 @@
   "actual": "[[\"QA-GLUCO500\", 3.0], [\"QA-ZYRTEC\", 2.0]]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:14"
+  "at": "2026-10-08 23:15:08"
  },
  {
   "area": "A9 Returns",
@@ -654,7 +654,7 @@
   "actual": "refused HTTP 417: الصف # 1: لا يمكن الارجاع أكثر من 3.0 للبند QA-GLUCO500",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:14"
+  "at": "2026-10-08 23:15:08"
  },
  {
   "area": "A9 Returns",
@@ -663,16 +663,16 @@
   "actual": "refused HTTP 417: ACC-SINV-2026-00013 هي نفسها مرتجع. استخدم البيع الأصلي.",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:14"
+  "at": "2026-10-08 23:15:08"
  },
  {
   "area": "A9 Returns",
   "check": "return audit: who / when / against",
   "expected": "owner = cashier, return_against = T8",
-  "actual": "[\"cashier@qa-pharmacy.test\", \"2026-10-08 19:51:13.747404\", \"ACC-SINV-2026-00008\"]",
+  "actual": "[\"cashier@qa-pharmacy.test\", \"2026-10-09 02:15:07.588262\", \"ACC-SINV-2026-00008\"]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:14"
+  "at": "2026-10-08 23:15:08"
  },
  {
   "area": "A10 Void",
@@ -681,7 +681,7 @@
   "actual": "refused HTTP 403: يجب أن يوافق شخص آخر على الإلغاء.",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:14"
+  "at": "2026-10-08 23:15:08"
  },
  {
   "area": "A10 Void",
@@ -690,7 +690,7 @@
   "actual": "refused HTTP 403: رُفضت الموافقة: البريد أو كلمة المرور غير صحيحة.",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:14"
+  "at": "2026-10-08 23:15:08"
  },
  {
   "area": "A10 Void",
@@ -699,7 +699,7 @@
   "actual": "refused HTTP 403: رُفضت الموافقة: البريد أو كلمة المرور غير صحيحة.",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:14"
+  "at": "2026-10-08 23:15:08"
  },
  {
   "area": "A10 Void",
@@ -708,7 +708,7 @@
   "actual": "refused HTTP 417: أدخل سبب الإلغاء.",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:14"
+  "at": "2026-10-08 23:15:08"
  },
  {
   "area": "A10 Void",
@@ -717,7 +717,7 @@
   "actual": "refused HTTP 403: يمكنك طلب إلغاء مبيعاتك فقط.",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:14"
+  "at": "2026-10-08 23:15:08"
  },
  {
   "area": "A10 Void",
@@ -726,16 +726,16 @@
   "actual": "1",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:14"
+  "at": "2026-10-08 23:15:08"
  },
  {
   "area": "A10 Void",
   "check": "correct manager approval voids the sale",
   "expected": "Void Log written, approved_by manager",
-  "actual": "{\"name\": \"VOID-00001\", \"invoice\": \"ACC-SINV-2026-00009\", \"amount\": 8000.0, \"reason\": \"customer changed mind\", \"requested_by\": \"cashier@qa-pharmacy.test\", \"approved_by\": \"manager@qa-pharmacy.test\", \"voided_on\": \"2026-10-08 19:51:16.148791\", \"status\": \"voided\"}",
+  "actual": "{\"name\": \"VOID-00001\", \"invoice\": \"ACC-SINV-2026-00009\", \"amount\": 8000.0, \"reason\": \"customer changed mind\", \"requested_by\": \"cashier@qa-pharmacy.test\", \"approved_by\": \"manager@qa-pharmacy.test\", \"voided_on\": \"2026-10-09 02:15:09.355964\", \"status\": \"voided\"}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:16"
+  "at": "2026-10-08 23:15:09"
  },
  {
   "area": "A10 Void",
@@ -744,16 +744,16 @@
   "actual": "cashier@qa-pharmacy.test",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:16"
+  "at": "2026-10-08 23:15:09"
  },
  {
   "area": "A10 Void",
   "check": "voided sale stays visible, marked voided",
   "expected": "in history with voided = true",
-  "actual": "[{\"name\": \"ACC-SINV-2026-00009\", \"customer_name\": \"زبون نقدي\", \"grand_total\": 8000.0, \"rounded_total\": 8000.0, \"currency\": \"IQD\", \"posting_date\": \"2026-10-08\", \"posting_time\": \"19:51:10.485104\", \"is_return\": 0, \"return_against\": null, \"status\": \"Cancelled\", \"docstatus\": 2, \"voided\": true, \"can_void\": false}]",
+  "actual": "[{\"name\": \"ACC-SINV-2026-00009\", \"customer_name\": \"زبون نقدي\", \"grand_total\": 8000.0, \"rounded_total\": 8000.0, \"currency\": \"IQD\", \"posting_date\": \"2026-10-09\", \"posting_time\": \"2:15:4.654393\", \"is_return\": 0, \"return_against\": null, \"status\": \"Cancelled\", \"docstatus\": 2, \"voided\": true, \"can_void\": false}]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:16"
+  "at": "2026-10-08 23:15:09"
  },
  {
   "area": "A10 Void",
@@ -762,7 +762,7 @@
   "actual": "{\"docstatus\": 2, \"status\": \"Cancelled\"}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:16"
+  "at": "2026-10-08 23:15:09"
  },
  {
   "area": "A10 Void",
@@ -771,25 +771,25 @@
   "actual": "{\"before\": 28.0, \"after\": 30.0}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:16"
+  "at": "2026-10-08 23:15:09"
  },
  {
   "area": "A10 Void",
   "check": "financial correction: ledger entries cancelled",
   "expected": "all GL entries of T9 is_cancelled = 1",
-  "actual": "[{\"account\": \"Cost of Goods Sold - QTP\", \"debit\": 0.0, \"credit\": 4800.0, \"is_cancelled\": 1}, {\"account\": \"Cash - QTP\", \"debit\": 8000.0, \"credit\": 0.0, \"is_cancelled\": 1}, {\"account\": \"Cash - QTP\", \"debit\": 0.0, \"credit\": 8000.0, \"is_cancelled\": 1}, {\"account\": \"Debtors - QTP\", \"debit\": 0.0, \"credit\": 8000.0, \"is_cancelled\": 1}, {\"account\": \"Debtors - QTP\", \"debit\": 8000.0, \"credit\": 0.0, \"is_cancelled\": 1}, {\"account\": \"Stock In Hand - QTP\", \"debit\": 4800.0, \"credit\": 0.0, \"is_cancelled\": 1}, {\"account\": \"Debtors - QTP\", \"debit\": 0.0, \"credit\": 8000.0, \"is_cancelled\": 1}, {\"account\": \"Stock In",
+  "actual": "[{\"account\": \"Stock In Hand - QTP\", \"debit\": 0.0, \"credit\": 4800.0, \"is_cancelled\": 1}, {\"account\": \"Stock In Hand - QTP\", \"debit\": 4800.0, \"credit\": 0.0, \"is_cancelled\": 1}, {\"account\": \"Debtors - QTP\", \"debit\": 0.0, \"credit\": 8000.0, \"is_cancelled\": 1}, {\"account\": \"Sales - QTP\", \"debit\": 8000.0, \"credit\": 0.0, \"is_cancelled\": 1}, {\"account\": \"Sales - QTP\", \"debit\": 0.0, \"credit\": 8000.0, \"is_cancelled\": 1}, {\"account\": \"Cost of Goods Sold - QTP\", \"debit\": 0.0, \"credit\": 4800.0, \"is_cancelled\": 1}, {\"account\": \"Cash - QTP\", \"debit\": 0.0, \"credit\": 8000.0, \"is_cancelled\": 1}, {\"account\": \"Cas",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:16"
+  "at": "2026-10-08 23:15:09"
  },
  {
   "area": "A10 Void",
   "check": "audit log readable by the manager",
   "expected": "1 Void Log row with amount 8,000",
-  "actual": "[{\"name\": \"VOID-00001\", \"amount\": 8000.0, \"requested_by\": \"cashier@qa-pharmacy.test\", \"approved_by\": \"manager@qa-pharmacy.test\", \"reason\": \"customer changed mind\", \"voided_on\": \"2026-10-08 19:51:16.148791\", \"pos_profile\": \"Main Counter\"}]",
+  "actual": "[{\"name\": \"VOID-00001\", \"amount\": 8000.0, \"requested_by\": \"cashier@qa-pharmacy.test\", \"approved_by\": \"manager@qa-pharmacy.test\", \"reason\": \"customer changed mind\", \"voided_on\": \"2026-10-09 02:15:09.355964\", \"pos_profile\": \"Main Counter\"}]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:16"
+  "at": "2026-10-08 23:15:09"
  },
  {
   "area": "A10 Void",
@@ -798,7 +798,7 @@
   "actual": "refused HTTP 403: عدم كفاية الإذن PharmacyOS Void Log",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:16"
+  "at": "2026-10-08 23:15:09"
  },
  {
   "area": "A10 Void",
@@ -807,7 +807,7 @@
   "actual": "VOID-00001",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:16"
+  "at": "2026-10-08 23:15:09"
  },
  {
   "area": "A10 Void",
@@ -816,7 +816,7 @@
   "actual": "refused HTTP 417: أُرجعت مواد من هذا البيع، فلم يعد بالإمكان إلغاؤه.",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:16"
+  "at": "2026-10-08 23:15:09"
  },
  {
   "area": "A10 Void",
@@ -825,7 +825,7 @@
   "actual": "refused HTTP 403: محاولات موافقة فاشلة كثيرة. انتظر بضع دقائق ثم أعد المحاولة.",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:19"
+  "at": "2026-10-08 23:15:12"
  },
  {
   "area": "A10 Void",
@@ -834,7 +834,7 @@
   "actual": "refused HTTP 417: يمكن إلغاء مبيعات اليوم فقط. استخدم الإرجاع للمبيعات الأقدم.",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:20"
+  "at": "2026-10-08 23:15:12"
  },
  {
   "area": "A11 Shift close",
@@ -843,16 +843,16 @@
   "actual": "{\"mode_of_payment\": \"Cash\", \"label\": \"نقد\", \"opening_amount\": 25000.0, \"expected_amount\": 148350.0, \"closing_amount\": 0.0, \"difference\": 0.0}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:20"
+  "at": "2026-10-08 23:15:12"
  },
  {
   "area": "A11 Shift close",
   "check": "voided sale not in expected cash",
-  "expected": "T9's 8,000 excluded",
-  "actual": "148350.0",
+  "expected": "T9 (8,000, cancelled, in the void log) is not among the shift's sales and not counted: expected = 25,000 + takings, not + 8,000 more",
+  "actual": "{\"expected_amount\": 148350.0, \"takings\": 123350.0, \"voided\": [[\"ACC-SINV-2026-00009\", 8000.0]], \"in_void_log\": [\"ACC-SINV-2026-00009\"]}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:20"
+  "at": "2026-10-08 23:15:12"
  },
  {
   "area": "A11 Shift close",
@@ -861,7 +861,7 @@
   "actual": "{\"name\": \"POS-CLO-2026-00001\", \"shift\": \"POS-OPE-2026-00001\", \"pos_profile\": \"Main Counter\", \"sales\": 12, \"grand_total\": 123350.0, \"net_total\": 123350.0, \"payments\": [{\"mode_of_payment\": \"Cash\", \"label\": \"نقد\", \"opening_amount\": 25000.0, \"expected_amount\": 148350.0, \"closing_amount\": 147850.0, \"difference\": -500.0}]}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:20"
+  "at": "2026-10-08 23:15:12"
  },
  {
   "area": "A11 Shift close",
@@ -870,7 +870,7 @@
   "actual": "refused HTTP 417: ليس لديك شِفت مفتوح.",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:20"
+  "at": "2026-10-08 23:15:12"
  },
  {
   "area": "A10 Void",
@@ -879,25 +879,25 @@
   "actual": "refused HTTP 417: هذا البيع ضمن شِفت مغلق (POS-CLO-2026-00001). استخدم الإرجاع بدلًا من ذلك.",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:20"
+  "at": "2026-10-08 23:15:13"
  },
  {
   "area": "A11 Shift close",
   "check": "closing entry audit",
-  "expected": "owner = cashier, submitted, 11 sales",
+  "expected": "owner = cashier, submitted, the shift's 12 invoices (11 sales — T1–T12 without the voided T9 — and 1 return), never the voided one",
   "actual": "[\"cashier@qa-pharmacy.test\", 1, 12]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:20"
+  "at": "2026-10-08 23:15:13"
  },
  {
   "area": "A12 Expired disposal",
   "check": "expired batch blocked at the POS",
-  "expected": "see A8: selling AMX-QA-2509 refused",
-  "actual": "",
+  "expected": "AMX-QA-2509 (8 in stock, expired) refused at a counter checkout",
+  "actual": "refused HTTP 417: الصف رقم 1: انتهت صلاحية الوجبة AMX-QA-2509 بالفعل.",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:20"
+  "at": "2026-10-08 23:15:13"
  },
  {
   "area": "A12 Expired disposal",
@@ -906,7 +906,7 @@
   "actual": "refused HTTP 403: غير مسموح لك بإتلاف المخزون.",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:20"
+  "at": "2026-10-08 23:15:13"
  },
  {
   "area": "A12 Expired disposal",
@@ -915,7 +915,7 @@
   "actual": "refused HTTP 417: يوجد 8 فقط من الوجبة AMX-QA-2509 في Main Branch - QTP.",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:20"
+  "at": "2026-10-08 23:15:13"
  },
  {
   "area": "A12 Expired disposal",
@@ -924,34 +924,34 @@
   "actual": "refused HTTP 417: الوجبة AMX-QA-2604 لم تنتهِ صلاحيتها بعد. اختر سببًا آخر إذا وجب إتلافها.",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:21"
+  "at": "2026-10-08 23:15:13"
  },
  {
   "area": "A12 Expired disposal",
   "check": "re-dating the expired batch refused (stock user)",
   "expected": "expiry change refused",
-  "actual": "refused HTTP 403: انتهت صلاحية الوجبة AMX-QA-2509 في 02-10-2026. لا يمكن تغيير تاريخ وجبة منتهية الصلاحية: أتلفها بدلًا من ذلك.",
+  "actual": "refused HTTP 403: انتهت صلاحية الوجبة AMX-QA-2509 في 03-10-2026. لا يمكن تغيير تاريخ وجبة منتهية الصلاحية: أتلفها بدلًا من ذلك.",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:21"
+  "at": "2026-10-08 23:15:13"
  },
  {
   "area": "A12 Expired disposal",
   "check": "re-dating the expired batch refused (manager)",
   "expected": "expiry change refused",
-  "actual": "refused HTTP 403: انتهت صلاحية الوجبة AMX-QA-2509 في 02-10-2026. لا يمكن تغيير تاريخ وجبة منتهية الصلاحية: أتلفها بدلًا من ذلك.",
+  "actual": "refused HTTP 403: انتهت صلاحية الوجبة AMX-QA-2509 في 03-10-2026. لا يمكن تغيير تاريخ وجبة منتهية الصلاحية: أتلفها بدلًا من ذلك.",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:21"
+  "at": "2026-10-08 23:15:13"
  },
  {
   "area": "A12 Expired disposal",
   "check": "re-dating the expired batch refused (owner)",
   "expected": "an expired batch cannot be re-dated by anyone",
-  "actual": "refused HTTP 403: انتهت صلاحية الوجبة AMX-QA-2509 في 02-10-2026. لا يمكن تغيير تاريخ وجبة منتهية الصلاحية: أتلفها بدلًا من ذلك.",
+  "actual": "refused HTTP 403: انتهت صلاحية الوجبة AMX-QA-2509 في 03-10-2026. لا يمكن تغيير تاريخ وجبة منتهية الصلاحية: أتلفها بدلًا من ذلك.",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:21"
+  "at": "2026-10-08 23:15:13"
  },
  {
   "area": "A12 Expired disposal",
@@ -960,7 +960,7 @@
   "actual": "{\"name\": \"MAT-STE-2026-00001\", \"qty\": 8.0, \"batch_id\": \"AMX-QA-2509\", \"warehouse\": \"Main Branch - QTP\", \"reason\": \"Expired\"}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:21"
+  "at": "2026-10-08 23:15:13"
  },
  {
   "area": "A12 Expired disposal",
@@ -969,16 +969,16 @@
   "actual": "0",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:21"
+  "at": "2026-10-08 23:15:13"
  },
  {
   "area": "A12 Expired disposal",
   "check": "history: batch, qty, reason, user, time",
   "expected": "row with reason Expired by stock@",
-  "actual": "{\"name\": \"MAT-STE-2026-00001\", \"posting_date\": \"2026-10-08\", \"posting_time\": \"19:51:21.30854\", \"owner\": \"stock@qa-pharmacy.test\", \"remarks\": \"إتلاف (منتهي الصلاحية) للوجبة AMX-QA-2509، انتهاء الصلاحية 2026-10-02. QA disposal\", \"reason\": \"Expired\", \"user\": \"QA Zainab\", \"items\": [{\"item_code\": \"QA-AMOXSYR\", \"item_name\": \"Amoxil 250mg/5ml Suspension\", \"qty\": 8.0, \"warehouse\": \"Main Branch - QTP\", \"batch_id\": \"AMX-QA-2509\"}]}",
+  "actual": "{\"name\": \"MAT-STE-2026-00001\", \"posting_date\": \"2026-10-09\", \"posting_time\": \"2:15:13.605531\", \"owner\": \"stock@qa-pharmacy.test\", \"remarks\": \"إتلاف (منتهي الصلاحية) للوجبة AMX-QA-2509، انتهاء الصلاحية 2026-10-03. QA disposal\", \"reason\": \"Expired\", \"user\": \"QA Zainab\", \"items\": [{\"item_code\": \"QA-AMOXSYR\", \"item_name\": \"Amoxil 250mg/5ml Suspension\", \"qty\": 8.0, \"warehouse\": \"Main Branch - QTP\", \"batch_id\": \"AMX-QA-2509\"}]}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:21"
+  "at": "2026-10-08 23:15:13"
  },
  {
   "area": "A12 Expired disposal",
@@ -987,7 +987,7 @@
   "actual": "{\"back_in_stock\": 8.0, \"sellable\": [\"AMX-QA-2604\"], \"docstatus\": 2}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:23"
+  "at": "2026-10-08 23:15:15"
  },
  {
   "area": "A12 Expired disposal",
@@ -996,34 +996,34 @@
   "actual": "0",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:23"
+  "at": "2026-10-08 23:15:15"
  },
  {
   "area": "A13 Reports",
   "check": "period presets",
   "expected": "today, yesterday, 7 days, month",
-  "actual": "{\"today\": [\"2026-10-08\", \"2026-10-08\"], \"yesterday\": [\"2026-10-07\", \"2026-10-07\"], \"week\": [\"2026-10-02\", \"2026-10-08\"], \"month\": [\"2026-10-01\", \"2026-10-08\"]}",
+  "actual": "{\"today\": [\"2026-10-09\", \"2026-10-09\"], \"yesterday\": [\"2026-10-08\", \"2026-10-08\"], \"week\": [\"2026-10-03\", \"2026-10-09\"], \"month\": [\"2026-10-01\", \"2026-10-09\"]}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:23"
+  "at": "2026-10-08 23:15:15"
  },
  {
   "area": "A13 Reports",
   "check": "today: transactions, sales, returns, net",
-  "expected": "counts match the shift",
-  "actual": "{'from_date': '2026-10-08', 'to_date': '2026-10-08', 'sales': {'gross': 129850.0, 'returns': 4000.0, 'net': 125850.0, 'transactions': 12, 'returns_count': 1, 'average': 10820.83}, 'discounts': {'total': 650.0, 'invoices': 2}, 'voids': {'count': 1, 'amount': 8000.0, 'rows': [{'name': 'VOID-00001', 'invoice': 'ACC-SINV-2026-00009', 'amount': 8000.0, 'reason': 'customer changed mind', 'requested_by': 'cashier@qa-pharmacy.test', 'approved_by': 'manager@qa-pharmacy.test', 'voided_on': '2026-10-08 19:",
+  "expected": "the day's submitted invoices counted independently (12 sales, 1 return, gross 129,850, net 125,850); the closed shift listed with its sales total 123,350",
+  "actual": "{\"sales\": {\"gross\": 129850.0, \"returns\": 4000.0, \"net\": 125850.0, \"transactions\": 12, \"returns_count\": 1, \"average\": 10820.83}, \"shift\": {\"shift\": \"POS-OPE-2026-00001\", \"user\": \"cashier@qa-pharmacy.test\", \"name\": \"QA Sara\", \"counter\": \"Main Counter\", \"opened\": \"2026-10-09 02:14:59.923759\", \"closed\": \"2026-10-09 02:15:12.838761\", \"status\": \"Closed\", \"sales_total\": 123350.0, \"expected\": 148350.0, \"counted\": 147850.0, \"difference\": -500.0}}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:23"
+  "at": "2026-10-08 23:15:15"
  },
  {
   "area": "A13 Reports",
   "check": "discounts, voids, payment methods, top sellers, cashiers, shifts",
   "expected": "sections present and filled",
-  "actual": "{\"discounts\": {\"total\": 650.0, \"invoices\": 2}, \"voids\": {\"count\": 1, \"amount\": 8000.0, \"rows\": [{\"name\": \"VOID-00001\", \"invoice\": \"ACC-SINV-2026-00009\", \"amount\": 8000.0, \"reason\": \"customer changed mind\", \"requested_by\": \"cashier@qa-pharmacy.test\", \"approved_by\": \"manager@qa-pharmacy.test\", \"voided_on\": \"2026-10-08 19:51:16.148791\"}]}, \"payments\": [{\"mode_of_payment\": \"Cash\", \"label\": \"نقد\", \"amount\": 125850.0, \"count\": 13}], \"top_items\": [{\"item_code\": \"QA-ZYRTEC\", \"item_name\": \"Zyrtec 10mg Tablets\", \"qty\": 3.0, \"amount\": 16500.0, \"name_ar\": \"زيرتك 10 ملغ أقراص\"}, {\"item_code\": \"QA-PAN500\", ",
+  "actual": "{\"discounts\": {\"total\": 650.0, \"invoices\": 2}, \"voids\": {\"count\": 1, \"amount\": 8000.0, \"rows\": [{\"name\": \"VOID-00001\", \"invoice\": \"ACC-SINV-2026-00009\", \"amount\": 8000.0, \"reason\": \"customer changed mind\", \"requested_by\": \"cashier@qa-pharmacy.test\", \"approved_by\": \"manager@qa-pharmacy.test\", \"voided_on\": \"2026-10-09 02:15:09.355964\"}]}, \"payments\": [{\"mode_of_payment\": \"Cash\", \"label\": \"نقد\", \"amount\": 125850.0, \"count\": 13}], \"top_items\": [{\"item_code\": \"QA-ZYRTEC\", \"item_name\": \"Zyrtec 10mg Tablets\", \"qty\": 3.0, \"amount\": 16500.0, \"name_ar\": \"زيرتك 10 ملغ أقراص\"}, {\"item_code\": \"QA-PAN500\", ",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:23"
+  "at": "2026-10-08 23:15:15"
  },
  {
   "area": "A13 Reports",
@@ -1032,7 +1032,7 @@
   "actual": "true",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:23"
+  "at": "2026-10-08 23:15:15"
  },
  {
   "area": "A13 Reports",
@@ -1041,16 +1041,16 @@
   "actual": "true",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:23"
+  "at": "2026-10-08 23:15:15"
  },
  {
   "area": "A13 Reports",
   "check": "yesterday: the back-dated desk sale",
-  "expected": "1 transaction yesterday",
-  "actual": "{\"from_date\": \"2026-10-07\", \"to_date\": \"2026-10-07\", \"sales\": {\"gross\": 0.0, \"returns\": 0.0, \"net\": 0.0, \"transactions\": 1, \"returns_count\": 0, \"average\": 0.0}, \"discounts\": {\"total\": 0.0, \"invoices\": 0}, \"voids\": {\"count\": 0, \"amount\": 0.0, \"rows\": []}, \"payments\": [], \"top_items\": [{\"item_code\": \"",
+  "expected": "1 transaction, gross = net = 4,500 (Voltaren 50), a Cash payment row of 4,500",
+  "actual": "{\"sales\": {\"gross\": 4500.0, \"returns\": 0.0, \"net\": 4500.0, \"transactions\": 1, \"returns_count\": 0, \"average\": 4500.0}, \"payments\": [{\"mode_of_payment\": \"Cash\", \"label\": \"نقد\", \"amount\": 4500.0, \"count\": 1}]}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:23"
+  "at": "2026-10-08 23:15:15"
  },
  {
   "area": "A13 Reports",
@@ -1059,7 +1059,7 @@
   "actual": "true",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:23"
+  "at": "2026-10-08 23:15:15"
  },
  {
   "area": "A13 Reports",
@@ -1068,7 +1068,7 @@
   "actual": "refused HTTP 417: اختر فترة لا تتجاوز سنة واحدة.",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:23"
+  "at": "2026-10-08 23:15:15"
  },
  {
   "area": "A13 Reports",
@@ -1077,7 +1077,7 @@
   "actual": "refused HTTP 403: تقرير الصيدلية لصاحب الصيدلية والمدراء والمحاسب.",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:23"
+  "at": "2026-10-08 23:15:15"
  },
  {
   "area": "A13 Reports",
@@ -1086,1429 +1086,7 @@
   "actual": "refused HTTP 403: تقرير الصيدلية لصاحب الصيدلية والمدراء والمحاسب.",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 16:51:23"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Read medicines (Item list) — Owner",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:51:53"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Read medicines (Item list) — Manager",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:51:53"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Read medicines (Item list) — Pharmacist",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:51:53"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Read medicines (Item list) — Cashier",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:51:53"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Read medicines (Item list) — Purchasing",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:51:53"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Read medicines (Item list) — Inventory",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:51:53"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Read medicines (Item list) — Accountant",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:51:53"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Counter sale (open shift + checkout) — Owner",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:51:57"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Counter sale (open shift + checkout) — Manager",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:00"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Counter sale (open shift + checkout) — Pharmacist",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:05"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Counter sale (open shift + checkout) — Cashier",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:10"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Counter sale (open shift + checkout) — Purchasing",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:11"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Counter sale (open shift + checkout) — Inventory",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:13"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Counter sale (open shift + checkout) — Accountant",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:15"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Void / cancel a sale directly — Owner",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:20"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Void / cancel a sale directly — Manager",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:22"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Void / cancel a sale directly — Pharmacist",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:23"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Void / cancel a sale directly — Cashier",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:25"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Void / cancel a sale directly — Purchasing",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:26"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Void / cancel a sale directly — Inventory",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:28"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Void / cancel a sale directly — Accountant",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:29"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Add a medicine with a price — Owner",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:30"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Add a medicine with a price — Manager",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:30"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Add a medicine with a price — Pharmacist",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:30"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Add a medicine with a price — Cashier",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:30"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Add a medicine with a price — Purchasing",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:30"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Add a medicine with a price — Inventory",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:30"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Add a medicine with a price — Accountant",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:30"
- },
- {
-  "area": "A14 Permissions",
-  "check": "See purchase cost (buying Item Price) — Owner",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:30"
- },
- {
-  "area": "A14 Permissions",
-  "check": "See purchase cost (buying Item Price) — Manager",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:30"
- },
- {
-  "area": "A14 Permissions",
-  "check": "See purchase cost (buying Item Price) — Pharmacist",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:30"
- },
- {
-  "area": "A14 Permissions",
-  "check": "See purchase cost (buying Item Price) — Cashier",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:30"
- },
- {
-  "area": "A14 Permissions",
-  "check": "See purchase cost (buying Item Price) — Purchasing",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:30"
- },
- {
-  "area": "A14 Permissions",
-  "check": "See purchase cost (buying Item Price) — Inventory",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:30"
- },
- {
-  "area": "A14 Permissions",
-  "check": "See purchase cost (buying Item Price) — Accountant",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:30"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Create a supplier — Owner",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:30"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Create a supplier — Manager",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:30"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Create a supplier — Pharmacist",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:30"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Create a supplier — Cashier",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:30"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Create a supplier — Purchasing",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:30"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Create a supplier — Inventory",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:30"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Create a supplier — Accountant",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:30"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Create a purchase order — Owner",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:31"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Create a purchase order — Manager",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:31"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Create a purchase order — Pharmacist",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:31"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Create a purchase order — Cashier",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:31"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Create a purchase order — Purchasing",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:32"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Create a purchase order — Inventory",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:32"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Create a purchase order — Accountant",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:32"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Receive stock (Purchase Receipt, batch + expiry) — Owner",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:33"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Receive stock (Purchase Receipt, batch + expiry) — Manager",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:33"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Receive stock (Purchase Receipt, batch + expiry) — Pharmacist",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:33"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Receive stock (Purchase Receipt, batch + expiry) — Cashier",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:33"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Receive stock (Purchase Receipt, batch + expiry) — Purchasing",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:34"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Receive stock (Purchase Receipt, batch + expiry) — Inventory",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:34"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Receive stock (Purchase Receipt, batch + expiry) — Accountant",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:34"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Stock adjustment (Stock Reconciliation) — Owner",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:35"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Stock adjustment (Stock Reconciliation) — Manager",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:35"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Stock adjustment (Stock Reconciliation) — Pharmacist",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:35"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Stock adjustment (Stock Reconciliation) — Cashier",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:35"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Stock adjustment (Stock Reconciliation) — Purchasing",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:35"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Stock adjustment (Stock Reconciliation) — Inventory",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:36"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Stock adjustment (Stock Reconciliation) — Accountant",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:36"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Dispose of stock (write-off) — Owner",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:36"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Dispose of stock (write-off) — Manager",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:36"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Dispose of stock (write-off) — Pharmacist",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:36"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Dispose of stock (write-off) — Cashier",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:36"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Dispose of stock (write-off) — Purchasing",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:36"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Dispose of stock (write-off) — Inventory",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:37"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Dispose of stock (write-off) — Accountant",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:37"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Batches & Expiry page — Owner",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:37"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Batches & Expiry page — Manager",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:37"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Batches & Expiry page — Pharmacist",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:37"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Batches & Expiry page — Cashier",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:37"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Batches & Expiry page — Purchasing",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:37"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Batches & Expiry page — Inventory",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:37"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Batches & Expiry page — Accountant",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:37"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Pharmacy Report — Owner",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:37"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Pharmacy Report — Manager",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:37"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Pharmacy Report — Pharmacist",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:37"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Pharmacy Report — Cashier",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:37"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Pharmacy Report — Purchasing",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:38"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Pharmacy Report — Inventory",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:38"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Pharmacy Report — Accountant",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:38"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Read the void audit log — Owner",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:38"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Read the void audit log — Manager",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:38"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Read the void audit log — Pharmacist",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:38"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Read the void audit log — Cashier",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:38"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Read the void audit log — Purchasing",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:38"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Read the void audit log — Inventory",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:38"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Read the void audit log — Accountant",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:38"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Read the general ledger — Owner",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:38"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Read the general ledger — Manager",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:38"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Read the general ledger — Pharmacist",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:38"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Read the general ledger — Cashier",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:38"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Read the general ledger — Purchasing",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:38"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Read the general ledger — Inventory",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:38"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Read the general ledger — Accountant",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:38"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Add a staff account (User) — Owner",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:39"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Add a staff account (User) — Manager",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:39"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Add a staff account (User) — Pharmacist",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:39"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Add a staff account (User) — Cashier",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:39"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Add a staff account (User) — Purchasing",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:39"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Add a staff account (User) — Inventory",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:39"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Add a staff account (User) — Accountant",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:39"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Change PharmacyOS Settings — Owner",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:40"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Change PharmacyOS Settings — Manager",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:40"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Change PharmacyOS Settings — Pharmacist",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:41"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Change PharmacyOS Settings — Cashier",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:41"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Change PharmacyOS Settings — Purchasing",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:41"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Change PharmacyOS Settings — Inventory",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:41"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Change PharmacyOS Settings — Accountant",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:41"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Back up now — Owner",
-  "expected": "allowed",
-  "actual": "allowed",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:41"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Back up now — Manager",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:41"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Back up now — Pharmacist",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:41"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Back up now — Cashier",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:41"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Back up now — Purchasing",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:41"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Back up now — Inventory",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:41"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Back up now — Accountant",
-  "expected": "refused",
-  "actual": "refused 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:41"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Guest cannot use the POS API",
-  "expected": "403",
-  "actual": "HTTP 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:41"
- },
- {
-  "area": "A14 Permissions",
-  "check": "Guest opening /pos is sent to sign-in",
-  "expected": "redirect or login page",
-  "actual": "HTTP 200",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:42"
- },
- {
-  "area": "A21 Security",
-  "check": "cashier sells at 1 IQD through the document API",
-  "expected": "refused: the price must be the pharmacy's price",
-  "actual": "refused HTTP 403: Payment methods refreshed. Please review before proceeding. | الصف 1: QA-PAN500: يجب أن يكون السعر سعر الصيدلية (2,500.000 د.ع).",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:53"
- },
- {
-  "area": "A21 Security",
-  "check": "cashier gives 100% off through the document API",
-  "expected": "refused: above the counter discount limit",
-  "actual": "refused HTTP 403: Payment methods refreshed. Please review before proceeding. | خصم أكثر من 10% من قيمة البيع يحتاج إلى مدير الصيدلية.",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:53"
- },
- {
-  "area": "A21 Security",
-  "check": "cashier makes a credit (non-POS) invoice",
-  "expected": "refused: counter staff sell through the POS",
-  "actual": "refused HTTP 403: يبيع موظفو الكاونتر من خلال نقطة البيع، ضمن شِفتاتهم.",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:54"
- },
- {
-  "area": "A21 Security",
-  "check": "cashier back-dates a sale (expiry is checked against the posting date)",
-  "expected": "refused: today's date only",
-  "actual": "refused HTTP 403: تُسجَّل مبيعات ومرتجعات الكاونتر بتاريخ اليوم.",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:54"
- },
- {
-  "area": "A21 Security",
-  "check": "cashier sells on a counter that is not their open shift",
-  "expected": "refused: own shift only",
-  "actual": "refused HTTP 403: افتح شِفتك على Main Counter قبل البيع أو الإرجاع عليه.",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:54"
- },
- {
-  "area": "A21 Security",
-  "check": "cashier discount above the 10% ceiling at the POS",
-  "expected": "refused before payment (quote)",
-  "actual": "refused HTTP 403: الصف 1: الخصم أكثر من 10% يحتاج إلى مدير الصيدلية.",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:55"
- },
- {
-  "area": "A21 Security",
-  "check": "a correct counter sale still works (10% discount, own shift)",
-  "expected": "sale submitted for 2,250",
-  "actual": "[\"ACC-SINV-2026-00027\", 2250.0]",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:56"
- },
- {
-  "area": "A21 Security",
-  "check": "a manager is not limited by the counter ceiling",
-  "expected": "50% discount sale by the manager",
-  "actual": "[\"ACC-SINV-2026-00028\", 1250.0]",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:57"
- },
- {
-  "area": "A21 Security",
-  "check": "a customer's cheaper default price list at the counter",
-  "expected": "refused: the counter's price list",
-  "actual": "refused HTTP 403: تستخدم مبيعات الكاونتر قائمة أسعار الكاونتر (Standard Selling).",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:52:59"
- },
- {
-  "area": "A21 Security",
-  "check": "cashier cannot rewrite a sale's return ledger",
-  "expected": "ledger unchanged (and hidden from every client)",
-  "actual": "unchanged: {\"returns\":{\"ACC-SINV-2026-00030\":{\"amounts\":{\"QA-PAN500\":5000.0},\"batches\":{\"QA-PAN500\":{\"PAN-QA-2601\":2.0}},\"items\":{\"",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:53:05"
- },
- {
-  "area": "A21 Security",
-  "check": "the same goods cannot be returned twice",
-  "expected": "second full return refused",
-  "actual": "refused HTTP 417: الصف # 1: لا يمكن الارجاع أكثر من 0.0 للبند QA-PAN500",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:53:06"
- },
- {
-  "area": "A21 Security",
-  "check": "cashier never receives purchase cost",
-  "expected": "valuation_rate / last_purchase_rate absent",
-  "actual": "{\"valuation_rate\": null, \"last_purchase_rate\": null}",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:53:06"
- },
- {
-  "area": "A21 Security",
-  "check": "Redis refuses unauthenticated clients",
-  "expected": "NOAUTH",
-  "actual": "NOAUTH Authentication required.",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:53:06"
- },
- {
-  "area": "A21 Security",
-  "check": "guests cannot call the POS API",
-  "expected": "403",
-  "actual": "HTTP 403",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:53:06"
- },
- {
-  "area": "A21 Security",
-  "check": "guests are sent to sign-in for the desk",
-  "expected": "login page / redirect",
-  "actual": "HTTP 200",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:53:06"
- },
- {
-  "area": "A22 Stress",
-  "check": "create 120 products",
-  "expected": "all created",
-  "actual": "{\"n\": 120, \"p50_ms\": 84, \"p95_ms\": 255, \"max_ms\": 393}",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:53:25"
- },
- {
-  "area": "A22 Stress",
-  "check": "one purchase receipt with 120 lines (120 batches)",
-  "expected": "submitted",
-  "actual": "{\"ms\": 18530}",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:53:48"
- },
- {
-  "area": "A22 Stress",
-  "check": "catalogue size",
-  "expected": "≥ 140 products",
-  "actual": "143",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:53:48"
- },
- {
-  "area": "A22 Stress",
-  "check": "100 rapid barcode scans",
-  "expected": "every scan resolves to its product",
-  "actual": "{\"n\": 100, \"p50_ms\": 40, \"p95_ms\": 100, \"max_ms\": 177, \"wrong_or_missing\": 0}",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:53:53"
- },
- {
-  "area": "A22 Stress",
-  "check": "100 searches (EN / AR / generic / partial)",
-  "expected": "every search returns results",
-  "actual": "{\"n\": 100, \"p50_ms\": 84, \"p95_ms\": 396, \"max_ms\": 746, \"empty\": 0}",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:54:06"
- },
- {
-  "area": "A22 Stress",
-  "check": "60 sequential sales",
-  "expected": "60 distinct invoices",
-  "actual": "{\"n\": 60, \"p50_ms\": 631, \"p95_ms\": 1071, \"max_ms\": 1168, \"invoices\": 60}",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:54:48"
- },
- {
-  "area": "A22 Stress",
-  "check": "stock after 60 sales",
-  "expected": "each of 20 products down by exactly 3",
-  "actual": "{\"QA-STRESS-000\": 3.0, \"QA-STRESS-001\": 3.0, \"QA-STRESS-002\": 3.0, \"QA-STRESS-003\": 3.0, \"QA-STRESS-004\": 3.0, \"QA-STRESS-005\": 3.0, \"QA-STRESS-006\": 3.0, \"QA-STRESS-007\": 3.0, \"QA-STRESS-008\": 3.0, \"QA-STRESS-009\": 3.0, \"QA-STRESS-010\": 3.0, \"QA-STRESS-011\": 3.0, \"QA-STRESS-012\": 3.0, \"QA-STRESS-013\": 3.0, \"QA-STRESS-014\": 3.0, \"QA-STRESS-015\": 3.0, \"QA-STRESS-016\": 3.0, \"QA-STRESS-017\": 3.0, \"QA-STRESS-018\": 3.0, \"QA-STRESS-019\": 3.0}",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:54:48"
- },
- {
-  "area": "A22 Stress",
-  "check": "stock = stock ledger for every QA product",
-  "expected": "no mismatch",
-  "actual": "all consistent",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:54:57"
- },
- {
-  "area": "A22 Stress",
-  "check": "month report with populated data",
-  "expected": "answers in < 5 s",
-  "actual": "{\"ms\": 157}",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:54:57"
- },
- {
-  "area": "A18 Offline",
-  "check": "the server reaches the internet before the test",
-  "expected": "HTTP answers",
-  "actual": "400 200 200 200",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:55:00"
- },
- {
-  "area": "A18 Offline",
-  "check": "internet cut for the pharmacy server (direct and through the proxy)",
-  "expected": "no answer from any site",
-  "actual": "000 FAIL 000 FAIL 000 FAIL 000 FAIL",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:55:01"
- },
- {
-  "area": "A18 Offline",
-  "check": "shift opens offline",
-  "expected": "an open shift",
-  "actual": "QA Counter cashier",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:55:07"
- },
- {
-  "area": "A18 Offline",
-  "check": "barcode scan offline",
-  "expected": "Panadol found at once",
-  "actual": "{\"items\": [\"QA-PAN500\"], \"ms\": 109}",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:55:08"
- },
- {
-  "area": "A18 Offline",
-  "check": "Arabic search offline",
-  "expected": "results",
-  "actual": "[\"QA-PAN500\", \"QA-PANEXT\"]",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:55:08"
- },
- {
-  "area": "A18 Offline",
-  "check": "cash sale offline, Cloud unreachable",
-  "expected": "submitted without waiting for the Cloud",
-  "actual": "{\"invoice\": \"ACC-SINV-2026-00091\", \"total\": 5000.0, \"change\": 5000.0, \"ms\": 1422}",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:55:09"
- },
- {
-  "area": "A18 Offline",
-  "check": "receipt offline",
-  "expected": "receipt renders",
-  "actual": "HTTP 200, 8742 bytes",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:55:09"
- },
- {
-  "area": "A18 Offline",
-  "check": "return offline",
-  "expected": "return submitted",
-  "actual": "[\"ACC-SINV-2026-00092\", -2500.0]",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:55:10"
- },
- {
-  "area": "A18 Offline",
-  "check": "owner's report offline",
-  "expected": "answers",
-  "actual": "{\"costs_visible\": true, \"has_sales\": true}",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:55:11"
- },
- {
-  "area": "A18 Offline",
-  "check": "Cloud events wait in the outbox (not lost, not sent, not blocking)",
-  "expected": "events queued, delivery tried and failed",
-  "actual": "{\"events\": 2, \"sent\": 0, \"tried\": 2, \"error\": \"[unreachable] HTTPSConnectionPool(host='cloud-unreachable.pharmacyos-qa.example', port=443): Max retries exceeded with url: /integrations/erp/events (Caused by NameResolutionError(\\\"HTTPSConnection(host='cloud-unreachable.pharmacyos-qa.example', port=443): Failed to resolve 'cloud-unreachable.pharmacyos-qa.example' ([Errno -3] Temporary failure in name resolution)\\\"))\", \"cloud_last_error\": \"تعذّر الوصول إلى سحابة PharmacyOS: HTTPSConnectionPool(host='cloud-unreachable.pharmacyos-qa.example', port=443): Max retries exceeded with url: /integrations/",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:56:10"
- },
- {
-  "area": "A18 Offline",
-  "check": "the Cloud failure is visible to the owner (PharmacyOS Settings → Cloud)",
-  "expected": "last error recorded",
-  "actual": "تعذّر الوصول إلى سحابة PharmacyOS: HTTPSConnectionPool(host='cloud-unreachable.pharmacyos-qa.example', port=443): Max retries exceeded with url: /integrations/e",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:56:10"
- },
- {
-  "area": "A18 Offline",
-  "check": "shift closes offline",
-  "expected": "closing entry submitted",
-  "actual": "POS-CLO-2026-00002",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:56:11"
- },
- {
-  "area": "A18 Offline",
-  "check": "internet back after the test",
-  "expected": "HTTP answers again",
-  "actual": "400 200 200 200",
-  "result": "PASS",
-  "evidence": "",
-  "at": "2026-10-08 16:56:14"
+  "at": "2026-10-08 23:15:15"
  },
  {
   "area": "A20 Receipts (rendered)",
@@ -2517,7 +1095,7 @@
   "actual": "HTTP 200, 9241 bytes, 58mm rule: False",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 17:04:41"
+  "at": "2026-10-08 23:15:19"
  },
  {
   "area": "A20 Receipts (rendered)",
@@ -2526,7 +1104,7 @@
   "actual": "[[\"Panadol 500mg Tablets\", \"بنادول 500 ملغ أقراص\"], [\"Brufen 400mg Tablets\", \"بروفين 400 ملغ أقراص\"]]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 17:04:41"
+  "at": "2026-10-08 23:15:19"
  },
  {
   "area": "A20 Receipts (rendered)",
@@ -2535,7 +1113,7 @@
   "actual": "{\"invoice\": \"ACC-SINV-2026-00002\", \"line_discounts\": [0.0, 10.0], \"paid\": 10000.0, \"change\": 4800.0}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 17:04:41"
+  "at": "2026-10-08 23:15:19"
  },
  {
   "area": "A20 Receipts (rendered)",
@@ -2544,34 +1122,1456 @@
   "actual": "HTTP 200, @page 58mm: True",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 17:04:44"
+  "at": "2026-10-08 23:15:20"
  },
  {
   "area": "A20 Receipts (rendered)",
   "check": "return (refund) receipt",
   "expected": "renders, marked as a return",
-  "actual": "HTTP 200, 8737 bytes",
+  "actual": "HTTP 200, 8742 bytes",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 17:04:46"
+  "at": "2026-10-08 23:15:21"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Read medicines (Item list) — Owner",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:33"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Read medicines (Item list) — Manager",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:33"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Read medicines (Item list) — Pharmacist",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:33"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Read medicines (Item list) — Cashier",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:33"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Read medicines (Item list) — Purchasing",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:33"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Read medicines (Item list) — Inventory",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:34"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Read medicines (Item list) — Accountant",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:34"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Counter sale (open shift + checkout) — Owner",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:36"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Counter sale (open shift + checkout) — Manager",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:38"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Counter sale (open shift + checkout) — Pharmacist",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:40"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Counter sale (open shift + checkout) — Cashier",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:42"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Counter sale (open shift + checkout) — Purchasing",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:43"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Counter sale (open shift + checkout) — Inventory",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:44"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Counter sale (open shift + checkout) — Accountant",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:45"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Void / cancel a sale directly — Owner",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:48"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Void / cancel a sale directly — Manager",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:49"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Void / cancel a sale directly — Pharmacist",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:49"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Void / cancel a sale directly — Cashier",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:50"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Void / cancel a sale directly — Purchasing",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:50"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Void / cancel a sale directly — Inventory",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:51"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Void / cancel a sale directly — Accountant",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:51"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Add a medicine with a price — Owner",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:51"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Add a medicine with a price — Manager",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:51"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Add a medicine with a price — Pharmacist",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:52"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Add a medicine with a price — Cashier",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:52"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Add a medicine with a price — Purchasing",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:52"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Add a medicine with a price — Inventory",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:52"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Add a medicine with a price — Accountant",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:52"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "See purchase cost (buying Item Price) — Owner",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:52"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "See purchase cost (buying Item Price) — Manager",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:52"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "See purchase cost (buying Item Price) — Pharmacist",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:52"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "See purchase cost (buying Item Price) — Cashier",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:52"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "See purchase cost (buying Item Price) — Purchasing",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:52"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "See purchase cost (buying Item Price) — Inventory",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:52"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "See purchase cost (buying Item Price) — Accountant",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:52"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Create a supplier — Owner",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:52"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Create a supplier — Manager",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:52"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Create a supplier — Pharmacist",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:52"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Create a supplier — Cashier",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:52"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Create a supplier — Purchasing",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:52"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Create a supplier — Inventory",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:52"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Create a supplier — Accountant",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:52"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Create a purchase order — Owner",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:52"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Create a purchase order — Manager",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:52"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Create a purchase order — Pharmacist",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:52"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Create a purchase order — Cashier",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:52"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Create a purchase order — Purchasing",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:52"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Create a purchase order — Inventory",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:53"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Create a purchase order — Accountant",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:53"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Receive stock (Purchase Receipt, batch + expiry) — Owner",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:53"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Receive stock (Purchase Receipt, batch + expiry) — Manager",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:53"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Receive stock (Purchase Receipt, batch + expiry) — Pharmacist",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:53"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Receive stock (Purchase Receipt, batch + expiry) — Cashier",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:53"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Receive stock (Purchase Receipt, batch + expiry) — Purchasing",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:54"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Receive stock (Purchase Receipt, batch + expiry) — Inventory",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:54"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Receive stock (Purchase Receipt, batch + expiry) — Accountant",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:54"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Stock adjustment (Stock Reconciliation) — Owner",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:54"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Stock adjustment (Stock Reconciliation) — Manager",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:55"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Stock adjustment (Stock Reconciliation) — Pharmacist",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:55"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Stock adjustment (Stock Reconciliation) — Cashier",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:55"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Stock adjustment (Stock Reconciliation) — Purchasing",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:55"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Stock adjustment (Stock Reconciliation) — Inventory",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:55"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Stock adjustment (Stock Reconciliation) — Accountant",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:55"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Dispose of stock (write-off) — Owner",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:55"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Dispose of stock (write-off) — Manager",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:55"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Dispose of stock (write-off) — Pharmacist",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:55"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Dispose of stock (write-off) — Cashier",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:55"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Dispose of stock (write-off) — Purchasing",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:55"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Dispose of stock (write-off) — Inventory",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:56"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Dispose of stock (write-off) — Accountant",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:56"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Batches & Expiry page — Owner",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:56"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Batches & Expiry page — Manager",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:56"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Batches & Expiry page — Pharmacist",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:56"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Batches & Expiry page — Cashier",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:56"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Batches & Expiry page — Purchasing",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:56"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Batches & Expiry page — Inventory",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:56"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Batches & Expiry page — Accountant",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:56"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Pharmacy Report — Owner",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:56"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Pharmacy Report — Manager",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:56"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Pharmacy Report — Pharmacist",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:56"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Pharmacy Report — Cashier",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:56"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Pharmacy Report — Purchasing",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:56"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Pharmacy Report — Inventory",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:56"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Pharmacy Report — Accountant",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:56"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Read the void audit log — Owner",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:56"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Read the void audit log — Manager",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:56"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Read the void audit log — Pharmacist",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:56"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Read the void audit log — Cashier",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:56"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Read the void audit log — Purchasing",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:56"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Read the void audit log — Inventory",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:56"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Read the void audit log — Accountant",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:56"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Read the general ledger — Owner",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:56"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Read the general ledger — Manager",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:56"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Read the general ledger — Pharmacist",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:56"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Read the general ledger — Cashier",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:56"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Read the general ledger — Purchasing",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:56"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Read the general ledger — Inventory",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:56"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Read the general ledger — Accountant",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:56"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Add a staff account (User) — Owner",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:56"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Add a staff account (User) — Manager",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:57"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Add a staff account (User) — Pharmacist",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:57"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Add a staff account (User) — Cashier",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:57"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Add a staff account (User) — Purchasing",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:57"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Add a staff account (User) — Inventory",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:57"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Add a staff account (User) — Accountant",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:57"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Change PharmacyOS Settings — Owner",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:57"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Change PharmacyOS Settings — Manager",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:57"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Change PharmacyOS Settings — Pharmacist",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:57"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Change PharmacyOS Settings — Cashier",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:57"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Change PharmacyOS Settings — Purchasing",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:57"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Change PharmacyOS Settings — Inventory",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:57"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Change PharmacyOS Settings — Accountant",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:57"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Back up now — Owner",
+  "expected": "allowed",
+  "actual": "allowed",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:57"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Back up now — Manager",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:57"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Back up now — Pharmacist",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:57"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Back up now — Cashier",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:57"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Back up now — Purchasing",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:57"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Back up now — Inventory",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:57"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Back up now — Accountant",
+  "expected": "refused",
+  "actual": "refused 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:58"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Guest cannot use the POS API",
+  "expected": "403",
+  "actual": "HTTP 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:58"
+ },
+ {
+  "area": "A14 Permissions",
+  "check": "Guest opening /pos is sent to sign-in",
+  "expected": "redirect or login page",
+  "actual": "HTTP 200",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:15:58"
+ },
+ {
+  "area": "A21 Security",
+  "check": "cashier sells at 1 IQD through the document API",
+  "expected": "refused: the price must be the pharmacy's price",
+  "actual": "refused HTTP 403: Payment methods refreshed. Please review before proceeding. | الصف 1: QA-PAN500: يجب أن يكون السعر سعر الصيدلية (2,500.000 د.ع).",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:16:07"
+ },
+ {
+  "area": "A21 Security",
+  "check": "cashier gives 100% off through the document API",
+  "expected": "refused: above the counter discount limit",
+  "actual": "refused HTTP 403: Payment methods refreshed. Please review before proceeding. | خصم أكثر من 10% من قيمة البيع يحتاج إلى مدير الصيدلية.",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:16:07"
+ },
+ {
+  "area": "A21 Security",
+  "check": "cashier makes a credit (non-POS) invoice",
+  "expected": "refused: counter staff sell through the POS",
+  "actual": "refused HTTP 403: يبيع موظفو الكاونتر من خلال نقطة البيع، ضمن شِفتاتهم.",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:16:07"
+ },
+ {
+  "area": "A21 Security",
+  "check": "cashier back-dates a sale (expiry is checked against the posting date)",
+  "expected": "refused: today's date only",
+  "actual": "refused HTTP 403: تُسجَّل مبيعات ومرتجعات الكاونتر بتاريخ اليوم.",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:16:08"
+ },
+ {
+  "area": "A21 Security",
+  "check": "cashier sells on a counter that is not their open shift",
+  "expected": "refused: own shift only",
+  "actual": "refused HTTP 403: افتح شِفتك على Main Counter قبل البيع أو الإرجاع عليه.",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:16:08"
+ },
+ {
+  "area": "A21 Security",
+  "check": "cashier discount above the 10% ceiling at the POS",
+  "expected": "refused before payment (quote)",
+  "actual": "refused HTTP 403: الصف 1: الخصم أكثر من 10% يحتاج إلى مدير الصيدلية.",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:16:08"
+ },
+ {
+  "area": "A21 Security",
+  "check": "a correct counter sale still works (10% discount, own shift)",
+  "expected": "sale submitted for 2,250",
+  "actual": "[\"ACC-SINV-2026-00027\", 2250.0]",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:16:08"
+ },
+ {
+  "area": "A21 Security",
+  "check": "a manager is not limited by the counter ceiling",
+  "expected": "50% discount sale by the manager",
+  "actual": "[\"ACC-SINV-2026-00028\", 1250.0]",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:16:09"
+ },
+ {
+  "area": "A21 Security",
+  "check": "a customer's cheaper default price list at the counter",
+  "expected": "refused: the counter's price list",
+  "actual": "refused HTTP 403: تستخدم مبيعات الكاونتر قائمة أسعار الكاونتر (Standard Selling).",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:16:10"
+ },
+ {
+  "area": "A21 Security",
+  "check": "cashier cannot rewrite a sale's return ledger",
+  "expected": "ledger unchanged (and hidden from every client)",
+  "actual": "unchanged: {\"returns\":{\"ACC-SINV-2026-00030\":{\"amounts\":{\"QA-PAN500\":5000.0},\"batches\":{\"QA-PAN500\":{\"PAN-QA-2601\":2.0}},\"items\":{\"",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:16:13"
+ },
+ {
+  "area": "A21 Security",
+  "check": "the same goods cannot be returned twice",
+  "expected": "second full return refused",
+  "actual": "refused HTTP 417: الصف # 1: لا يمكن الارجاع أكثر من 0.0 للبند QA-PAN500",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:16:13"
+ },
+ {
+  "area": "A21 Security",
+  "check": "cashier never receives purchase cost",
+  "expected": "valuation_rate / last_purchase_rate absent",
+  "actual": "{\"valuation_rate\": null, \"last_purchase_rate\": null}",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:16:13"
+ },
+ {
+  "area": "A21 Security",
+  "check": "Redis refuses unauthenticated clients",
+  "expected": "NOAUTH",
+  "actual": "NOAUTH Authentication required.",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:16:13"
+ },
+ {
+  "area": "A21 Security",
+  "check": "guests cannot call the POS API",
+  "expected": "403",
+  "actual": "HTTP 403",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:16:13"
+ },
+ {
+  "area": "A21 Security",
+  "check": "guests are sent to sign-in for the desk",
+  "expected": "login page / redirect",
+  "actual": "HTTP 200",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:16:13"
+ },
+ {
+  "area": "A22 Stress",
+  "check": "create 120 products",
+  "expected": "all 120 created",
+  "actual": "{\"created\": 120, \"n\": 120, \"p50_ms\": 58, \"p95_ms\": 81, \"max_ms\": 101}",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:16:25"
+ },
+ {
+  "area": "A22 Stress",
+  "check": "one purchase receipt with 120 lines (120 batches)",
+  "expected": "submitted with 120 lines",
+  "actual": "{\"ms\": 9980, \"docstatus\": 1, \"lines\": 120}",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:16:37"
+ },
+ {
+  "area": "A22 Stress",
+  "check": "catalogue size",
+  "expected": "≥ 140 products",
+  "actual": "143",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:16:37"
+ },
+ {
+  "area": "A22 Stress",
+  "check": "100 rapid barcode scans",
+  "expected": "every scan resolves to its product",
+  "actual": "{\"n\": 100, \"p50_ms\": 34, \"p95_ms\": 53, \"max_ms\": 60, \"wrong_or_missing\": 0}",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:16:40"
+ },
+ {
+  "area": "A22 Stress",
+  "check": "100 searches (EN / AR / generic / partial)",
+  "expected": "every search returns results",
+  "actual": "{\"n\": 100, \"p50_ms\": 44, \"p95_ms\": 209, \"max_ms\": 258, \"empty\": 0}",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:16:48"
+ },
+ {
+  "area": "A22 Stress",
+  "check": "60 sequential sales",
+  "expected": "60 distinct invoices",
+  "actual": "{\"n\": 60, \"p50_ms\": 350, \"p95_ms\": 438, \"max_ms\": 475, \"invoices\": 60}",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:17:10"
+ },
+ {
+  "area": "A22 Stress",
+  "check": "stock after 60 sales",
+  "expected": "each of 20 products down by exactly 3",
+  "actual": "{\"QA-STRESS-000\": 3.0, \"QA-STRESS-001\": 3.0, \"QA-STRESS-002\": 3.0, \"QA-STRESS-003\": 3.0, \"QA-STRESS-004\": 3.0, \"QA-STRESS-005\": 3.0, \"QA-STRESS-006\": 3.0, \"QA-STRESS-007\": 3.0, \"QA-STRESS-008\": 3.0, \"QA-STRESS-009\": 3.0, \"QA-STRESS-010\": 3.0, \"QA-STRESS-011\": 3.0, \"QA-STRESS-012\": 3.0, \"QA-STRESS-013\": 3.0, \"QA-STRESS-014\": 3.0, \"QA-STRESS-015\": 3.0, \"QA-STRESS-016\": 3.0, \"QA-STRESS-017\": 3.0, \"QA-STRESS-018\": 3.0, \"QA-STRESS-019\": 3.0}",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:17:10"
+ },
+ {
+  "area": "A22 Stress",
+  "check": "stock = stock ledger for every QA product",
+  "expected": "no mismatch",
+  "actual": "all consistent",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:17:15"
+ },
+ {
+  "area": "A22 Stress",
+  "check": "month report with populated data",
+  "expected": "answers in < 5 s",
+  "actual": "{\"ms\": 91}",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:17:15"
+ },
+ {
+  "area": "A18 Offline",
+  "check": "the server reaches the internet before the test",
+  "expected": "HTTP answers",
+  "actual": "400 200 200 200",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:17:17"
+ },
+ {
+  "area": "A18 Offline",
+  "check": "internet cut for the pharmacy server (direct and through the proxy)",
+  "expected": "no answer from any site",
+  "actual": "000 FAIL 000 FAIL 000 FAIL 000 FAIL",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:17:17"
+ },
+ {
+  "area": "A18 Offline",
+  "check": "shift opens offline",
+  "expected": "an open shift",
+  "actual": "QA Counter cashier",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:17:21"
+ },
+ {
+  "area": "A18 Offline",
+  "check": "barcode scan offline",
+  "expected": "Panadol found at once",
+  "actual": "{\"items\": [\"QA-PAN500\"], \"ms\": 61}",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:17:21"
+ },
+ {
+  "area": "A18 Offline",
+  "check": "Arabic search offline",
+  "expected": "results",
+  "actual": "[\"QA-PAN500\", \"QA-PANEXT\"]",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:17:21"
+ },
+ {
+  "area": "A18 Offline",
+  "check": "cash sale offline, Cloud unreachable",
+  "expected": "submitted without waiting for the Cloud",
+  "actual": "{\"invoice\": \"ACC-SINV-2026-00091\", \"total\": 5000.0, \"change\": 5000.0, \"ms\": 1046}",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:17:22"
+ },
+ {
+  "area": "A18 Offline",
+  "check": "receipt offline",
+  "expected": "receipt renders",
+  "actual": "HTTP 200, 8742 bytes",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:17:22"
+ },
+ {
+  "area": "A18 Offline",
+  "check": "return offline",
+  "expected": "return submitted",
+  "actual": "[\"ACC-SINV-2026-00092\", -2500.0]",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:17:23"
+ },
+ {
+  "area": "A18 Offline",
+  "check": "owner's report offline",
+  "expected": "answers",
+  "actual": "{\"costs_visible\": true, \"has_sales\": true}",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:17:23"
+ },
+ {
+  "area": "A18 Offline",
+  "check": "Cloud events wait in the outbox (not lost, not sent, not blocking)",
+  "expected": "events queued, delivery tried and failed",
+  "actual": "{\"events\": 2, \"sent\": 0, \"tried\": 2, \"error\": \"[unreachable] HTTPSConnectionPool(host='cloud-unreachable.pharmacyos-qa.example', port=443): Max retries exceeded with url: /integrations/erp/events (Caused by NameResolutionError(\\\"HTTPSConnection(host='cloud-unreachable.pharmacyos-qa.example', port=443): Failed to resolve 'cloud-unreachable.pharmacyos-qa.example' ([Errno -3] Temporary failure in name resolution)\\\"))\", \"cloud_last_error\": \"تعذّر الوصول إلى سحابة PharmacyOS: HTTPSConnectionPool(host='cloud-unreachable.pharmacyos-qa.example', port=443): Max retries exceeded with url: /integrations/",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:20:08"
+ },
+ {
+  "area": "A18 Offline",
+  "check": "the Cloud failure is visible to the owner (PharmacyOS Settings → Cloud)",
+  "expected": "last error recorded",
+  "actual": "تعذّر الوصول إلى سحابة PharmacyOS: HTTPSConnectionPool(host='cloud-unreachable.pharmacyos-qa.example', port=443): Max retries exceeded with url: /integrations/e",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:20:08"
+ },
+ {
+  "area": "A18 Offline",
+  "check": "shift closes offline",
+  "expected": "closing entry submitted",
+  "actual": "POS-CLO-2026-00002",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:20:08"
+ },
+ {
+  "area": "A18 Offline",
+  "check": "internet back after the test",
+  "expected": "HTTP answers again",
+  "actual": "400 200 200 200",
+  "result": "PASS",
+  "evidence": "",
+  "at": "2026-10-08 23:20:11"
  },
  {
   "area": "A16 Update / rollback",
   "check": "the update from the previous release (1.0.0rc2 → 1.0.0rc3): new installer's bundle, then Update now (pharmacyos-server update)",
   "expected": "status updated, previous 1.0.0rc2, safety backup taken",
-  "actual": "{\"status\": \"updated\", \"version\": \"1.0.0rc3\", \"previous\": \"1.0.0rc2\", \"backup\": \"/mnt/c/ProgramData/PharmacyOS/Backups/2026-10-08/20-20\"}",
+  "actual": "{\"status\": \"updated\", \"version\": \"1.0.0rc3\", \"previous\": \"1.0.0rc2\", \"backup\": \"/mnt/c/ProgramData/PharmacyOS/Backups/2026-10-09/02-32\"}",
   "result": "PASS",
-  "evidence": "== Maintenance mode on\n== Safety backup\n== Installing 1.0.0rc3 (build 30705c5a83dd)\n== Migrating\nMO file created at /home/frappe/frappe-bench/sites/assets/locale/ar/LC_MESSAGES/pharmacyos_erp.mo\n== Building\nMO file already up to date at /home/frappe/frappe-bench/sites/assets/locale/ar/LC_MESSAGES/pharmacyos_erp.mo\n== Restarting\n== Health check",
-  "at": "2026-10-08 17:20:31"
+  "evidence": "== Maintenance mode on\n== Safety backup\n== Installing 1.0.0rc3 (build a701924350b1)\n== Migrating\nMO file created at /home/frappe/frappe-bench/sites/assets/locale/ar/LC_MESSAGES/pharmacyos_erp.mo\n== Building\nMO file already up to date at /home/frappe/frappe-bench/sites/assets/locale/ar/LC_MESSAGES/pharmacyos_erp.mo\n== Restarting\n== Health check",
+  "at": "2026-10-08 23:33:07"
  },
  {
   "area": "A16 Update / rollback",
   "check": "version and build after the update",
-  "expected": "1.0.0rc3 / build 30705c5a83dd (the bundle the app carries)",
-  "actual": "[\"1.0.0rc3\", \"30705c5a83dd\"]",
+  "expected": "1.0.0rc3 / build a701924350b1 (the bundle the app carries)",
+  "actual": "[\"1.0.0rc3\", \"a701924350b1\"]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 17:20:31"
+  "at": "2026-10-08 23:33:07"
  },
  {
   "area": "A16 Update / rollback",
@@ -2580,7 +2580,7 @@
   "actual": "{\"marker\": true, \"sales\": 15, \"before\": 15}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 17:20:38"
+  "at": "2026-10-08 23:33:12"
  },
  {
   "area": "A16 Update / rollback",
@@ -2589,16 +2589,16 @@
   "actual": "{\"before\": {\"version\": \"1.0.0rc2\", \"older_word_on_counter\": 8}, \"after\": {\"shift\": \"الشِفت\", \"open_shift\": \"فتح الشِفت\", \"close_shift\": \"إغلاق الشِفت\", \"no_shift\": \"لا يوجد شِفت مفتوح. افتح شِفتك لبدء البيع.\", \"shift_closed\": \"تم إغلاق الشِفت.\", \"old_word_left\": 0}}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 17:20:38"
+  "at": "2026-10-08 23:33:12"
  },
  {
   "area": "A16 Update / rollback",
   "check": "the desk's Arabic after the update (Pharmacy Report, sidebar): shifts are «شِفتات»",
-  "expected": "before: strings with the older word; after: الشِفتات · شِفتات نقطة البيع …, none left",
-  "actual": "{\"before\": {\"strings_with_older_word\": 19}, \"after\": {\"Shifts\": \"الشِفتات\", \"No shifts in this period\": \"لا شِفتات في هذه الفترة\", \"POS sessions\": \"شِفتات نقطة البيع\", \"Opening Entries\": \"فتح الشِفتات\", \"Closing Entries\": \"إغلاق الشِفتات\", \"Opened\": \"فُتح\", \"Closed\": \"أُغلق\", \"Open\": \"مفتوح\", \"served_strings\": 15132, \"old_word_left\": []}}",
+  "expected": "before: strings with the older word; after: الشِفتات · شِفتات نقطة البيع …, none left; the generic Shift / Open / Closed / Opened keep Frappe's and ERPNext's Arabic",
+  "actual": "{\"before\": {\"strings_with_older_word\": 19}, \"after\": {\"Shifts\": \"الشِفتات\", \"No shifts in this period\": \"لا شِفتات في هذه الفترة\", \"POS sessions\": \"شِفتات نقطة البيع\", \"Opening Entries\": \"فتح الشِفتات\", \"Closing Entries\": \"إغلاق الشِفتات\", \"Opened:Shift table\": \"فُتح\", \"Closed:Shift table\": \"أُغلق\", \"Open:Shift status\": \"مفتوح\", \"Shift:POS\": \"الشِفت\", \"generic\": {\"Shift\": \"يحول\", \"Opened\": \"افتتح\", \"Closed\": \"مغلق\", \"Open\": \"فتح\"}, \"served_strings\": 15136, \"old_word_left\": []}}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 17:20:39"
+  "at": "2026-10-08 23:33:13"
  },
  {
   "area": "A16 Update / rollback",
@@ -2607,7 +2607,7 @@
   "actual": "refused HTTP 417: ليس لديك شِفت مفتوح.",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 17:20:40"
+  "at": "2026-10-08 23:33:14"
  },
  {
   "area": "A16 Update / rollback",
@@ -2616,25 +2616,25 @@
   "actual": "{\"status\": \"current\", \"version\": \"1.0.0rc3\"}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 17:20:41"
+  "at": "2026-10-08 23:33:14"
  },
  {
   "area": "A16 Update / rollback",
   "check": "a failing update rolls back",
   "expected": "status rolled_back, previous version",
-  "actual": "{\"status\": \"rolled_back\", \"version\": \"1.0.0rc3\", \"backup\": \"/mnt/c/ProgramData/PharmacyOS/Backups/2026-10-08/20-20-45\"}",
+  "actual": "{\"status\": \"rolled_back\", \"version\": \"1.0.0rc3\", \"backup\": \"/mnt/c/ProgramData/PharmacyOS/Backups/2026-10-09/02-33\"}",
   "result": "PASS",
   "evidence": "== Maintenance mode on\n== Safety backup\n== Installing 1.0.0rc3 (build qa0broken0bu)\n== Migrating\n    raise Exception('QA: a broken release that fails on purpose')\nException: QA: a broken release that fails on purpose\nQA: a broken release that fails on purpose\n== Update failed — restoring the previous version\n== 1/6 Verifying backup\n== 2/6 Maintenance mode on (writes stopped)\n== 3/6 Safety backup of the current state\n== 4/6 Restoring\n== 5/6 Migrating to the installed version\n== 6/6 Health check",
-  "at": "2026-10-08 17:21:41"
+  "at": "2026-10-08 23:33:56"
  },
  {
   "area": "A16 Update / rollback",
   "check": "version after rollback",
-  "expected": "1.0.0rc3 / build 30705c5a83dd",
-  "actual": "[\"1.0.0rc3\", \"30705c5a83dd\"]",
+  "expected": "1.0.0rc3 / build a701924350b1",
+  "actual": "[\"1.0.0rc3\", \"a701924350b1\"]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 17:21:42"
+  "at": "2026-10-08 23:33:56"
  },
  {
   "area": "A16 Update / rollback",
@@ -2643,7 +2643,7 @@
   "actual": "{\"marker\": true, \"sales\": 15, \"before\": 15}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 17:21:49"
+  "at": "2026-10-08 23:34:03"
  },
  {
   "area": "A16 Update / rollback",
@@ -2652,16 +2652,16 @@
   "actual": "HTTP 200",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 17:21:49"
+  "at": "2026-10-08 23:34:03"
  },
  {
   "area": "A15 Backup / restore",
   "check": "back up now (database + files, verified)",
   "expected": "status ok with a backup folder",
-  "actual": "{\"status\": \"ok\", \"folder\": \"/mnt/c/ProgramData/PharmacyOS/Backups/2026-10-08/20-24\"}",
+  "actual": "{\"status\": \"ok\", \"folder\": \"/mnt/c/ProgramData/PharmacyOS/Backups/2026-10-09/02-34\"}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 17:24:03"
+  "at": "2026-10-08 23:34:07"
  },
  {
   "area": "A15 Backup / restore",
@@ -2670,34 +2670,34 @@
   "actual": "true",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 17:24:03"
+  "at": "2026-10-08 23:34:07"
  },
  {
   "area": "A15 Backup / restore",
   "check": "restore that backup",
   "expected": "status restored",
-  "actual": "{\"status\": \"restored\", \"folder\": \"/mnt/c/ProgramData/PharmacyOS/Backups/2026-10-08/20-24\"}",
+  "actual": "{\"status\": \"restored\", \"folder\": \"/mnt/c/ProgramData/PharmacyOS/Backups/2026-10-09/02-34\"}",
   "result": "PASS",
-  "evidence": "= 6/6 Health check\nEnabled for pharmacy.local\n{\"database\": true, \"items\": 20, \"settings\": true, \"scheduler_enabled\": true, \"branch_dimension\": true, \"missing_branch_fields\": [], \"critical_branch_fields\": true, \"ok\": true}\n{\"database\": true, \"items\": 20, \"settings\": true, \"scheduler_enabled\": true, \"branch_dimension\": true, \"missing_branch_fields\": [], \"critical_branch_fields\": true, \"ok\": true}\nRestore finished. Restart PharmacyOS services (bench restart / PharmacyOS Server service).\n##PHARMACYOS-RESULT {\"status\": \"restored\", \"folder\": \"/mnt/c/ProgramData/PharmacyOS/Backups/2026-10-08/20-24\"}\n",
-  "at": "2026-10-08 17:24:52"
+  "evidence": "= 6/6 Health check\nEnabled for pharmacy.local\n{\"database\": true, \"items\": 20, \"settings\": true, \"scheduler_enabled\": true, \"branch_dimension\": true, \"missing_branch_fields\": [], \"critical_branch_fields\": true, \"ok\": true}\n{\"database\": true, \"items\": 20, \"settings\": true, \"scheduler_enabled\": true, \"branch_dimension\": true, \"missing_branch_fields\": [], \"critical_branch_fields\": true, \"ok\": true}\nRestore finished. Restart PharmacyOS services (bench restart / PharmacyOS Server service).\n##PHARMACYOS-RESULT {\"status\": \"restored\", \"folder\": \"/mnt/c/ProgramData/PharmacyOS/Backups/2026-10-09/02-34\"}\n",
+  "at": "2026-10-08 23:34:41"
  },
  {
   "area": "A15 Backup / restore",
   "check": "a safety backup was taken first",
   "expected": "safety backup folder printed and present",
-  "actual": "[\"/mnt/c/ProgramData/PharmacyOS/Backups/2026-10-08/20-24-06\"]",
+  "actual": "[\"/mnt/c/ProgramData/PharmacyOS/Backups/2026-10-09/02-34-08\"]",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 17:24:52"
+  "at": "2026-10-08 23:34:41"
  },
  {
   "area": "A15 Backup / restore",
   "check": "server answers again after the restore",
-  "expected": "sign-in works",
-  "actual": "owner@qa-pharmacy.test",
+  "expected": "sign-in works, ping 200",
+  "actual": "{\"user\": \"owner@qa-pharmacy.test\", \"ping\": 200}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 17:24:59"
+  "at": "2026-10-08 23:34:47"
  },
  {
   "area": "A15 Backup / restore",
@@ -2706,7 +2706,7 @@
   "actual": "true",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 17:25:00"
+  "at": "2026-10-08 23:34:47"
  },
  {
   "area": "A15 Backup / restore",
@@ -2715,7 +2715,7 @@
   "actual": "false",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 17:25:00"
+  "at": "2026-10-08 23:34:47"
  },
  {
   "area": "A15 Backup / restore",
@@ -2724,7 +2724,7 @@
   "actual": "{\"sales\": 15, \"at_backup\": 15}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 17:25:00"
+  "at": "2026-10-08 23:34:47"
  },
  {
   "area": "A15 Backup / restore",
@@ -2733,7 +2733,7 @@
   "actual": "all consistent",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 17:25:01"
+  "at": "2026-10-08 23:34:47"
  },
  {
   "area": "A15 Backup / restore",
@@ -2742,7 +2742,7 @@
   "actual": "{\"status\": \"invalid_folder\"}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 17:25:01"
+  "at": "2026-10-08 23:34:47"
  },
  {
   "area": "A15 Backup / restore",
@@ -2751,33 +2751,33 @@
   "actual": "false",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 17:25:01"
+  "at": "2026-10-08 23:34:48"
  },
  {
   "area": "A15 Backup / restore",
   "check": "a tampered backup is refused, data unchanged",
   "expected": "failed_unchanged (exit 3); current data kept",
-  "actual": "{\"status\": \"invalid_folder\"}",
+  "actual": "{\"status\": \"failed_unchanged\", \"folder\": \"/mnt/c/ProgramData/PharmacyOS/Backups/2026-10-09/02-32-99\"}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 17:25:04"
+  "at": "2026-10-08 23:34:57"
  },
  {
   "area": "A15 Backup / restore",
   "check": "a restore that fails mid-way puts the safety backup back",
   "expected": "failed_reverted; data as before; server answers",
-  "actual": "{\"result\": {\"status\": \"failed_reverted\", \"folder\": \"/mnt/c/ProgramData/PharmacyOS/Backups/2026-10-08/23-58\"}, \"marker_kept\": true}",
+  "actual": "{\"result\": {\"status\": \"failed_reverted\", \"folder\": \"/mnt/c/ProgramData/PharmacyOS/Backups/2026-10-09/23-58\"}, \"marker_kept\": true}",
   "result": "PASS",
-  "evidence": "cing customizations...\nSyncing languages...\nFlushing deferred inserts...\nRemoving orphan doctypes...\nRemoving orphan Workspaces\nRemoving orphan Dashboards\nRemoving orphan Pages\nRemoving orphan Reports\nRemoving orphan Notifications\nRemoving orphan Workspace Sidebars\nRemoving orphan Desktop Icons\nSyncing portal menu...\nUpdating installed applications...\nExecuting `after_migrate` hooks...\nMO file created at /home/frappe/frappe-bench/sites/assets/locale/ar/LC_MESSAGES/pharmacyos_erp.mo\n\nQueued rebuilding of search index for pharmacy.local\n\nEnabled for pharmacy.local\nThe data is as it was before the restore (safety backup /mnt/c/ProgramData/PharmacyOS/Backups/2026-10-08/20-25).\n##PHARMACYOS-RESULT {\"status\": \"failed_reverted\", \"folder\": \"/mnt/c/ProgramData/PharmacyOS/Backups/2026-10-08/23-58\"}\n",
-  "at": "2026-10-08 17:25:58"
+  "evidence": "cing customizations...\nSyncing languages...\nFlushing deferred inserts...\nRemoving orphan doctypes...\nRemoving orphan Workspaces\nRemoving orphan Dashboards\nRemoving orphan Pages\nRemoving orphan Reports\nRemoving orphan Notifications\nRemoving orphan Workspace Sidebars\nRemoving orphan Desktop Icons\nSyncing portal menu...\nUpdating installed applications...\nExecuting `after_migrate` hooks...\nMO file created at /home/frappe/frappe-bench/sites/assets/locale/ar/LC_MESSAGES/pharmacyos_erp.mo\n\nQueued rebuilding of search index for pharmacy.local\n\nEnabled for pharmacy.local\nThe data is as it was before the restore (safety backup /mnt/c/ProgramData/PharmacyOS/Backups/2026-10-09/02-35).\n##PHARMACYOS-RESULT {\"status\": \"failed_reverted\", \"folder\": \"/mnt/c/ProgramData/PharmacyOS/Backups/2026-10-09/23-58\"}\n",
+  "at": "2026-10-08 23:35:37"
  },
  {
   "area": "A16 Update / rollback",
   "check": "one server operation at a time (a second update while one runs)",
   "expected": "the second is refused as busy (exit 75); the first finishes (rolled back)",
-  "actual": "{\"second_exit\": 75, \"second\": {\"status\": \"busy\"}, \"first\": {\"status\": \"rolled_back\", \"version\": \"1.0.0rc3\", \"backup\": \"/mnt/c/ProgramData/PharmacyOS/Backups/2026-10-08/20-26\"}}",
+  "actual": "{\"second_exit\": 75, \"second\": {\"status\": \"busy\"}, \"first\": {\"status\": \"rolled_back\", \"version\": \"1.0.0rc3\", \"backup\": \"/mnt/c/ProgramData/PharmacyOS/Backups/2026-10-09/02-35-39\"}}",
   "result": "PASS",
   "evidence": "",
-  "at": "2026-10-08 17:27:29"
+  "at": "2026-10-08 23:36:20"
  }
 ]

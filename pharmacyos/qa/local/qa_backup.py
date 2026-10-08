@@ -56,7 +56,9 @@ def main():
 	safety = [l.split("safety backup:", 1)[1].strip() for l in log.splitlines() if "safety backup:" in l]
 	R.add(A, "a safety backup was taken first", "safety backup folder printed and present", safety, bool(safety) and os.path.exists("/var/tmp/wslroot" + safety[0] + "/metadata.json"))
 	o = Session().login(*OWNER)  # sessions belong to the restored database
-	R.add(A, "server answers again after the restore", "sign-in works", o.user, True)
+	st, _body = o.raw("GET", "/api/method/ping")
+	me = o.call("frappe.auth.get_logged_user")
+	R.add(A, "server answers again after the restore", "sign-in works, ping 200", {"user": me, "ping": st}, me == OWNER[0] and st == 200)
 	R.add(A, "QA BEFORE BACKUP is there", "present", has(o, "QA BEFORE BACKUP"), has(o, "QA BEFORE BACKUP"))
 	R.add(A, "QA AFTER BACKUP is gone", "absent", has(o, "QA AFTER BACKUP"), not has(o, "QA AFTER BACKUP"))
 	R.add(A, "transactions consistent", "the same sales as at backup time", {"sales": len(o.get_list("Sales Invoice", fields=["name"], limit=5000)), "at_backup": sales_before}, len(o.get_list("Sales Invoice", fields=["name"], limit=5000)) == sales_before)

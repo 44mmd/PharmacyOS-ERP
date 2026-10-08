@@ -21,6 +21,15 @@ shift (the POS, the shift dialogs, server messages, the Pharmacy Report, the sid
 (the installer also takes ERPNext from the upstream v16.37.0 tag, not from this tree). `qa/check_terminology.py`
 names those 7 msgids (`ERPNEXT_NOT_A_CASH_SHIFT`) and fails on any other ERPNext string with the older word.
 
+The app's `ar.po` overrides a generic English word only where PharmacyOS wants the same Arabic everywhere in the
+desk. Words it needs in one sense only carry a **context** (`msgctxt`), so the rest of the desk keeps Frappe's and
+ERPNext's Arabic: the counter's *Shift* (`_("Shift", context="POS")` in `www/pos.py`) and the Pharmacy Report's
+shift table (*Opened* / *Closed* — context *Shift table*, *Open* — context *Shift status*). ERPNext's own *Shift*
+field and column on the asset-depreciation screens (Depreciation Schedule, the asset's schedule table) therefore
+read upstream's Arabic for the generic word, Frappe's *Open* button and the *Closed* status of orders read
+Frappe's; `tests/test_terminology.py` (`test_generic_words_keep_upstream_arabic`) and the QA's desk check verify
+that PharmacyOS leaves those four generic words as upstream serves them.
+
 Extension points used for consistency and least privilege (still no ERPNext file changed):
 
 | Extension | What | Why |

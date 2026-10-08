@@ -1,0 +1,6 @@
+# PharmacyOS: text files are checked out with LF line endings on every OS, including a Windows checkout with
+# core.autocrlf (the Windows CI runner). The server bundle shipped in the Windows installer is then
+# byte-for-byte the bundle built and QA'd on Linux, so its BUILD_ID is the same (prepare-server-bundle.js).
+# text=auto: Git decides what is text, so images, fonts and other binary files are never touched.
+pharmacyos/** text=auto eol=lf
+.github/workflows/pharmacyos-*.yml text=auto eol=lf

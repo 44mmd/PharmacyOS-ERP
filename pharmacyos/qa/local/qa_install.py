@@ -73,7 +73,7 @@ def fresh():
 	shift_ar = counter_shift_arabic(owner)
 	R.add(A, "the counter's Arabic: a shift is «شِفت» (translations compiled by the installer)", "الشِفت · فتح الشِفت · إغلاق الشِفت · لا يوجد شِفت مفتوح… · no older shift word on the screen", shift_ar, shift_arabic_ok(shift_ar))
 	desk_ar = desk_shift_arabic(owner)
-	R.add(A, "the desk's Arabic (translations the server boots the desk with): shifts are «شِفتات»", "الشِفتات · شِفتات نقطة البيع · لا شِفتات في هذه الفترة · فُتح / أُغلق / مفتوح; no served string uses the older word for a cash shift", desk_ar, desk_shift_arabic_ok(desk_ar))
+	R.add(A, "the desk's Arabic (translations the server boots the desk with): shifts are «شِفتات»", "الشِفتات · شِفتات نقطة البيع · لا شِفتات في هذه الفترة · the shift table's فُتح / أُغلق / مفتوح and the counter's الشِفت by context, while the generic Shift / Open / Closed / Opened keep Frappe's and ERPNext's Arabic; no served string uses the older word for a cash shift", desk_ar, desk_shift_arabic_ok(desk_ar))
 	g = Session("guest")
 	st, _ = g.raw("POST", "/api/method/frappe.core.doctype.user.user.sign_up", {"email": "x@example.com", "full_name": "x", "redirect_to": ""})
 	R.add(A, "self sign-up refused", "refused (sign-up disabled)", f"HTTP {st}", st in (403, 417, 500) or st == 200 and "disabled" in _.lower())

@@ -17,7 +17,7 @@ the bundled version (or, for the same version, the build) differs from the insta
 
 | Version | Changes |
 |---|---|
-| `1.0.0-rc.3` | Arabic terminology (Iraqi usage): a cash/POS shift is **«شِفت»**, plural **«شِفتات»**, masculine — on the POS (open / close shift, the counter bar), in server messages, the Pharmacy Report's shift table (فُتح / أُغلق / مفتوح) and the sidebar (شِفتات نقطة البيع). Display text only (`locale/ar.po` msgstr, docs): no database, DocType, field, API or migration change. Guard: `qa/check_terminology.py` (CI step *Arabic terminology*) and `tests/test_terminology.py`. Updating from rc.2 recompiles the translations during `bench migrate` (the app's `after_migrate`). Also: after a failed update is rolled back, `pharmacyos-server` reports the result only once the server answers again (found by the rc.3 QA: the next sign-in got the web server's "back soon" page). Fresh install, the update rc.2 → rc.3 and the full local QA re-run: `docs/qa/local/FINAL_QA_REPORT.md`. |
+| `1.0.0-rc.3` | Arabic terminology (Iraqi usage): a cash/POS shift is **«شِفت»**, plural **«شِفتات»**, masculine — on the POS (open / close shift, the counter bar), in server messages, the Pharmacy Report's shift table (فُتح / أُغلق / مفتوح) and the sidebar (شِفتات نقطة البيع). Display text only (`locale/ar.po` msgstr, docs): no database, DocType, field, API or migration change. The counter's *Shift* and the report's shift-table words are translated with a context (msgctxt), so the generic *Shift* (ERPNext's asset-depreciation shift), *Open*, *Closed* and *Opened* elsewhere in the desk keep Frappe's / ERPNext's Arabic. Guard: `qa/check_terminology.py` (CI step *Arabic terminology*; normalises Persian/Kurdish ی and invisible joiners, scans `.bat` / `.cmd`, allows colour phrases) and `tests/test_terminology.py`. `.gitattributes` keeps LF line endings in a Windows checkout, so the server bundle inside the installer is byte-for-byte the one QA installs (CI fails otherwise). Updating from rc.2 recompiles the translations during `bench migrate` (the app's `after_migrate`). Also: after a failed update is rolled back, `pharmacyos-server` reports the result only once the server answers again (found by the rc.3 QA: the next sign-in got the web server's "back soon" page). Fresh install, the update rc.2 → rc.3 and the full local QA re-run: `docs/qa/local/FINAL_QA_REPORT.md`. |
 | `1.0.0-rc.2` | Local ERP v1 final certification (Phase A): `docs/qa/local/FINAL_QA_REPORT.md` at commit `05a68fa`. |
 
 ## Pinned dependencies (server)
@@ -54,11 +54,15 @@ generated from the repository each time.
 ### GitHub Actions — `.github/workflows/pharmacyos-desktop.yml`
 
 * **checks** (Linux): shell and PowerShell scripts parse; Arabic terminology guard (`qa/check_terminology.py`:
-  a cash/POS shift is «شِفت»); desktop unit tests.
+  a cash/POS shift is «شِفت»); desktop unit tests; the server bundle built from the Linux checkout (its
+  `BUILD_ID` is handed to the Windows job). Push runs also start for changes under `pharmacyos/docs/` and
+  `pharmacyos/qa/`, which the guard scans.
 * **windows-installer** (windows-latest): scripts parse in Windows PowerShell 5.1 (and are UTF-8 with BOM,
   which 5.1 needs for non-ASCII text); installer helper functions behave on 5.1; the setup's system check runs
   on real Windows; build; SHA-256 — the installer's file name, size in bytes, SHA-256 (`SHA256SUMS.txt`),
-  whether it is signed and the commit are printed in the job log and the run summary; silent install →
+  whether it is signed, the commit and the server bundle's version and build are printed in the job log and the
+  run summary; the job fails if the bundle built on Windows is not the Linux one (same `BUILD_ID`: the build QA
+  installs is the build that ships); silent install →
   installed server bundle present → first launch (smoke run) → silent uninstall keeps pharmacy data. Artifact
   **PharmacyOS-Setup** (installer, `SHA256SUMS.txt`, the smoke run's images), kept 90 days.
 * **evidence** (`workflow_dispatch` with `publish_evidence` only): commits the Windows CI images to the branch.

@@ -169,17 +169,22 @@ def desk_messages(session: Session) -> dict:
 	return boot.get("__messages") or {}
 
 
-# the desk's shift wording: Pharmacy Report shift table and the sidebar (msgid → Arabic)
+# the desk's shift wording: Pharmacy Report shift table and the sidebar (msgid, or "msgid:context" as the
+# desk's translations key it → Arabic)
 DESK_SHIFT_ARABIC = {
 	"Shifts": "الشِفتات",
 	"No shifts in this period": "لا شِفتات في هذه الفترة",
 	"POS sessions": "شِفتات نقطة البيع",
 	"Opening Entries": "فتح الشِفتات",
 	"Closing Entries": "إغلاق الشِفتات",
-	"Opened": "فُتح",
-	"Closed": "أُغلق",
-	"Open": "مفتوح",
+	"Opened:Shift table": "فُتح",
+	"Closed:Shift table": "أُغلق",
+	"Open:Shift status": "مفتوح",
+	"Shift:POS": "الشِفت",
 }
+# generic words PharmacyOS translates only in context: everywhere else in the desk they must keep Frappe's /
+# ERPNext's Arabic (ERPNext's asset-depreciation "Shift", Frappe's "Open" button, "Closed" order statuses)
+GENERIC_WORDS = {"Shift": "Shift:POS", "Opened": "Opened:Shift table", "Closed": "Closed:Shift table", "Open": "Open:Shift status"}
 
 
 def desk_shift_arabic(session: Session) -> dict:
@@ -187,6 +192,7 @@ def desk_shift_arabic(session: Session) -> dict:
 	(ERPNext's asset-depreciation / workstation shifts are a different thing and are not counted)."""
 	msgs = desk_messages(session)
 	out = {k: msgs.get(k) for k in DESK_SHIFT_ARABIC}
+	out["generic"] = {k: msgs.get(k) for k in GENERIC_WORDS}
 	out["served_strings"] = len(msgs)
 	out["old_word_left"] = sorted(
 		k for k, v in msgs.items()
@@ -196,7 +202,14 @@ def desk_shift_arabic(session: Session) -> dict:
 
 
 def desk_shift_arabic_ok(found: dict) -> bool:
-	return found.get("served_strings", 0) > 1000 and all(found.get(k) == v for k, v in DESK_SHIFT_ARABIC.items()) and not found.get("old_word_left")
+	generic = found.get("generic") or {}
+	return (
+		found.get("served_strings", 0) > 1000
+		and all(found.get(k) == v for k, v in DESK_SHIFT_ARABIC.items())
+		and not found.get("old_word_left")
+		# the contextual Arabic never leaks into the generic word
+		and all(generic.get(k) != DESK_SHIFT_ARABIC[ctx] for k, ctx in GENERIC_WORDS.items())
+	)
 
 
 def rid() -> str:
@@ -219,7 +232,7 @@ class Results:
 			"actual": actual if isinstance(actual, str) else json.dumps(actual, ensure_ascii=False, default=str)[:600],
 			"result": "PASS" if ok else "FAIL",
 			"evidence": evidence,
-			"at": time.strftime("%Y-%m-%d %H:%M:%S"),
+			"at": time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()),  # UTC, whatever TZ the harness runs in
 		}
 		self.rows = [r for r in self.rows if not (r["area"] == area and r["check"] == check)]
 		self.rows.append(row)
