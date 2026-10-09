@@ -32,7 +32,7 @@ sudo cp pharmacyos/dev/mariadb-frappe.cnf /etc/mysql/mariadb.conf.d/99-frappe.cn
 curl -LsSf https://astral.sh/uv/install.sh | sh          # uv → Python 3.14 + bench
 nvm install 24 && corepack enable yarn                   # Node 24 + yarn 1.x
 
-DB_ROOT_PASSWORD=... ERPNEXT_REPO=https://github.com/44mmd/PharmacyOS-ERP ERPNEXT_BRANCH=develop \
+DB_ROOT_PASSWORD=... ERPNEXT_REPO=https://github.com/44mmd/Private-ERP ERPNEXT_BRANCH=develop \
   ./pharmacyos/dev/setup-dev-bench.sh
 ```
 

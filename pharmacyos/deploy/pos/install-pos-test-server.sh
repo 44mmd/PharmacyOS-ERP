@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # PharmacyOS POS — one-command TEST server (fictitious demo pharmacy) on a fresh Ubuntu 24.04 VPS.
 #
-#   git clone -b claude/pharmacyos-dual-pos-auscie https://github.com/44mmd/PharmacyOS-ERP
-#   sudo POS_HOST=pos.halfpharmacy.com CERTBOT_EMAIL=you@example.com PharmacyOS-ERP/pharmacyos/deploy/pos/install-pos-test-server.sh
+#   git clone -b claude/pharmacyos-dual-pos-auscie https://github.com/44mmd/Private-ERP
+#   sudo POS_HOST=pos.halfpharmacy.com CERTBOT_EMAIL=you@example.com Private-ERP/pharmacyos/deploy/pos/install-pos-test-server.sh
 #
 # Before running: create a DNS A record POS_HOST → this server's public IP, and open ports 80 + 443.
 #

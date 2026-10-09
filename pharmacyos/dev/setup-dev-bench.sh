@@ -13,7 +13,7 @@
 #   MariaDB configured for utf8mb4 (see pharmacyos/dev/mariadb-frappe.cnf) and a root password.
 #
 # Usage:
-#   ERPNEXT_REPO=https://github.com/44mmd/PharmacyOS-ERP ERPNEXT_BRANCH=develop \
+#   ERPNEXT_REPO=https://github.com/44mmd/Private-ERP ERPNEXT_BRANCH=develop \
 #   DB_ROOT_PASSWORD=... ./pharmacyos/dev/setup-dev-bench.sh
 set -euo pipefail
 
@@ -21,7 +21,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 APP_SRC="${APP_SRC:-$SCRIPT_DIR/../apps/pharmacyos_erp}"
 BENCH_DIR="${BENCH_DIR:-$HOME/frappe-bench}"
 FRAPPE_BRANCH="${FRAPPE_BRANCH:-develop}"
-ERPNEXT_REPO="${ERPNEXT_REPO:-https://github.com/44mmd/PharmacyOS-ERP}"
+ERPNEXT_REPO="${ERPNEXT_REPO:-https://github.com/44mmd/Private-ERP}"
 ERPNEXT_BRANCH="${ERPNEXT_BRANCH:-develop}"
 DEV_SITE="${DEV_SITE:-pharmacyos.localhost}"
 TEST_SITE="${TEST_SITE:-test.localhost}"
