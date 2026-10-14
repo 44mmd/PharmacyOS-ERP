@@ -46,6 +46,13 @@ STATE_DIR=/var/lib/pharmacyos/install
 OPT=/opt/pharmacyos
 TOTAL=9
 
+# Machine architecture: x86_64 (Windows PCs through WSL2, Linux servers) or aarch64 (an Ubuntu ARM64 VM, e.g.
+# Parallels on an Apple-silicon Mac). Only the Node.js and uv downloads differ; everything else comes from apt.
+case "$(uname -m)" in
+	x86_64 | amd64) NODE_ARCH=x64; UV_ARCH=x86_64 ;;
+	aarch64 | arm64) NODE_ARCH=arm64; UV_ARCH=aarch64 ;;
+	*) echo "Unsupported machine architecture: $(uname -m) (PharmacyOS needs x86_64 or aarch64)." >&2; exit 1 ;;
+esac
 [ "$(id -u)" -eq 0 ] || { echo "Run as root (sudo)." >&2; exit 1; }
 mkdir -p /etc/pharmacyos "$STATE_DIR" "$OPT/bin" "$OPT/releases"
 chmod 700 /etc/pharmacyos
@@ -102,7 +109,7 @@ packages() {
 toolchain() {
 	# Node.js: one pinned release from nodejs.org, checked against its published SHA-256 list
 	if ! node --version 2>/dev/null | grep -qx "v${NODE_VERSION}"; then
-		local tarball="node-v${NODE_VERSION}-linux-x64.tar.xz" tmp
+		local tarball="node-v${NODE_VERSION}-linux-${NODE_ARCH}.tar.xz" tmp
 		tmp="$(mktemp -d)"
 		curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/${tarball}" -o "$tmp/$tarball"
 		curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/SHASUMS256.txt" -o "$tmp/SHASUMS256.txt"
@@ -117,13 +124,13 @@ toolchain() {
 	chmod 755 "/home/$BENCH_USER"
 	# uv (Python 3.14 + the bench CLI): one pinned release, checked against its published SHA-256
 	if ! uv --version 2>/dev/null | grep -q "^uv ${UV_VERSION} "; then
-		local tmp archive="uv-x86_64-unknown-linux-gnu.tar.gz"
+		local tmp archive="uv-${UV_ARCH}-unknown-linux-gnu.tar.gz"
 		tmp="$(mktemp -d)"
 		curl -fsSL "https://github.com/astral-sh/uv/releases/download/${UV_VERSION}/${archive}" -o "$tmp/$archive"
 		curl -fsSL "https://github.com/astral-sh/uv/releases/download/${UV_VERSION}/${archive}.sha256" -o "$tmp/$archive.sha256"
 		(cd "$tmp" && sha256sum -c "$archive.sha256")
 		tar -xzf "$tmp/$archive" -C "$tmp"
-		install -m 0755 "$tmp"/uv-x86_64-unknown-linux-gnu/uv "$tmp"/uv-x86_64-unknown-linux-gnu/uvx /usr/local/bin/
+		install -m 0755 "$tmp"/uv-"${UV_ARCH}"-unknown-linux-gnu/uv "$tmp"/uv-"${UV_ARCH}"-unknown-linux-gnu/uvx /usr/local/bin/
 		rm -rf "$tmp"
 	fi
 }
